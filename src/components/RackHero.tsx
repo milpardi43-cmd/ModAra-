@@ -453,13 +453,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={item.name}
+                      onPointerEnter={(event) => {
+                        if (event.pointerType !== 'touch') setActiveId(item.id);
+                      }}
                       onFocus={() => {
                         setRackPaused(true);
                         setActiveId(item.id);
                       }}
                       onClick={() => setActiveId(item.id)}
-                      className="group/piece absolute inset-y-0 start-1/2 block -translate-x-1/2 outline-none"
-                      style={{ width: `calc(var(--piece-h) * ${item.aspect})` }}
+                      className="group/piece absolute inset-0 block cursor-pointer outline-none"
                     >
                       {/* soft glow of the garment's own colour */}
                       <span
