@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { asset, formatPrice } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
@@ -49,6 +49,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   /** Piece height that makes the whole line fit the row exactly. */
   const [rackSize, setRackSize] = useState({ height: 240, fits: true });
   const suppressClick = useRef(false);
+  const [rackPaused, setRackPaused] = useState(false);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
@@ -164,6 +165,18 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     [reduceMotion],
   );
 
+  // Cinematic product changes pause while the visitor is interacting with the rack.
+  useEffect(() => {
+    if (loading || items.length < 2 || rackPaused) return;
+    const timer = window.setTimeout(() => {
+      setActiveId((current) => {
+        const currentIndex = items.findIndex((item) => item.id === current);
+        return items[(currentIndex + 1 + items.length) % items.length].id;
+      });
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [activeId, items, loading, rackPaused]);
+
   const moveActive = (step: 1 | -1) => {
     if (items.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
@@ -264,164 +277,78 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       />
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
-        {/* Headline: one centred column, opened and closed by a hairline */}
-        <div className="mx-auto mt-4 flex w-full max-w-[1100px] flex-col items-start gap-5 md:flex-row lg:gap-8">
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: EASE }}
-          className="mx-auto flex w-full max-w-3xl flex-col items-center text-center md:order-2 md:mx-0 md:w-[40%] md:items-start md:text-right"
-        >
-          {/* kicker: a small label on a hairline that opens out to both edges */}
-          <div className="flex w-full items-center gap-3 sm:gap-4">
-            <span
-              aria-hidden="true"
-              className="h-px flex-1 bg-[linear-gradient(90deg,rgba(189,167,124,0),#bda77c)]"
-            />
-            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/80 px-3 py-1 text-[10px] font-bold text-[#8a7344] sm:text-[10.5px]">
-              کالکشن پاییز مُدارا
-              <span aria-hidden="true" className="h-1 w-1 rounded-full bg-[#c3ac81]" />
-              <span className="tabular-nums">
-                {loading
-                  ? 'در حال چیدن…'
-                  : `${new Intl.NumberFormat('fa-IR').format(items.length)} قطعه`}
-              </span>
-            </span>
-            <span
-              aria-hidden="true"
-              className="h-px flex-1 bg-[linear-gradient(270deg,rgba(189,167,124,0),#bda77c)]"
-            />
-          </div>
-
-          <h1 className="mt-4 text-balance text-[clamp(1.45rem,3.5vw,2.5rem)] font-extrabold leading-[1.28] text-[#241d14]">
-            همه‌ی لباس‌ها، از بغل، روی یک رگال
-          </h1>
-
-          <p className="mt-2 text-balance text-[clamp(0.9rem,1.5vw,1.05rem)] font-bold leading-relaxed text-[#8b6f3e]">
-            همان‌طور که در بوتیک چیده می‌شوند
-          </p>
-
-          <p className="mt-3 max-w-[36rem] text-balance text-[12px] leading-[1.65] text-[#6b6152] sm:text-[12.5px]">
-            کت، ترنچ‌کت، هودی و بافت‌ها؛ عکسِ واقعیِ هر لباس در حالت آویزان و از بغل، همان‌طور
-            که پارچه روی جالباسی می‌افتد. هر قطعه که جلو بیاید کمی از ریل بلند می‌شود، و
-            پارچه‌های تمام‌پشم با برشِ تیلور و دوختِ محدود، انتخاب‌شده برای پوشیدنِ هر روز.
-          </p>
-
-          {/* a quiet rule that closes the title block and opens the card */}
-          <div aria-hidden="true" className="mt-5 flex w-full items-center gap-3">
-            <span className="h-px flex-1 bg-[linear-gradient(90deg,rgba(207,189,160,0),#cfbda0)]" />
-            <span className="h-1.5 w-1.5 rotate-45 bg-[#bda77c]" />
-            <span className="h-px flex-1 bg-[linear-gradient(270deg,rgba(207,189,160,0),#cfbda0)]" />
-          </div>
-        </motion.div>
-
-        {/* Compact product card: clear image, title, details, and one action */}
-        <div className="relative mx-auto w-full max-w-[700px] md:order-1 md:mx-0 md:w-[60%]">
-          <AnimatePresence mode="popLayout" initial={false}>
+        {/* Product information follows the selected garment; intentionally no card frame. */}
+        <div className="mx-auto mt-4 w-full max-w-[1100px] px-2 sm:px-0">
+          <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
-              <motion.article
+              <motion.div
                 key={activeItem.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -5 }}
-                transition={{ duration: 0.35, ease: EASE }}
-                className="relative overflow-hidden rounded-2xl border border-[#d9cdb6] bg-[#fdfaf4] shadow-[0_16px_36px_-28px_rgba(45,33,18,0.55)]"
+                exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+                transition={{ duration: 0.42, ease: EASE }}
+                className="mx-auto flex w-full max-w-4xl flex-col gap-3 text-right sm:flex-row sm:items-center sm:justify-between sm:gap-8"
                 aria-live="polite"
               >
-                <div className="grid md:grid-cols-[260px_minmax(0,1fr)]">
-                  <div className="relative h-32 overflow-hidden bg-[#e9e2d6] md:hidden">
-                    <img
-                      src={optimizedAsset(activeItem.product.image_url, 480)}
-                      srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                      sizes="(min-width: 768px) 260px, 100vw"
-                      alt={activeItem.product.name}
-                      className="h-full w-full object-cover object-[center_38%]"
-                      decoding="async"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#fdfaf4]/50 to-transparent"
-                    />
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
+                      <span
+                        className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
+                        style={{ backgroundColor: activeItem.hex }}
+                        aria-hidden="true"
+                      />
+                      {activeItem.categoryName}
+                    </span>
+                    <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
+                      {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
+                      {new Intl.NumberFormat('fa-IR').format(items.length)}
+                    </span>
                   </div>
 
-                  <div className="relative hidden min-h-[168px] overflow-hidden bg-[#e9e2d6] md:block">
-                    <img
-                      src={optimizedAsset(activeItem.product.image_url, 720)}
-                      srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                      sizes="260px"
-                      alt={activeItem.product.name}
-                      className="absolute inset-0 h-full w-full object-cover object-[center_38%]"
-                      decoding="async"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#fdfaf4]/25 via-transparent to-transparent"
-                    />
-                  </div>
-
-                  <div className="flex min-w-0 flex-col p-3.5 text-right sm:p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f2e9d8] px-2.5 py-1 text-[10px] font-bold text-[#7d6636]">
-                        <span
-                          className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
-                          style={{ backgroundColor: activeItem.hex }}
-                          aria-hidden="true"
-                        />
-                        {activeItem.categoryName}
-                      </span>
-                      <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
-                        {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
-                        {new Intl.NumberFormat('fa-IR').format(items.length)}
-                      </span>
-                    </div>
-
-                    <h2 className="mt-2 text-balance text-[clamp(1rem,1.8vw,1.25rem)] font-bold leading-snug text-[#241d14]">
-                      {activeItem.product.name}
-                    </h2>
-
-                    {activeItem.product.description && (
-                      <p className="mt-1 line-clamp-2 text-[11px] leading-[1.65] text-[#6b6152]">
-                        {activeItem.product.description}
-                      </p>
-                    )}
-
-                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px]">
-                      <span className="inline-flex items-center gap-1 font-bold text-[#3f3527]">
-                        <Star className="h-3.5 w-3.5 fill-[#c0913f] text-[#c0913f]" aria-hidden="true" />
-                        {new Intl.NumberFormat('fa-IR').format(
-                          Number(activeItem.product.rating.toFixed(1)),
-                        )}
-                      </span>
-                      <span className="h-3 w-px bg-[#d9cdb6]" aria-hidden="true" />
-                      <span className="text-[#6b6152]">
-                        {activeItem.product.stock > 0
-                          ? `${new Intl.NumberFormat('fa-IR').format(activeItem.product.stock)} عدد موجود`
-                          : 'ناموجود'}
-                      </span>
-                    </div>
-
-                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-[#e7dece] pt-2.5">
-                      <span className="whitespace-nowrap text-[11px] font-extrabold text-[#3f3527]">
-                        {formatPrice(activeItem.product.price)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onNavigate('product', activeItem.slug)}
-                        className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-3.5 py-2 text-[11px] font-semibold text-[#f7f1e4] transition-colors hover:bg-[#3a2f20] active:scale-[0.98]"
-                      >
-                        مشاهدهٔ محصول
-                        <ArrowLeft
-                          className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1"
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </div>
+                  <h1 className="text-balance text-[clamp(1.45rem,3.5vw,2.5rem)] font-extrabold leading-[1.28] text-[#241d14]">
+                    {activeItem.product.name}
+                  </h1>
+                  {activeItem.product.description && (
+                    <p className="mt-2 max-w-[46rem] text-[12px] leading-[1.75] text-[#6b6152] sm:text-[12.5px]">
+                      {activeItem.product.description}
+                    </p>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px]">
+                    <span className="inline-flex items-center gap-1 font-bold text-[#3f3527]">
+                      <Star className="h-3.5 w-3.5 fill-[#c0913f] text-[#c0913f]" aria-hidden="true" />
+                      {new Intl.NumberFormat('fa-IR').format(
+                        Number(activeItem.product.rating.toFixed(1)),
+                      )}
+                    </span>
+                    <span className="h-3 w-px bg-[#d9cdb6]" aria-hidden="true" />
+                    <span className="text-[#6b6152]">
+                      {activeItem.product.stock > 0
+                        ? `${new Intl.NumberFormat('fa-IR').format(activeItem.product.stock)} عدد موجود`
+                        : 'ناموجود'}
+                    </span>
                   </div>
                 </div>
-              </motion.article>
+
+                <div className="flex shrink-0 items-center justify-between gap-4 sm:flex-col sm:items-end sm:gap-2">
+                  <span className="whitespace-nowrap text-sm font-extrabold text-[#3f3527] sm:text-base">
+                    {formatPrice(activeItem.product.price)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('product', activeItem.slug)}
+                    className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-4 py-2.5 text-[11px] font-semibold text-[#f7f1e4] transition-colors hover:bg-[#3a2f20] active:scale-[0.98]"
+                  >
+                    مشاهدهٔ محصول
+                    <ArrowLeft
+                      className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
-        </div>
         </div>
 
         {/* The rail, and the garments on it */}
@@ -440,13 +367,23 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             ref={trackRef}
             aria-label="لباس‌های مُدارا روی رگال"
             onKeyDown={onRackKeyDown}
+            onPointerEnter={() => setRackPaused(true)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            onPointerLeave={onPointerUp}
+            onPointerLeave={() => {
+              onPointerUp();
+              setRackPaused(false);
+            }}
+            onFocusCapture={() => setRackPaused(true)}
+            onBlurCapture={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setRackPaused(false);
+              }
+            }}
             onClickCapture={(event) => {
-              /* a drag must not open a product page */
+              /* a drag should not select a garment accidentally */
               if (!suppressClick.current) return;
               suppressClick.current = false;
               event.preventDefault();
@@ -498,11 +435,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={item.name}
-                      onFocus={() => setActiveId(item.id)}
-                      onClick={() => {
+                      onFocus={() => {
+                        setRackPaused(true);
                         setActiveId(item.id);
-                        onNavigate('product', item.slug);
                       }}
+                      onClick={() => setActiveId(item.id)}
                       className="group/piece absolute inset-y-0 start-1/2 block -translate-x-1/2 outline-none"
                       style={{ width: `calc(var(--piece-h) * ${item.aspect})` }}
                     >
