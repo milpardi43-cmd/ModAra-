@@ -529,7 +529,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             src={asset(item.image)}
                             alt=""
                             aria-hidden="true"
-                            loading={index < 17 ? 'eager' : 'lazy'}
+                            loading={index < 2 ? 'eager' : 'lazy'}
+                            fetchPriority={index === 0 ? 'high' : 'auto'}
                             decoding="async"
                             draggable={false}
                             className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${

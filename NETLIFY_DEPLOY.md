@@ -88,19 +88,14 @@ npm run preview      # → http://localhost:4173
 
 1. وارد [app.netlify.com](https://app.netlify.com) شوید و با GitHub لاگین کنید.
 2. **Add new project → Import an existing project → GitHub**.
-3. ریپوی `milanorezaee2/Modara` را انتخاب کنید. در صورت نیاز، دسترسی Netlify را به آن ریپو بدهید.
-4. در صفحهٔ تنظیمات build:
-   - **Branch to deploy:** `main`
+3. ریپوی `milpardi43-cmd/ModAra-` را انتخاب کنید و دسترسی Netlify به آن را تأیید کنید.
+4. در تنظیمات build، مقادیر فایل `netlify.toml` را نگه دارید:
    - **Build command:** `npm run build`
    - **Publish directory:** `dist`
-   - (این مقادیر از `netlify.toml` هم خوانده می‌شوند؛ یکسان بودنشان مهم است.)
-5. **Deploy site** را بزنید.
+5. برای اینکه تغییرات شاخهٔ کاری همین نشست مستقیماً روی سایت اصلی منتشر شوند، در **Site configuration → Build & deploy → Branches** مقدار **Production branch** را روی `arena/84ba23af-modara` بگذارید. اگر می‌خواهید `main` سایت اصلی بماند، به‌جای آن **Branch deploys** را برای همین شاخه فعال کنید؛ در آن حالت تغییرات در آدرس جداگانهٔ branch deploy دیده می‌شوند.
+6. **Deploy site** را بزنید.
 
-از این لحظه، هر `push` روی `main` یک Deploy جدید می‌سازد و در صورت موفقیت، سایت به‌روز می‌شود.
-برای هر Pull Request هم Netlify یک **Deploy Preview** با URL موقت می‌سازد (بخش ۷).
-
-> اگر شاخهٔ کاری شما `arena/...` است، آن را در `main` مرج کنید؛ یا موقتاً
-> **Site configuration → Build & deploy → Branches → Branch deploys** را روی همان شاخه بگذارید.
+پس از اتصال GitHub و انتخاب شاخه، هر `push` روی شاخهٔ deployشونده به‌طور خودکار Build و Deploy می‌شود. تغییراتی که در محیط کار انجام می‌شوند تا زمانی که به GitHub push نشوند، به Netlify نمی‌رسند.
 
 ---
 
