@@ -482,6 +482,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   <li
                     key={item.id}
                     data-piece={item.id}
+                    onPointerEnter={(event) => {
+                      if (event.pointerType !== 'touch') setActiveId(item.id);
+                    }}
                     className="rack-drop relative shrink-0"
                     style={{
                       width: slotWidth,
@@ -495,7 +498,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={item.name}
-                      onMouseEnter={() => setActiveId(item.id)}
                       onFocus={() => setActiveId(item.id)}
                       onClick={() => {
                         setActiveId(item.id);
