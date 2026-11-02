@@ -70,6 +70,10 @@ VITE_SUPABASE_ANON_KEY=xxxx
 - **یک اسکلت HTML برای اولین فریم:** تا وقتی ری‌اکت mount شود، پوستهٔ برند در HTML دیده می‌شود،
   پس صفحه هیچ‌وقت سفید نمی‌ماند.
 - بخش‌های پایین صفحه با `DeferredMount` فقط نزدیک رسیدن به دید کاربر mount می‌شوند.
+- **هیروهای قدیمی حذف شدند:** پنج کامپوننت `HeroSlider`, `CinematicMaisonHero`, `ModaraMaisonHero`,
+  `InteractiveBoutiqueHero`, `StyleAtelierHero` (~۵٬۶۰۰ خط) هیچ‌جا import نمی‌شدند؛ حذفشان
+  باندل JS را تغییر نداد ولی حدود ۳۳ کیلوبایت CSS بی‌استفاده (و ۵.۴ کیلوبایت CSS مرده در
+  `index.css`) را از خروجی برداشت. هیروی صفحهٔ اصلی `RackHero` است.
 
 ## تصاویر رگال و پالت رنگ
 
