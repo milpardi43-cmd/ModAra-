@@ -9,7 +9,6 @@ import {
 import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
 import RackHero from '../components/RackHero';
-import TrustMarquee from '../components/home/TrustMarquee';
 import DeferredMount from '../components/DeferredMount';
 
 const EditorialCollections = lazy(() => import('../components/home/EditorialCollections'));
@@ -168,9 +167,6 @@ export default function Home({ onNavigate }: HomeProps) {
     <div>
       {/* Rack hero: the whole catalogue, edge-on, with a full stage on hover */}
       <RackHero onNavigate={onNavigate} />
-
-      {/* Trust marquee */}
-      <TrustMarquee />
 
       {/* Features bar */}
       <section className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6 lg:px-8">
