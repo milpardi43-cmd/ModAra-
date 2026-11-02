@@ -295,7 +295,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative mx-auto aspect-[4/5] w-full max-w-[400px] overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] sm:aspect-[3/4]">
+                <div className="relative mx-auto aspect-[4/5] w-full max-w-[360px] overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)]">
                   <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[#241d14]/75 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
                     <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#e6b95e]" aria-hidden="true" />
                     {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
