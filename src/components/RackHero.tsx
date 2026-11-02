@@ -122,6 +122,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
+  const activeImageSrc = activeItem
+    ? activeItem.product.image_url
+      ? optimizedAsset(activeItem.product.image_url, 720)
+      : asset(activeItem.image)
+    : '';
 
   const updateScrollHints = useCallback(() => {
     const track = trackRef.current;
@@ -292,9 +297,16 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] sm:aspect-[16/10]">
                   <img
-                    src={activeItem.product.image_url
-                      ? optimizedAsset(activeItem.product.image_url, 720)
-                      : asset(activeItem.image)}
+                    src={activeImageSrc}
+                    alt=""
+                    aria-hidden="true"
+                    loading="eager"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-2xl"
+                  />
+                  <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#efeae1]/20" />
+                  <img
+                    src={activeImageSrc}
                     srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
                     sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
                     alt={activeItem.product.name}
