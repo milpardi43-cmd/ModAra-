@@ -265,12 +265,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Headline: one centred column, opened and closed by a hairline */}
-        <div className="mx-auto mt-4 grid w-full max-w-[1100px] items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:gap-8">
+        <div className="mx-auto mt-4 flex w-full max-w-[1100px] flex-col items-start gap-5 md:flex-row lg:gap-8">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, ease: EASE }}
-          className="mx-auto flex w-full max-w-3xl flex-col items-center text-center md:col-start-2 md:items-start md:text-right"
+          className="mx-auto flex w-full max-w-3xl flex-col items-center text-center md:order-2 md:mx-0 md:w-[40%] md:items-start md:text-right"
         >
           {/* kicker: a small label on a hairline that opens out to both edges */}
           <div className="flex w-full items-center gap-3 sm:gap-4">
@@ -316,7 +316,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </motion.div>
 
         {/* Compact product card: clear image, title, details, and one action */}
-        <div className="relative mx-auto w-full max-w-[700px] md:col-start-1">
+        <div className="relative mx-auto w-full max-w-[700px] md:order-1 md:mx-0 md:w-[60%]">
           <AnimatePresence mode="popLayout" initial={false}>
             {activeItem && (
               <motion.article
