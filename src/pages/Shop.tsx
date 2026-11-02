@@ -4,7 +4,7 @@ import { supabase, type Product, type Category } from '../lib/supabase';
 import { PRODUCT_CARD_COLUMNS, getCategories } from '../lib/catalog';
 import ProductCard from '../components/ProductCard';
 import Breadcrumbs from '../components/Breadcrumbs';
-import { formatPrice } from '../lib/format';
+import { formatNumber, formatPrice } from '../lib/format';
 
 type ShopProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -178,7 +178,7 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
 
           <div className="min-w-0 flex-1">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-dark-500">{loading ? 'در حال بارگذاری...' : `${new Intl.NumberFormat('fa-IR').format(visibleProducts.length)} محصول یافت شد`}</p>
+              <p className="text-sm text-dark-500">{loading ? 'در حال بارگذاری...' : `${formatNumber(visibleProducts.length)} محصول یافت شد`}</p>
               {search && <p className="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">نتایج برای «{search}»</p>}
             </div>
 

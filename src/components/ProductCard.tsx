@@ -1,7 +1,7 @@
 import { Check, Eye, ShoppingBag, Star } from 'lucide-react';
 import { useState } from 'react';
 import type { Product } from '../lib/supabase';
-import { imageSrcSet, optimizedAsset } from '../lib/format';
+import { formatNumber, imageSrcSet, optimizedAsset } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
@@ -26,7 +26,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
 
   const imageUrl = optimizedAsset(product.image_url, 480);
   const imageSet = imageSrcSet(product.image_url, [480, 720]);
-  const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
+  const faNumber = formatNumber;
 
   return (
     <article

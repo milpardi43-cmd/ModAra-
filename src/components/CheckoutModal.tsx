@@ -3,7 +3,7 @@ import { X, MapPin, Phone, Loader2, CheckCircle, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { isDemoMode, supabase } from '../lib/supabase';
-import { formatPrice } from '../lib/format';
+import { formatNumber, formatPrice } from '../lib/format';
 
 type CheckoutModalProps = {
   open: boolean;
@@ -127,7 +127,7 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
                       ? 'bg-white text-amber-700'
                       : 'bg-white/20 text-white/60'
                   }`}>
-                    {new Intl.NumberFormat('fa-IR').format(i + 1)}
+                    {formatNumber(i + 1)}
                   </div>
                   {i < 2 && <div className={`h-1 w-12 rounded-full ${step === 'success' ? 'bg-white' : 'bg-white/20'}`} />}
                 </div>
@@ -178,7 +178,7 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
                 <div className="rounded-xl bg-dark-50 p-4 space-y-2">
                   {items.map((item) => (
                     <div key={item.id} className="flex items-center justify-between text-sm">
-                      <span className="text-dark-600">{item.product?.name} × {new Intl.NumberFormat('fa-IR').format(item.quantity)}</span>
+                      <span className="text-dark-600">{item.product?.name} × {formatNumber(item.quantity)}</span>
                       <span className="font-medium text-dark-900">{formatPrice((item.product?.price ?? 0) * item.quantity)}</span>
                     </div>
                   ))}

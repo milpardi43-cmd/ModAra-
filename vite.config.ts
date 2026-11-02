@@ -59,8 +59,28 @@ export default defineConfig(({ command, mode }) => {
 
   const siteMeta = {
     name: 'modara-site-meta',
-    transformIndexHtml(html: string) {
-      return html.replaceAll('__SITE_URL__', siteUrl);
+    /**
+     * Fills the canonical/OG placeholders and — because the fonts are now
+     * self-hosted and therefore fingerprinted at build time — injects a
+     * preload for the one woff2 that carries the Persian glyphs. Without it the
+     * browser only discovers the font after parsing the CSS, which shows a
+     * flash of fallback text on every first visit.
+     */
+    transformIndexHtml(html: string, ctx?: { bundle?: Record<string, unknown> }) {
+      const rendered = html.replaceAll('__SITE_URL__', siteUrl);
+      const bundle = ctx?.bundle;
+      if (!bundle) return rendered;
+
+      const base = command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/';
+      const normalizeBase = base.endsWith('/') ? base : `${base}/`;
+
+      const arabicFont = Object.keys(bundle).find(
+        (file) => file.includes('beiruti') && file.includes('arabic') && file.endsWith('.woff2'),
+      );
+      if (!arabicFont) return rendered;
+
+      const preload = `    <link rel="preload" href="${normalizeBase}${arabicFont}" as="font" type="font/woff2" crossorigin />\n`;
+      return rendered.replace('</head>', `${preload}  </head>`);
     },
   };
 

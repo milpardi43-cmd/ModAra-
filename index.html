@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" style="background-color: #faf8f5">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,12 +29,34 @@
     <meta name="twitter:description" content="کت، ترنچ‌کت، هودی و بافت‌ها؛ کالکشن پاییز مُدارا، هر قطعه از بغل روی یک رگال." />
     <meta name="twitter:image" content="__SITE_URL__/images/og-cover.jpg" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Beiruti:wght@400;500;600;700;800;900&family=Cinzel:wght@500;600&display=swap" rel="stylesheet" />
+    <!-- Paint something on the very first HTML frame. React replaces this
+         shell on mount; without it the viewport stays blank until the bundle
+         has been parsed and executed. Kept inline so it costs no request. -->
+    <style>
+      .boot-shell{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100svh;gap:2.25rem;font-family:'Beiruti Variable','Beiruti','Segoe UI',Tahoma,sans-serif;color:#3f3527}
+      .boot-word{font-size:clamp(1.9rem,5vw,2.6rem);font-weight:800;letter-spacing:.02em}
+      .boot-latin{display:block;margin-top:.5rem;font-family:'Cinzel Variable','Cinzel',Georgia,serif;font-size:.62rem;letter-spacing:.42em;color:#a99c86;text-align:center}
+      .boot-rail{display:flex;gap:6px;align-items:flex-end;height:clamp(120px,22vh,190px)}
+      .boot-rail span{display:block;width:clamp(10px,1.2vw,18px);height:100%;border-radius:8px;background:linear-gradient(180deg,#e5dccd,#ded4c2);animation:bootPulse 1.6s ease-in-out infinite}
+      .boot-rail span:nth-child(3n){animation-delay:.25s}
+      .boot-rail span:nth-child(3n+1){animation-delay:.5s}
+      @keyframes bootPulse{0%,100%{opacity:.45}50%{opacity:.85}}
+      @media (prefers-reduced-motion:reduce){.boot-rail span{animation:none;opacity:.6}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-shell" role="status" aria-live="polite" aria-label="در حال آماده‌سازی فروشگاه مُدارا">
+        <div>
+          <div class="boot-word">مُدارا</div>
+          <span class="boot-latin">MODARA</span>
+        </div>
+        <div class="boot-rail" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

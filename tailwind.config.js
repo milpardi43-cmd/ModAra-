@@ -4,8 +4,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Beiruti', 'sans-serif'],
-        display: ['Cinzel', 'serif'],
+        sans: [
+          'Beiruti Variable',
+          'Beiruti',
+          'Noto Sans Arabic',
+          'Segoe UI',
+          'Tahoma',
+          'sans-serif',
+        ],
+        display: ['Cinzel Variable', 'Cinzel', 'Georgia', 'serif'],
       },
       colors: {
         gold: {

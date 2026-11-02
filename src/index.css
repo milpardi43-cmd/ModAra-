@@ -91,6 +91,12 @@
 
 }
 
+/* Infinite marquees are compositor-only, but there is no point animating a
+   hidden tab. `body.is-hidden` is toggled once in main.tsx. */
+body.is-hidden .animate-marquee {
+  animation-play-state: paused;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -442,6 +448,35 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Rack hero entrances. Plain CSS: the hero no longer pulls in a motion
+ * library, which keeps ~45 kB (brotli) off the critical bundle.
+ * ------------------------------------------------------------------ */
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.hero-in {
+  animation: heroIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes heroCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.hero-card-in {
+  animation: heroCardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in,
+  .hero-card-in {
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Home rack: garments hang on one rail and swing a little, like cloth.
  * Each piece keeps its own rhythm; the pivot sits at the hanger hook so
  * the hem travels the most.
@@ -476,7 +511,23 @@
   transform-origin: top center;
   animation: rackSway var(--rack-sway-duration, 7s) ease-in-out infinite;
   animation-delay: var(--rack-sway-delay, 0s);
-  will-change: transform;
+  /* No persistent will-change here: seventeen permanently promoted layers cost
+     GPU memory for the whole session. A small rotate() animation is still
+     composited on demand, and transform-only work never triggers layout. */
+  backface-visibility: hidden;
+}
+
+/* Parked by RackHero when the rail is off-screen or the tab is hidden. */
+.rack-paused .rack-sway,
+.rack-paused .rack-drop {
+  animation-play-state: paused;
+}
+
+/* Phones pay for many simultaneous rotations; the rack reads fine still. */
+@media (max-width: 767px) {
+  .rack-sway {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

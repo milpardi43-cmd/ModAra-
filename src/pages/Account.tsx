@@ -3,7 +3,7 @@ import { Package, Clock, CheckCircle, Truck, LogOut, Mail, ShieldCheck } from 'l
 import { isDemoMode, supabase, type Order, type OrderItem } from '../lib/supabase';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useAuth } from '../context/AuthContext';
-import { formatPrice, formatDateTime, optimizedAsset } from '../lib/format';
+import { formatDateTime, formatNumber, formatPrice, optimizedAsset } from '../lib/format';
 
 type AccountProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -82,7 +82,7 @@ export default function Account({ onNavigate }: AccountProps) {
           <Package className="h-5 w-5 text-amber-600" />
           <h2 className="text-xl font-bold text-dark-900">سفارش‌های من</h2>
           <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-            {new Intl.NumberFormat('fa-IR').format(orders.length)}
+            {formatNumber(orders.length)}
           </span>
         </div>
 
@@ -142,7 +142,7 @@ export default function Account({ onNavigate }: AccountProps) {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-dark-900">{item.product?.name}</p>
                           <p className="text-xs text-dark-500">
-                            {new Intl.NumberFormat('fa-IR').format(item.quantity)} عدد × {formatPrice(item.price)}
+                            {formatNumber(item.quantity)} عدد × {formatPrice(item.price)}
                           </p>
                         </div>
                         <p className="text-sm font-bold text-dark-900">

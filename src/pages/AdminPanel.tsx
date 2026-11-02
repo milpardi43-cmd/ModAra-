@@ -34,7 +34,7 @@ import {
 import { isDemoMode, supabase, type BlogPost, type Category, type Coupon, type CustomerProfile, type Order, type OrderItem, type Product, type Review, type StoreSettings } from '../lib/supabase';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useAuth } from '../context/AuthContext';
-import { asset, formatDateTime, formatPrice } from '../lib/format';
+import { asset, formatDateTime, formatNumber, formatPrice } from '../lib/format';
 
 type AdminPanelProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -511,7 +511,7 @@ function CustomerForm({ draft, setDraft, onSubmit, saving }: { draft: CustomerDr
 
 function Modal({ open, title, onClose, children, wide = false }: { open: boolean; title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) { if (!open) return null; return <div className="fixed inset-0 z-[100] flex items-end justify-center bg-dark-950/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}><div className={`max-h-[92svh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6 ${wide ? 'max-w-3xl' : 'max-w-xl'}`}><div className="mb-5 flex items-center justify-between border-b border-dark-100 pb-4"><h2 className="text-lg font-bold text-dark-900">{title}</h2><button onClick={onClose} className="rounded-xl p-2 text-dark-400 hover:bg-dark-50 hover:text-dark-700" aria-label="بستن"><X className="h-5 w-5" /></button></div>{children}</div></div>; }
 
-function fa(value: number | string) { return new Intl.NumberFormat('fa-IR').format(Number(value) || 0); }
+function fa(value: number | string) { return formatNumber(Number(value) || 0); }
 
 function downloadSalesCsv(orders: Order[]) {
   const header = ['نوع ردیف', 'کد سفارش', 'تاریخ', 'وضعیت', 'تلفن', 'آدرس', 'مبلغ سفارش', 'محصول', 'تعداد', 'قیمت واحد', 'کد رهگیری'];

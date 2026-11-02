@@ -1,23 +1,37 @@
+/**
+ * Constructing an Intl formatter is surprisingly expensive (it compiles ICU
+ * data on first use). Pages render dozens of prices per frame while hovering
+ * the rack, so every formatter is created once and reused.
+ */
+const faNumber = new Intl.NumberFormat('fa-IR');
+const faDate = new Intl.DateTimeFormat('fa-IR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const faDateTime = new Intl.DateTimeFormat('fa-IR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** Formats a number with Persian digits (no unit). */
+export function formatNumber(value: number): string {
+  return faNumber.format(value);
+}
+
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
+  return faNumber.format(price) + ' تومان';
 }
 
 export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(date));
+  return faDate.format(new Date(date));
 }
 
 export function formatDateTime(date: string): string {
-  return new Intl.DateTimeFormat('fa-IR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
+  return faDateTime.format(new Date(date));
 }
 
 /**

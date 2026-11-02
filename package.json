@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:netlify": "BASE_PATH=/ vite build",
+    "serve": "node scripts/serve-build.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "verify:live": "node scripts/check-deploy.mjs",
@@ -17,6 +18,8 @@
     "images:palette": "node scripts/generate-product-palette.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/beiruti": "^5.3.0",
+    "@fontsource-variable/cinzel": "^5.3.0",
     "@react-three/fiber": "^8.17.10",
     "@supabase/supabase-js": "^2.57.4",
     "framer-motion": "^13.1.1",

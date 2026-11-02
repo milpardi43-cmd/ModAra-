@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Star, ShoppingCart, Truck, Shield, RefreshCw, Check, MessageSquare, Send } from 'lucide-react';
 import { supabase, type Product, type Review } from '../lib/supabase';
 import Breadcrumbs from '../components/Breadcrumbs';
-import { formatPrice, formatDate, imageSrcSet, optimizedAsset } from '../lib/format';
+import { formatDate, formatNumber, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import {
   PRODUCT_CARD_COLUMNS,
   PRODUCT_PREVIEW_COLUMNS,
@@ -173,7 +173,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                 />
                 <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-dark-950/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  {new Intl.NumberFormat('fa-IR').format(avgRating)}
+                  {formatNumber(avgRating)}
                 </div>
               </div>
             </div>
@@ -190,11 +190,11 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                     className={`h-4 w-4 ${i <= Math.round(avgRating) ? 'fill-amber-400 text-amber-400' : 'text-dark-200'}`}
                   />
                 ))}
-                <span className="text-sm text-dark-500 mr-1">({new Intl.NumberFormat('fa-IR').format(reviews.length)} نظر)</span>
+                <span className="text-sm text-dark-500 mr-1">({formatNumber(reviews.length)} نظر)</span>
               </div>
               <span className="text-dark-300">|</span>
               <span className={`text-sm font-medium ${product.stock > 0 ? 'text-success-600' : 'text-error-600'}`}>
-                {product.stock > 0 ? `${new Intl.NumberFormat('fa-IR').format(product.stock)} عدد موجود` : 'ناموجود'}
+                {product.stock > 0 ? `${formatNumber(product.stock)} عدد موجود` : 'ناموجود'}
               </span>
             </div>
 
@@ -216,7 +216,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                   >
                     <span className="text-lg">−</span>
                   </button>
-                  <span className="w-10 text-center font-medium">{new Intl.NumberFormat('fa-IR').format(quantity)}</span>
+                  <span className="w-10 text-center font-medium">{formatNumber(quantity)}</span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
                     className="flex h-9 w-9 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50"
@@ -271,7 +271,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
             <MessageSquare className="h-5 w-5 text-amber-600" />
             <h2 className="text-2xl font-bold text-dark-900">نظرات کاربران</h2>
             <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-              {new Intl.NumberFormat('fa-IR').format(reviews.length)} نظر
+              {formatNumber(reviews.length)} نظر
             </span>
           </div>
 
@@ -409,7 +409,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
 function ProductCardLite({ product }: { product: ProductPreview }) {
   const imageUrl = optimizedAsset(product.image_url, 480);
   const imageSet = imageSrcSet(product.image_url, [480, 720]);
-  const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
+  const faNumber = formatNumber;
 
   return (
     <article className="group relative h-full cursor-pointer overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40">

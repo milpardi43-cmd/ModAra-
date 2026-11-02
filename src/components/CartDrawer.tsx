@@ -1,7 +1,7 @@
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { formatPrice, optimizedAsset } from '../lib/format';
+import { formatNumber, formatPrice, optimizedAsset } from '../lib/format';
 
 type CartDrawerProps = {
   open: boolean;
@@ -38,7 +38,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
               <h2 className="text-lg font-bold text-dark-900">سبد خرید</h2>
               {totalItems > 0 && (
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                  {new Intl.NumberFormat('fa-IR').format(totalItems)} کالا
+                  {formatNumber(totalItems)} کالا
                 </span>
               )}
             </div>
@@ -118,7 +118,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
                             <Minus className="h-3 w-3" />
                           </button>
                           <span className="w-8 text-center text-sm font-medium">
-                            {new Intl.NumberFormat('fa-IR').format(item.quantity)}
+                            {formatNumber(item.quantity)}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}

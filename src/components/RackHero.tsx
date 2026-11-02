@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { asset, formatNumber, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
@@ -28,7 +27,6 @@ type RackItem = {
   categoryName: string;
 };
 
-const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** Air between two hangers. */
 const PIECE_GAP = 6;
 /** Never shrink a piece below this; below it the row scrolls instead. */
@@ -37,7 +35,6 @@ const MIN_PIECE_HEIGHT = 104;
 const MAX_PIECE_HEIGHT = 220;
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
-  const reduceMotion = useReducedMotion();
   const trackRef = useRef<HTMLUListElement>(null);
   const [items, setItems] = useState<RackItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +49,39 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
+  }, []);
+
+  /**
+   * Seventeen garments sway on their own rhythm. That is lovely while the rail
+   * is on screen and pure battery drain once it is scrolled past, so the whole
+   * rail is parked (animation-play-state: paused) whenever it leaves the
+   * viewport or the tab is hidden.
+   */
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return;
+
+    let onScreen = true;
+    const sync = () => {
+      shell.classList.toggle('rack-paused', !onScreen || document.hidden);
+    };
+
+    const observer =
+      typeof IntersectionObserver === 'undefined'
+        ? null
+        : new IntersectionObserver(
+            ([entry]) => {
+              onScreen = entry.isIntersecting;
+              sync();
+            },
+            { rootMargin: '120px' },
+          );
+    observer?.observe(shell);
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener('visibilitychange', sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -144,6 +174,16 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     };
   }, [updateScrollHints, items.length]);
 
+  /**
+   * Read the motion preference at call time instead of subscribing to it with a
+   * library: this is the only place the hero needs the flag, and keeping it
+   * here keeps the motion library out of the initial bundle.
+   */
+  const prefersReducedMotion = () =>
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   /** Keep the active piece inside the visible part of the rail. */
   const revealPiece = useCallback(
     (id: string) => {
@@ -157,11 +197,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         piece.scrollIntoView({
           inline: 'center',
           block: 'nearest',
-          behavior: reduceMotion ? 'auto' : 'smooth',
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
         });
       }
     },
-    [reduceMotion],
+    [],
   );
 
   const moveActive = (step: 1 | -1) => {
@@ -244,11 +284,18 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             'radial-gradient(120% 92% at 50% -12%, #fdfaf5 0%, #f5f0e7 42%, #ece6db 74%, #e3dccd 100%)',
         }}
       />
-      <motion.div
+      {/* Studio light tinted by the active garment. This used to be a
+          760×420 px layer with blur(130px) whose colour was animated on every
+          hover: a multi-pass repaint of the whole viewport centre. A radial
+          gradient gives the same soft falloff with a single cheap paint. */}
+      <div
         aria-hidden="true"
-        animate={{ backgroundColor: activeItem ? `${activeItem.hex}42` : 'rgba(176,132,64,0.2)' }}
-        transition={{ duration: reduceMotion ? 0 : 0.9, ease: EASE }}
-        className="pointer-events-none absolute left-1/2 top-32 -z-10 h-[420px] w-[760px] -translate-x-1/2 rounded-full blur-[130px]"
+        className="pointer-events-none absolute left-1/2 top-32 -z-10 h-[420px] w-[760px] -translate-x-1/2"
+        style={{
+          background: `radial-gradient(closest-side, ${
+            activeItem ? `${activeItem.hex}55` : 'rgba(176,132,64,0.22)'
+          }, transparent 72%)`,
+        }}
       />
       <div
         aria-hidden="true"
@@ -265,12 +312,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Headline: one centred column, opened and closed by a hairline */}
-        <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.85, ease: EASE }}
-          className="mx-auto flex w-full max-w-3xl flex-col items-center text-center"
-        >
+        <div className="hero-in mx-auto flex w-full max-w-3xl flex-col items-center text-center">
           {/* kicker: a small label on a hairline that opens out to both edges */}
           <div className="flex w-full items-center gap-3 sm:gap-4">
             <span
@@ -283,7 +325,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               <span className="tabular-nums">
                 {loading
                   ? 'در حال چیدن…'
-                  : `${new Intl.NumberFormat('fa-IR').format(items.length)} قطعه`}
+                  : `${formatNumber(items.length)} قطعه`}
               </span>
             </span>
             <span
@@ -312,49 +354,34 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             <span className="h-1.5 w-1.5 rotate-45 bg-[#bda77c]" />
             <span className="h-px flex-1 bg-[linear-gradient(270deg,rgba(207,189,160,0),#cfbda0)]" />
           </div>
-        </motion.div>
+        </div>
 
         {/* Compact product card: clear image, title, details, and one action */}
         <div className="relative mx-auto mt-4 w-full max-w-[700px]">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {activeItem && (
-              <motion.article
+          {activeItem && (
+              <article
                 key={activeItem.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -5 }}
-                transition={{ duration: 0.35, ease: EASE }}
-                className="relative overflow-hidden rounded-2xl border border-[#d9cdb6] bg-[#fdfaf4] shadow-[0_16px_36px_-28px_rgba(45,33,18,0.55)]"
+                className="hero-card-in relative overflow-hidden rounded-2xl border border-[#d9cdb6] bg-[#fdfaf4] shadow-[0_16px_36px_-28px_rgba(45,33,18,0.55)]"
                 aria-live="polite"
               >
                 <div className="grid md:grid-cols-[260px_minmax(0,1fr)]">
-                  <div className="relative h-32 overflow-hidden bg-[#e9e2d6] md:hidden">
+                  {/* One responsive image for both breakpoints. Rendering a
+                      phone banner *and* a desktop column meant every visitor
+                      downloaded two crops of the same photo. */}
+                  <div className="relative h-32 overflow-hidden bg-[#e9e2d6] md:h-auto md:min-h-[196px]">
                     <img
                       src={optimizedAsset(activeItem.product.image_url, 480)}
                       srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
                       sizes="(min-width: 768px) 260px, 100vw"
                       alt={activeItem.product.name}
-                      className="h-full w-full object-cover object-[center_38%]"
-                      decoding="async"
-                    />
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#fdfaf4]/50 to-transparent"
-                    />
-                  </div>
-
-                  <div className="relative hidden min-h-[196px] overflow-hidden bg-[#e9e2d6] md:block">
-                    <img
-                      src={optimizedAsset(activeItem.product.image_url, 720)}
-                      srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                      sizes="260px"
-                      alt={activeItem.product.name}
+                      width={480}
+                      height={640}
                       className="absolute inset-0 h-full w-full object-cover object-[center_38%]"
                       decoding="async"
                     />
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#fdfaf4]/25 via-transparent to-transparent"
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#fdfaf4]/50 to-transparent md:bg-gradient-to-l md:from-[#fdfaf4]/25 md:via-transparent"
                     />
                   </div>
 
@@ -369,8 +396,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         {activeItem.categoryName}
                       </span>
                       <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
-                        {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
-                        {new Intl.NumberFormat('fa-IR').format(items.length)}
+                        {formatNumber(activeIndex + 1)} /{' '}
+                        {formatNumber(items.length)}
                       </span>
                     </div>
 
@@ -387,14 +414,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10.5px]">
                       <span className="inline-flex items-center gap-1 font-bold text-[#3f3527]">
                         <Star className="h-3.5 w-3.5 fill-[#c0913f] text-[#c0913f]" aria-hidden="true" />
-                        {new Intl.NumberFormat('fa-IR').format(
+                        {formatNumber(
                           Number(activeItem.product.rating.toFixed(1)),
                         )}
                       </span>
                       <span className="h-3 w-px bg-[#d9cdb6]" aria-hidden="true" />
                       <span className="text-[#6b6152]">
                         {activeItem.product.stock > 0
-                          ? `${new Intl.NumberFormat('fa-IR').format(activeItem.product.stock)} عدد موجود`
+                          ? `${formatNumber(activeItem.product.stock)} عدد موجود`
                           : 'ناموجود'}
                       </span>
                     </div>
@@ -417,9 +444,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </div>
                   </div>
                 </div>
-              </motion.article>
-            )}
-          </AnimatePresence>
+              </article>
+          )}
         </div>
 
         {/* The rail, and the garments on it */}
@@ -502,13 +528,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       className="group/piece absolute inset-y-0 start-1/2 block -translate-x-1/2 outline-none"
                       style={{ width: `calc(var(--piece-h) * ${item.aspect})` }}
                     >
-                      {/* soft glow of the garment's own colour */}
-                      <span
-                        aria-hidden="true"
-                        className={`pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md transition-opacity duration-500 ${
-                          isActive ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
+                      {/* Soft glow of the garment's own colour. Only the
+                          active piece paints one: keeping 17 blurred layers
+                          alive kept the compositor busy for no visual gain. */}
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md"
+                        />
+                      )}
 
                       {/* the garment: profile photo, or turned away when it has none */}
                       <span
@@ -532,10 +560,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             loading={index < 17 ? 'eager' : 'lazy'}
                             decoding="async"
                             draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
+                            className={`h-full w-full select-none object-contain object-top ${
                               isActive
-                                ? 'drop-shadow-[0_30px_30px_rgba(56,42,22,0.3)]'
-                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
+                                ? 'drop-shadow-[0_30px_30px_rgba(56,42,22,0.3)] transition-[filter] duration-500'
+                                : ''
                             }`}
                           />
                         </span>
@@ -566,7 +594,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               aria-hidden="true"
               className="w-5 shrink-0 text-center text-[9.5px] font-bold tabular-nums text-[#a99c86]"
             >
-              {new Intl.NumberFormat('fa-IR').format(1)}
+              {formatNumber(1)}
             </span>
             <span
               role="progressbar"
@@ -591,7 +619,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               aria-hidden="true"
               className="w-5 shrink-0 text-center text-[9.5px] font-bold tabular-nums text-[#a99c86]"
             >
-              {new Intl.NumberFormat('fa-IR').format(items.length)}
+              {formatNumber(items.length)}
             </span>
           </div>
 
