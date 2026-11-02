@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Search, SlidersHorizontal, Star, X } from 'lucide-react';
+import { ArrowLeft, Check, Search, SlidersHorizontal, Sparkles, Star, X } from 'lucide-react';
 import { supabase, type Product, type Category } from '../lib/supabase';
 import { PRODUCT_CARD_COLUMNS, getCategories } from '../lib/catalog';
 import ProductCard from '../components/ProductCard';
@@ -104,16 +104,54 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
 
   return (
     <div className="min-h-screen bg-dark-50 pt-20" dir="rtl">
-      <div className="bg-gradient-to-br from-dark-950 to-amber-900 py-10 sm:py-16">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="mb-2 text-3xl font-bold text-white sm:text-4xl">فروشگاه مُدارا</h1>
-          <p className="text-sm text-white/60 sm:text-base">شیک‌ترین لباس‌ها و اکسسوری‌ها را با ما تجربه کنید</p>
+      <section className="group relative isolate overflow-hidden bg-[#211a15]" aria-label="معرفی فروشگاه مُدارا">
+        <img
+          src="/images/hero-atelier/look-noir.jpg"
+          alt="استایل مشکی از مجموعهٔ مُدارا"
+          width={1360}
+          height={768}
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 -z-20 h-full w-full object-cover object-[38%_center] transition-transform duration-[1400ms] ease-out group-hover:scale-[1.025]"
+        />
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-l from-[#17120e]/95 via-[#17120e]/65 to-[#17120e]/5" />
+        <div aria-hidden="true" className="promo-poster-shine pointer-events-none absolute inset-y-0 -left-1/3 z-10 w-1/4 bg-gradient-to-r from-transparent via-amber-100/20 to-transparent" />
+        <div className="relative z-10 mx-auto flex min-h-[320px] max-w-7xl items-center px-4 py-12 sm:min-h-[360px] sm:px-6 sm:py-16 lg:min-h-[400px] lg:px-8">
+          <div className="max-w-2xl text-right text-white">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-black/20 px-4 py-2 text-xs font-semibold text-amber-100 backdrop-blur-md">
+              <Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />
+              انتخاب‌های مُدارا، با نگاه تازه
+            </div>
+            <h1 className="text-balance text-4xl font-black leading-[1.2] sm:text-5xl lg:text-6xl">
+              فروشگاه مُدارا
+              <span className="mt-2 block text-[#e8c987]">استایل دلخواهتان را کشف کنید</span>
+            </h1>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-white/80 sm:text-base sm:leading-8">
+              از پوشاک و کیف تا ساعت و اکسسوری؛ مجموعه‌ها را مرور کنید، گزینه‌ها را با فیلترهای هوشمند پیدا کنید و انتخابی هماهنگ با سلیقهٔ خودتان داشته باشید.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {['پوشاک', 'کیف و چرم', 'ساعت', 'اکسسوری'].map((item) => (
+                <span key={item} className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-sm">
+                  {item}
+                </span>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => document.getElementById('shop-filters')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+              className="group/button mt-6 inline-flex items-center gap-3 rounded-full bg-[#f0d59b] px-6 py-3 text-sm font-bold text-[#2b2116] shadow-[0_12px_32px_-16px_rgba(240,213,155,0.75)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#211a15]"
+            >
+              جستجو در محصولات
+              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover/button:-translate-x-1" aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      </div>
+        <span aria-hidden="true" className="pointer-events-none absolute inset-3 rounded-[1.25rem] border border-white/15 sm:inset-5 sm:rounded-[1.75rem]" />
+      </section>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <Breadcrumbs items={[{ label: activeCategory ? categories.find((category) => category.slug === activeCategory)?.name || 'فروشگاه' : 'فروشگاه' }]} onNavigate={onNavigate} />
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <div id="shop-filters" className="mb-6 flex scroll-mt-24 flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-dark-400" />
             <input
