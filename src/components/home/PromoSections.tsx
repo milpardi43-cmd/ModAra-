@@ -58,6 +58,14 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
               <p className="mt-4 max-w-lg text-sm leading-7 text-white/80 sm:text-base sm:leading-8">
                 از پوشاک روزمره تا انتخاب‌هایی برای قرارهای خاص؛ قطعه‌ها را کنار هم ببینید، رنگ‌ها را با سلیقهٔ خودتان ترکیب کنید و استایلی بسازید که بازتاب شخصیت شماست.
               </p>
+              <div className="mt-5 flex flex-wrap gap-2" aria-label="ویژگی‌های مجموعه">
+                {['پوشاک خوش‌فرم', 'جزئیات هماهنگ', 'برای هر موقعیت'].map((item) => (
+                  <span key={item} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-sm">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#e8c987]" />
+                    {item}
+                  </span>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={() => onNavigate('shop', 'clothing')}
