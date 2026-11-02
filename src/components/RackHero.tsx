@@ -298,15 +298,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] sm:aspect-[16/10]">
                   <img
                     src={activeImageSrc}
-                    alt=""
-                    aria-hidden="true"
-                    loading="eager"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-2xl"
-                  />
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[#efeae1]/20" />
-                  <img
-                    src={activeImageSrc}
                     srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
                     sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
                     alt={activeItem.product.name}
@@ -315,7 +306,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    className="h-full w-full max-h-full max-w-full object-contain object-center transition-transform duration-1000 ease-out"
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out"
                   />
                 </div>
                 <div className="min-w-0">
