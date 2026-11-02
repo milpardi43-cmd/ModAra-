@@ -8,22 +8,22 @@ type PromoSectionsProps = {
 const featuredCategories = [
   {
     slug: 'watch',
-    title: 'ساعت؛ امضای زمان',
-    subtitle: 'انتخابی ظریف برای هر لحظه',
+    title: 'ساعت؛ امضای استایل',
+    subtitle: 'جزئیاتی دقیق برای هر لحظهٔ روز',
     image: '/images/categories/category-watch.jpg',
     alt: 'ساعت‌های مجموعه مُدارا',
   },
   {
     slug: 'bag',
-    title: 'کیف؛ همراه هر روز',
-    subtitle: 'ترکیب کاربرد و زیبایی',
+    title: 'کیف؛ همراه انتخاب‌های شما',
+    subtitle: 'ترکیبی از کاربرد و جلوهٔ شخصی',
     image: '/images/categories/category-bag.jpg',
     alt: 'کیف‌های مجموعه مُدارا',
   },
   {
     slug: 'accessory',
-    title: 'اکسسوری؛ جزئیات ماندگار',
-    subtitle: 'تکمیل استایل با انتخابی شخصی',
+    title: 'اکسسوری؛ امضای نهایی',
+    subtitle: 'لمس‌های کوچک با تأثیری ماندگار',
     image: '/images/categories/category-accessory.jpg',
     alt: 'اکسسوری‌های مجموعه مُدارا',
   },
@@ -49,14 +49,14 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
             <div className="max-w-xl text-right text-white">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-[#f5d99d] backdrop-blur-sm">
                 <Sparkles className="h-4 w-4" aria-hidden="true" />
-                انتخاب فصل مُدارا
+                انتخاب‌های مُدارا برای فصل پیشِ رو
               </div>
               <h2 className="text-balance text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
-                استایلی برای
-                <span className="mt-1 block text-[#e8c987]">لحظه‌های ماندگار</span>
+                استایل شما،
+                <span className="mt-1 block text-[#e8c987]">روایت خودتان</span>
               </h2>
               <p className="mt-4 max-w-lg text-sm leading-7 text-white/80 sm:text-base sm:leading-8">
-                از لباس‌های خوش‌دوخت تا جزئیات کامل‌کننده؛ انتخاب‌هایی برای ساختن استایلی که به خودتان تعلق دارد.
+                از پوشاک روزمره تا انتخاب‌هایی برای قرارهای خاص؛ قطعه‌ها را کنار هم ببینید، رنگ‌ها را با سلیقهٔ خودتان ترکیب کنید و استایلی بسازید که بازتاب شخصیت شماست.
               </p>
               <button
                 type="button"
@@ -78,11 +78,11 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
           <div>
             <p className="mb-2 text-[10px] font-bold tracking-[0.28em] text-amber-700" dir="ltr">THE MODARA EDIT</p>
             <h2 id="promo-categories-title" className="text-2xl font-extrabold text-dark-900 sm:text-3xl">
-              انتخاب‌های ویژه برای استایل شما
+              جزئیاتی که استایل را کامل می‌کنند
             </h2>
           </div>
           <p className="max-w-md text-sm leading-6 text-dark-500">
-            از جزئیات کوچک تا انتخاب‌های شاخص؛ مجموعه‌ای را پیدا کنید که با شما هماهنگ است.
+            ساعت، کیف و اکسسوری فقط همراه استایل نیستند؛ شخصیت هر ترکیب را شکل می‌دهند. میان انتخاب‌های مُدارا بگردید و جزئیاتی را پیدا کنید که به سلیقهٔ شما نزدیک‌تر است.
           </p>
         </div>
 
