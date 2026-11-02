@@ -31,7 +31,7 @@ const featuredCategories = [
 
 export default function PromoSections({ onNavigate }: PromoSectionsProps) {
   return (
-    <div className="space-y-10 py-10 sm:space-y-14 sm:py-14">
+    <div className="space-y-8 py-8 sm:space-y-10 sm:py-10">
       {/* Editorial campaign banner */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="پیشنهاد مُدارا">
         <div className="group relative isolate min-h-[340px] overflow-hidden rounded-[2rem] bg-[#30251b] shadow-[0_24px_70px_-38px_rgba(42,29,17,0.65)] sm:min-h-[390px] lg:min-h-[430px]">
@@ -74,14 +74,14 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
 
       {/* Category discovery promos */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-labelledby="promo-categories-title">
-        <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 text-[10px] font-bold tracking-[0.28em] text-amber-700" dir="ltr">THE MODARA EDIT</p>
-            <h2 id="promo-categories-title" className="text-2xl font-extrabold text-dark-900 sm:text-3xl">
+            <h2 id="promo-categories-title" className="text-xl font-extrabold text-dark-900 sm:text-2xl">
               جزئیاتی که استایل را کامل می‌کنند
             </h2>
           </div>
-          <p className="max-w-md text-sm leading-6 text-dark-500">
+          <p className="max-w-sm text-xs leading-5 text-dark-500 sm:text-sm">
             ساعت، کیف و اکسسوری فقط همراه استایل نیستند؛ شخصیت هر ترکیب را شکل می‌دهند. میان انتخاب‌های مُدارا بگردید و جزئیاتی را پیدا کنید که به سلیقهٔ شما نزدیک‌تر است.
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
               type="button"
               onClick={() => onNavigate('shop', category.slug)}
               aria-label={`مشاهدهٔ ${category.title}`}
-              className="group relative isolate h-[250px] overflow-hidden rounded-[1.5rem] bg-[#30251b] text-right shadow-[0_16px_40px_-28px_rgba(42,29,17,0.55)] transition-transform duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 sm:h-[290px]"
+              className="group relative isolate h-[190px] overflow-hidden rounded-[1.5rem] bg-[#30251b] text-right shadow-[0_16px_40px_-28px_rgba(42,29,17,0.55)] transition-transform duration-500 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 sm:h-[220px]"
             >
               <img
                 src={optimizedAsset(category.image, 720)}
@@ -107,10 +107,10 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
                 className="absolute inset-0 -z-20 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
               <span aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-[#17120d]/90 via-[#17120d]/15 to-transparent" />
-              <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 sm:p-6">
+              <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-5">
                 <span className="block">
-                  <span className="block text-lg font-bold text-white sm:text-xl">{category.title}</span>
-                  <span className="mt-1 block text-xs text-white/75 sm:text-sm">{category.subtitle}</span>
+                  <span className="block text-base font-bold text-white sm:text-lg">{category.title}</span>
+                  <span className="mt-1 block text-[11px] text-white/75 sm:text-xs">{category.subtitle}</span>
                 </span>
                 <span className="mb-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/35 bg-white/10 text-white backdrop-blur-sm transition-all duration-300 group-hover:border-[#f0d59b] group-hover:bg-[#f0d59b] group-hover:text-[#2b2116]">
                   <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden="true" />
