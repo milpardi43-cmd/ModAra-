@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice } from '../lib/format';
+import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
@@ -290,6 +290,22 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 className="mx-auto flex w-full max-w-4xl flex-col gap-3 text-right sm:flex-row sm:items-center sm:justify-between sm:gap-8"
                 aria-live="polite"
               >
+                <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl bg-[#e9e2d6] sm:h-40 sm:w-56 md:h-44 md:w-64">
+                  <img
+                    src={activeItem.product.image_url
+                      ? optimizedAsset(activeItem.product.image_url, 720)
+                      : asset(activeItem.image)}
+                    srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
+                    sizes="(min-width: 768px) 256px, (min-width: 640px) 224px, 100vw"
+                    alt={activeItem.product.name}
+                    width={720}
+                    height={540}
+                    loading="eager"
+                    fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
+                    decoding="async"
+                    className="h-full w-full object-cover object-[center_38%] transition-transform duration-700"
+                  />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
