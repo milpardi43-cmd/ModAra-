@@ -303,7 +303,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    className="h-full w-full object-cover object-[center_38%] transition-transform duration-1000 ease-out"
+                    className="h-full w-full max-h-full max-w-full object-contain object-center transition-transform duration-1000 ease-out"
                   />
                 </div>
                 <div className="min-w-0">
