@@ -265,7 +265,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Headline: one centred column, opened and closed by a hairline */}
-        <div className="mx-auto mt-4 grid w-full max-w-[1100px] items-center gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:gap-8">
+        <div className="mx-auto mt-4 grid w-full max-w-[1100px] items-start gap-5 md:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)] lg:gap-8">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
