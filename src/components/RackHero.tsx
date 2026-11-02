@@ -286,11 +286,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.42, ease: EASE }}
+                transition={{ duration: 0.72, ease: EASE }}
                 className="mx-auto flex w-full max-w-4xl flex-col gap-3 text-right sm:flex-row sm:items-center sm:justify-between sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl bg-[#e9e2d6] sm:h-40 sm:w-56 md:h-44 md:w-64">
+                <div className="relative h-56 w-full shrink-0 overflow-hidden rounded-2xl bg-[#e9e2d6] sm:h-52 sm:w-72 md:h-60 md:w-80">
                   <img
                     src={activeItem.product.image_url
                       ? optimizedAsset(activeItem.product.image_url, 720)
@@ -303,7 +303,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    className="h-full w-full object-cover object-[center_38%] transition-transform duration-700"
+                    className="h-full w-full object-contain object-center transition-transform duration-1000 ease-out"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -478,8 +478,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         }
                       >
                         <span
-                          className={`absolute inset-0 block origin-top transition-transform duration-500 ease-out ${
-                            isActive ? '-translate-y-1.5 scale-[1.03]' : ''
+                          className={`absolute inset-0 block origin-top transition-transform duration-700 ease-out ${
+                            isActive ? '-translate-y-4 scale-[1.06]' : ''
                           }`}
                         >
                           <img
