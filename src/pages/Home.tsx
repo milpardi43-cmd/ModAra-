@@ -9,6 +9,7 @@ import {
 import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
 import RackHero from '../components/RackHero';
+import PromoSections from '../components/home/PromoSections';
 import DeferredMount from '../components/DeferredMount';
 
 const EditorialCollections = lazy(() => import('../components/home/EditorialCollections'));
@@ -193,6 +194,8 @@ export default function Home({ onNavigate }: HomeProps) {
           ))}
         </div>
       </section>
+
+      <PromoSections onNavigate={onNavigate} />
 
       {/* Categories */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
