@@ -292,17 +292,21 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
                 transition={{ duration: 0.72, ease: EASE }}
-                className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] sm:items-center sm:gap-8"
+                className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] sm:aspect-[16/10]">
+                <div className="relative mx-auto aspect-[4/5] w-full max-w-[400px] overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] sm:aspect-[3/4]">
+                  <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[#241d14]/75 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
+                    <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#e6b95e]" aria-hidden="true" />
+                    {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
+                  </span>
                   <img
                     src={activeImageSrc}
                     srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                    sizes="(min-width: 1024px) 540px, (min-width: 640px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 40vw, 100vw"
                     alt={activeItem.product.name}
                     width={720}
-                    height={540}
+                    height={964}
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
@@ -335,11 +339,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   )}
 
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#493c29]">
-                      <Star className="h-4 w-4 fill-[#c0913f] text-[#c0913f]" aria-hidden="true" />
-                      <span>{new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}</span>
-                      <span className="font-normal text-[#8b806e]">امتیاز</span>
-                    </span>
                     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`} aria-hidden="true" />
                       {activeItem.product.stock > 0
