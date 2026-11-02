@@ -8,7 +8,6 @@ import {
 } from '../lib/catalog';
 import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
-import HomeHeroBanner from '../components/home/HomeHeroBanner';
 import RackHero from '../components/RackHero';
 import PromoSections from '../components/home/PromoSections';
 import DeferredMount from '../components/DeferredMount';
@@ -167,8 +166,6 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (
     <div>
-      <HomeHeroBanner onNavigate={onNavigate} />
-
       {/* Rack hero: the whole catalogue, edge-on, with a full stage on hover */}
       <RackHero onNavigate={onNavigate} />
 
