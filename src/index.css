@@ -485,3 +485,133 @@
     animation: none !important;
   }
 }
+
+/* ——— App-like mobile presentation (visual-only; no content/DOM changes) ——— */
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: 4.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-width: 320px;
+    background: #f7f5f1;
+    overscroll-behavior-x: none;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+
+  main {
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  header {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  header button.group {
+    max-width: calc(100vw - 1.5rem);
+    min-height: 46px;
+    border: 1px solid rgba(70, 52, 31, 0.08);
+    background-color: rgba(255, 253, 249, 0.9);
+    box-shadow: 0 8px 28px -14px rgba(34, 26, 16, 0.38);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .card {
+    border-radius: 1.2rem;
+    box-shadow: 0 8px 24px -18px rgba(40, 29, 16, 0.28);
+  }
+
+  /* Product tiles: tighter, legible, and comfortable to tap in a two-column grid. */
+  article.group.relative.flex.h-full.cursor-pointer {
+    border-radius: 1.2rem;
+    box-shadow: 0 8px 24px -18px rgba(40, 29, 16, 0.32);
+    transition: box-shadow 220ms ease;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer:hover {
+    transform: none;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer > div:last-child {
+    padding: 0.7rem;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer h3 {
+    min-height: 2.65rem;
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer p {
+    font-size: 0.72rem;
+    line-height: 1.5rem;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer .group-hover\:scale-110 {
+    transform: none;
+  }
+
+  /* The mobile shop filters become a full-width panel above the product results. */
+  div[class*="items-start"][class*="sm:gap-6"] {
+    display: block;
+  }
+
+  div[class*="items-start"][class*="sm:gap-6"] > aside {
+    margin-bottom: 1rem;
+  }
+
+  /* Full-height drawers respect the phone's dynamic viewport and safe area. */
+  div[class*="max-w-md"][class*="h-full"][class*="fixed"] {
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  footer {
+    margin-top: 3rem;
+  }
+
+  footer > div.relative.z-10 {
+    padding-top: 2.75rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .scrollbar-hide {
+    overscroll-behavior-x: contain;
+  }
+}
+
+@media (max-width: 420px) {
+  article.group.relative.flex.h-full.cursor-pointer > div:last-child {
+    padding: 0.6rem;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer .mb-4.mt-5 {
+    margin-top: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  article.group.relative.flex.h-full.cursor-pointer .text-lg {
+    font-size: 0.95rem;
+  }
+}
