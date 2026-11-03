@@ -1997,3 +1997,140 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
+
+/* Mobile cross-browser flow fixes: reserve the header and prevent story overlays. */
+@media (max-width: 767px) {
+  /* Keep the floating brand from sitting on top of section headings while scrolling. */
+  header.fixed {
+    position: sticky;
+    top: 0;
+    height: auto;
+    min-height: 4rem;
+    padding-top: env(safe-area-inset-top);
+    border-bottom: 1px solid rgba(105, 80, 44, 0.08);
+    background: rgba(247, 245, 241, 0.97);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  header.fixed > div > div {
+    height: 4rem;
+  }
+
+  main > div > section[aria-label="رگال لباس مُدارا"] {
+    padding-top: 1rem;
+  }
+
+  main > div > div[class*="pt-20"] {
+    padding-top: 1rem;
+  }
+
+  main section {
+    scroll-margin-top: calc(4.5rem + env(safe-area-inset-top));
+  }
+
+  /* Story section: use a reliable single-column flow on narrow screens. */
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child {
+    grid-column: auto;
+    grid-row: auto;
+    height: auto;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child > div.absolute.rounded-2xl {
+    right: 0.65rem;
+    bottom: 0.65rem;
+    left: 0.65rem;
+    width: auto;
+    max-width: none;
+    gap: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.9rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child > div.relative.overflow-hidden {
+    height: clamp(11rem, 58vw, 15rem);
+    min-height: 0;
+    border-radius: 1.15rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child img {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    object-fit: cover;
+    object-position: center 38%;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child {
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:first-child > div.mb-8 {
+    margin-bottom: 0.75rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) {
+    display: block;
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) > div.-mt-2.space-y-5 {
+    display: block;
+    margin: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) > div.-mt-2.space-y-5 > p {
+    grid-column: auto;
+    grid-row: auto;
+    margin: 0 0 0.65rem;
+    font-size: 0.82rem;
+    line-height: 1.8;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div.mt-8.space-y-5 {
+    grid-column: auto;
+    grid-row: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    margin: 1rem 0 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div.mt-8.space-y-5 > div {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(139, 109, 63, 0.12);
+    border-radius: 0.9rem;
+    background: rgba(255, 253, 249, 0.82);
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-last-child(2),
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:last-child {
+    grid-column: auto;
+    grid-row: auto;
+    margin-top: 1rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-last-child(2) > div.mt-10 {
+    margin-top: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:last-child > div.mt-9 {
+    margin-top: 0;
+  }
+}
