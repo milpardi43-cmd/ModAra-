@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import BackgroundDecor from './components/BackgroundDecor';
 import Home from './pages/Home';
+import MobileBottomNav from './components/MobileBottomNav';
 
 const loadCartDrawer = () => import('./components/CartDrawer');
 const loadAuthModal = () => import('./components/AuthModal');
@@ -223,6 +224,9 @@ function AppContent() {
       </main>
 
       {!isUtilityPage && <Footer onNavigate={handleNavigate} />}
+      {!isUtilityPage && view.name !== 'admin' && (
+        <MobileBottomNav activeView={view.name} onNavigate={handleNavigate} />
+      )}
 
       {!isUtilityPage && cartEverOpened && (
         <Suspense fallback={null}>
