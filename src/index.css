@@ -1032,3 +1032,968 @@
     height: 118px;
   }
 }
+
+/* Reference-matched mobile home layout (CSS-only; keeps all existing content and markup). */
+@media (max-width: 767px) {
+  /* Match the quiet, unframed centered wordmark; reuse the existing store mark at right. */
+  header button.group:not([class*="bg-white/80"]) {
+    min-height: 3.5rem;
+    max-width: none;
+    padding: 0 0.5rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  header button.group > span:first-child {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 1.05rem);
+    right: 1.05rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #a77a2e;
+  }
+
+  header button.group > span:first-child svg {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  header button.group > span:last-child {
+    align-items: center;
+  }
+
+  header button.group > span:last-child > span:first-child {
+    font-size: 1.45rem;
+  }
+
+  /* The categories become the reference's sideways strip of small image chips. */
+  main > div > div.space-y-8 + section > div.grid {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-inline: -0.75rem;
+    padding: 0.25rem 0.75rem 0.65rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  main > div > div.space-y-8 + section > div.grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button {
+    flex: 0 0 3.65rem;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    scroll-snap-align: start;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child {
+    width: 3.35rem;
+    height: 3.35rem;
+    aspect-ratio: 1;
+    margin-inline: auto;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #eee8dd;
+    box-shadow: 0 2px 8px rgba(49, 38, 24, 0.08);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > img {
+    transform: none;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:nth-child(2) {
+    background: linear-gradient(to top, rgba(28, 22, 15, 0.24), transparent 65%);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child {
+    position: static;
+    padding: 0;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > div {
+    width: 1rem;
+    height: 1rem;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: rgba(255, 253, 249, 0.86);
+    color: #8a6f42;
+    backdrop-filter: none;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > div svg {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > span {
+    display: block;
+    padding-top: 0.3rem;
+    color: #30281e;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  /* A compact three-across product shelf like the reference image. */
+  main > div > section:nth-of-type(4) > div.grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article {
+    border-radius: 1rem;
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article > div:first-of-type {
+    height: clamp(112px, 34vw, 148px);
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article > div:last-child {
+    padding: 0.45rem;
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article h3 {
+    min-height: 2rem;
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article p {
+    font-size: 0.62rem;
+  }
+
+  main > div > section:nth-of-type(4) > div.grid > article button {
+    width: 1.8rem;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    min-height: 1.8rem;
+  }
+
+  /* Keep the opening view airy and close to the mockup's warm boutique palette. */
+  main > div > section[aria-label="رگال لباس مُدارا"] {
+    padding-top: 5rem;
+    padding-bottom: 0.7rem;
+  }
+
+  main > div > section[aria-label="رگال لباس مُدارا"] + section {
+    margin-top: 0.2rem;
+  }
+
+  main > div > section[aria-label="رگال لباس مُدارا"] + section .card {
+    box-shadow: 0 4px 14px -12px rgba(40, 29, 16, 0.22);
+  }
+}
+
+@media (max-width: 380px) {
+  main > div > section:nth-of-type(4) > div.grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Compact image layouts for the remaining editorial sections on mobile. */
+@media (max-width: 767px) {
+  /* Collection artwork is a compact swipe row instead of full-width desktop banners. */
+  main section:has(button[aria-label^="مشاهده کالکشن"]) > div.grid {
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-inline: -0.75rem;
+    padding: 0.2rem 0.75rem 0.6rem;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) > div.grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) > div.grid > div:first-child,
+  main section:has(button[aria-label^="مشاهده کالکشن"]) > div.grid > div:nth-child(2) > div {
+    flex: 0 0 min(42vw, 168px);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) > div.grid > div:nth-child(2) {
+    display: contents;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) button[aria-label^="مشاهده کالکشن"] {
+    height: 176px;
+    min-height: 0;
+    border-radius: 1rem;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) button[aria-label^="مشاهده کالکشن"] > span:last-child {
+    padding: 0.65rem;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) button[aria-label^="مشاهده کالکشن"] > span:last-child > span:nth-child(2) {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) button[aria-label^="مشاهده کالکشن"] > span:last-child > span:nth-child(3) {
+    margin-top: 0.2rem;
+    font-size: 0.62rem;
+    line-height: 1.45;
+  }
+
+  main section:has(button[aria-label^="مشاهده کالکشن"]) button[aria-label^="مشاهده کالکشن"] > span:last-child > span:last-child {
+    margin-top: 0.35rem;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.58rem;
+  }
+
+  /* Blog thumbnails become small companions to their existing text, not tall posters. */
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid {
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-inline: -0.75rem;
+    padding: 0.2rem 0.75rem 0.6rem;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > button,
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > div {
+    display: grid;
+    grid-template-columns: 5.25rem minmax(0, 1fr);
+    flex: 0 0 min(78vw, 310px);
+    min-height: 7.5rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    scroll-snap-align: start;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > button > div:first-child,
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > div > div:first-child {
+    width: 5.25rem;
+    height: 100%;
+    min-height: 7.5rem;
+    aspect-ratio: auto;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > button > div:last-child {
+    align-self: center;
+    min-width: 0;
+    padding: 0.55rem;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > button h3 {
+    margin-bottom: 0.2rem;
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  main section:has(> div.grid.grid-cols-1.gap-6) > div.grid > button p {
+    font-size: 0.62rem;
+    line-height: 1.5;
+  }
+
+  /* The lookbook becomes a tidy three-column thumbnail gallery. */
+  main section [class*="auto-rows-[170px]"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 5.5rem;
+    gap: 0.4rem;
+  }
+
+  main section [class*="auto-rows-[170px]"] > div {
+    grid-row: span 1 / span 1;
+    min-width: 0;
+  }
+
+  main section [class*="auto-rows-[170px]"] button {
+    border-radius: 0.8rem;
+  }
+
+  /* Keep the brand photo as a small side image beside its existing copy. */
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid {
+    grid-template-columns: minmax(5.5rem, 0.72fr) minmax(0, 1.28fr);
+    align-items: start;
+    gap: 0.8rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child {
+    min-width: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child img {
+    aspect-ratio: 4 / 5;
+    border-radius: 1rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child {
+    min-width: 0;
+    padding-top: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child h2 {
+    margin-top: 0.15rem;
+    font-size: 1rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child .-mt-2.space-y-5 {
+    font-size: 0.68rem;
+    line-height: 1.55;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child .mt-8.space-y-5 {
+    margin-top: 0.45rem;
+    gap: 0.3rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child .mt-8.space-y-5 > div > div {
+    gap: 0.35rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child .mt-8.space-y-5 > div > div > span:last-child {
+    font-size: 0.62rem;
+    line-height: 1.45;
+  }
+}
+
+/* Refined category-photo rail: a balanced, boutique-style row with clear labels. */
+@media (max-width: 767px) {
+  main > div > div.space-y-8 + section > div.grid {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.2rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.8rem;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button {
+    flex: 0 0 3.9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.1rem 0.35rem;
+    border-radius: 0.9rem;
+    transition: transform 180ms ease, background-color 180ms ease;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button:active {
+    transform: scale(0.96);
+    background: rgba(189, 151, 87, 0.08);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child {
+    width: 3.65rem;
+    height: 3.65rem;
+    border: 2px solid rgba(255, 253, 249, 0.95);
+    box-shadow: 0 3px 10px rgba(49, 38, 24, 0.12), 0 0 0 1px rgba(116, 91, 54, 0.1);
+    transition: box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > img {
+    transform: scale(1.015);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:nth-child(2) {
+    background: linear-gradient(to top, rgba(34, 26, 17, 0.12), transparent 55%);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > div {
+    width: 0.85rem;
+    height: 0.85rem;
+    background: rgba(255, 253, 249, 0.92);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > div svg {
+    width: 0.58rem;
+    height: 0.58rem;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button > div:first-child > div:last-child > span {
+    padding-top: 0.22rem;
+    color: #30281e;
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button[class*="ring-2"] {
+    background: rgba(189, 151, 87, 0.09);
+  }
+
+  main > div > div.space-y-8 + section > div.grid > button[class*="ring-2"] > div:first-child {
+    box-shadow: 0 0 0 2px #b88b42, 0 4px 12px rgba(70, 49, 22, 0.16);
+  }
+}
+
+/* Match the supplied mobile collage for the three existing discovery photos. */
+@media (max-width: 767px) {
+  main > div > div.space-y-8 > section:last-child > div.grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: row;
+    align-items: start;
+    gap: 0.5rem;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button:nth-child(3) {
+    grid-column: auto;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button {
+    height: clamp(7rem, 31vw, 8.35rem);
+    border-radius: 1rem;
+    box-shadow: 0 8px 20px -14px rgba(34, 25, 15, 0.4);
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button > span:last-child {
+    padding: 0.55rem;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button > span:last-child > span:first-child > span:first-child {
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button > span:last-child > span:first-child > span:last-child {
+    font-size: 0.58rem;
+    line-height: 1.35;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button > span:last-child > span:last-child {
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-bottom: 0.05rem;
+  }
+
+  main > div > div.space-y-8 > section:last-child > div.grid > button > span:last-child > span:last-child svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+}
+
+/* Signature mobile treatment for «جدیدترین‌های مُدارا»: an editorial swipe shelf. */
+@media (max-width: 767px) {
+  main section:has(button[aria-label="محصولات قبلی"]) {
+    position: relative;
+    isolation: isolate;
+    margin: 0 0.75rem 1.5rem;
+    padding: 1rem 0.8rem 0.85rem;
+    overflow: hidden;
+    border: 1px solid rgba(164, 126, 62, 0.17);
+    border-radius: 1.45rem;
+    background: linear-gradient(145deg, #fffdf9 0%, #f7f1e7 58%, #f1e7d7 100%);
+    box-shadow: 0 14px 34px -27px rgba(55, 39, 19, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"])::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background: radial-gradient(ellipse at 100% 0%, rgba(208, 174, 112, 0.13), transparent 42%);
+    content: "";
+    pointer-events: none;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) > div > div.mb-8 {
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) h2 {
+    margin-top: 0.2rem;
+    font-size: 1.2rem;
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) h2 + p {
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    line-height: 1.5;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) button[aria-label="محصولات قبلی"],
+  main section:has(button[aria-label="محصولات قبلی"]) button[aria-label="محصولات بعدی"] {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-color: rgba(138, 104, 47, 0.22);
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 3px 10px rgba(43, 32, 16, 0.07);
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) div.scrollbar-hide.snap-x.snap-mandatory {
+    gap: 0.7rem;
+    margin-inline: -0.8rem;
+    padding: 0.15rem 0.8rem 0.55rem;
+    scroll-padding-inline: 0.8rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) div.scrollbar-hide.snap-x.snap-mandatory > div {
+    flex: 0 0 min(76vw, 270px);
+    width: min(76vw, 270px);
+    scroll-snap-align: start;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer {
+    overflow: hidden;
+    border: 1px solid rgba(125, 93, 43, 0.12);
+    border-radius: 1.15rem;
+    background: #fffefa;
+    box-shadow: 0 10px 24px -18px rgba(48, 33, 15, 0.48);
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer > div:first-of-type {
+    height: 13.75rem;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer > div:last-child {
+    padding: 0.75rem;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer h3 {
+    min-height: 2.55rem;
+    font-size: 0.78rem;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer p {
+    font-size: 0.68rem;
+  }
+
+  main section:has(button[aria-label="محصولات قبلی"]) article.group.relative.flex.h-full.cursor-pointer .mb-4.mt-5 {
+    margin-top: 0.6rem;
+    margin-bottom: 0.55rem;
+  }
+}
+
+/* Mobile-only compact, balanced layout for the «انتخاب‌های ماندگار مُدارا» campaign. */
+@media (max-width: 767px) {
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] {
+    min-height: 0;
+    padding: 1rem 0.85rem;
+    border-radius: 1.15rem;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(6.2rem, 0.8fr);
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div {
+    min-width: 0;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 > h2 {
+    font-size: clamp(1.05rem, 4.7vw, 1.35rem);
+    line-height: 1.4;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 > p {
+    margin-top: 0.45rem;
+    font-size: 0.68rem;
+    line-height: 1.65;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 > div:first-child {
+    margin-bottom: 0.55rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.58rem;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 > div:last-child {
+    margin-top: 0.65rem;
+    gap: 0.45rem;
+    align-items: flex-start;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 button {
+    width: auto;
+    min-height: 2.45rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-1 > div:last-child > span {
+    font-size: 0.58rem;
+    line-height: 1.5;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-2 {
+    padding: 0.65rem 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.045);
+    text-align: center;
+  }
+
+  main section:has(.promo-poster-orbit) .promo-poster-float {
+    font-size: clamp(2.4rem, 11vw, 3.35rem);
+    line-height: 0.95;
+    letter-spacing: -0.08em;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-2 > div.relative {
+    max-width: none;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-2 > div.relative > span:nth-child(2) {
+    margin-top: 0.25rem;
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-2 > div:last-child {
+    margin-top: 0.55rem;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid > div.order-2 > div:last-child > span {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.55rem;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 380px) {
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] {
+    padding: 0.8rem 0.65rem;
+  }
+
+  main section:has(.promo-poster-orbit) > div.rounded-\[2rem\] > div.grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(5.4rem, 0.9fr);
+    gap: 0.5rem;
+  }
+}
+
+/* Mobile alignment for the Modara story: pair the photo with the opening copy,
+   then let the remaining existing story details use the full section width. */
+@media (max-width: 767px) {
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto auto auto auto auto;
+    align-items: start;
+    column-gap: 0.7rem;
+    row-gap: 0.7rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: stretch;
+    height: 100%;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child > div.relative.overflow-hidden {
+    height: 100%;
+    min-height: 0;
+    border-radius: 1rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:first-child img {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    object-fit: cover;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child {
+    display: contents;
+  }
+
+  /* Heading + opening paragraph share one balanced row with the photograph. */
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:first-child {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:first-child > div.mb-8 {
+    margin: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:first-child h2 {
+    margin-top: 0.35rem;
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) {
+    display: contents;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) > div.-mt-2.space-y-5 {
+    display: contents;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) > div.-mt-2.space-y-5 > p:first-child {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin: 0;
+    font-size: 0.68rem;
+    line-height: 1.6;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-child(2) > div.-mt-2.space-y-5 > p:last-child {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.65;
+  }
+
+  /* Values, figures and actions remain visible and form tidy full-width rows. */
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div.mt-8.space-y-5 {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin: 0.1rem 0 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div.mt-8.space-y-5 > div {
+    min-width: 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-last-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 5;
+    margin: 0.15rem 0 0;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:nth-last-child(2) > div.mt-10 {
+    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:last-child {
+    grid-column: 1 / -1;
+    grid-row: 6;
+    margin: 0.15rem 0 0;
+    gap: 0.5rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:last-child > div.mt-9 {
+    margin-top: 0.2rem;
+  }
+
+  main section:has(img[alt="استایل لوکس مشکی و طلایی مُدارا"]) > div.grid > div:last-child > div:last-child button {
+    min-height: 2.55rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* Mobile testimonials: three compact review cards per row, desktop stays untouched. */
+@media (max-width: 767px) {
+  main section:has(figure) {
+    padding-top: 2.25rem;
+    padding-bottom: 2.25rem;
+  }
+
+  main section:has(figure) div.grid:has(figure) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+    align-items: stretch;
+  }
+
+  main section:has(figure) figure {
+    min-width: 0;
+    padding: 0.55rem;
+    border-radius: 0.9rem;
+  }
+
+  main section:has(figure) figure > div:first-child {
+    gap: 0.2rem;
+  }
+
+  main section:has(figure) figure > div:first-child > span:first-child svg {
+    width: 0.58rem;
+    height: 0.58rem;
+  }
+
+  main section:has(figure) figure > div:first-child > svg {
+    width: 0.8rem;
+    height: 0.8rem;
+    flex: 0 0 auto;
+  }
+
+  main section:has(figure) figure blockquote {
+    margin-top: 0.45rem;
+    font-size: 0.65rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+  main section:has(figure) figure figcaption {
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+  }
+
+  main section:has(figure) figure figcaption > span:first-child {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.68rem;
+  }
+
+  main section:has(figure) figure figcaption > span:last-child > span:first-child {
+    font-size: 0.62rem;
+  }
+
+  main section:has(figure) figure figcaption button {
+    margin-top: 0.1rem;
+    font-size: 0.55rem;
+    line-height: 1.35;
+  }
+
+  main section:has(figure) > div.relative.mx-auto > div:first-child {
+    margin-bottom: 0.9rem;
+  }
+
+  main section:has(figure) > div.relative.mx-auto > div:first-child > div.mb-8 {
+    margin-bottom: 0.2rem;
+  }
+
+  main section:has(figure) > div.relative.mx-auto h2 {
+    font-size: 1.2rem;
+    line-height: 1.4;
+  }
+
+  main section:has(figure) > div.relative.mx-auto h2 + p {
+    font-size: 0.68rem;
+    line-height: 1.6;
+  }
+}
+
+/* Organized, touch-friendly footer groups for mobile only. */
+@media (max-width: 767px) {
+  footer > div.relative.z-10 > div.grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+    align-items: stretch;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:first-child {
+    grid-column: 1 / -1;
+    padding: 0.15rem 0 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  footer > div.relative.z-10 > div.grid > div:first-child > p {
+    max-width: 36rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.75rem;
+    line-height: 1.75;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:first-child .flex.gap-3 > a {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(2),
+  footer > div.relative.z-10 > div.grid > div:nth-child(3) {
+    min-width: 0;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(2) h3,
+  footer > div.relative.z-10 > div.grid > div:nth-child(3) h3,
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) h3 {
+    margin-bottom: 0.55rem;
+    font-size: 0.82rem;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(2) ul,
+  footer > div.relative.z-10 > div.grid > div:nth-child(3) ul {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(2) li,
+  footer > div.relative.z-10 > div.grid > div:nth-child(3) li {
+    min-width: 0;
+    margin: 0;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(2) li button,
+  footer > div.relative.z-10 > div.grid > div:nth-child(3) li a {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    text-align: right;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 0.95rem;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 0.75rem;
+    margin: 0;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) li {
+    min-width: 0;
+    margin: 0;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  footer > div.relative.z-10 > div.grid > div:nth-child(4) li > * {
+    min-width: 0;
+    font-size: 0.68rem;
+    line-height: 1.55;
+  }
+
+  footer > div.relative.z-10 > div:last-child {
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  footer > div.relative.z-10 > div:last-child > div:last-child {
+    width: 100%;
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
