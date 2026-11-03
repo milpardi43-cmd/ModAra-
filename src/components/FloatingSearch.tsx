@@ -69,7 +69,7 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
 
   return (
     <div
-      className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 transition-all duration-500 sm:bottom-6 sm:w-[92%] ${
+      className={`mobile-search-dock fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 transition-all duration-500 sm:bottom-6 sm:w-[92%] ${
         visible
           ? 'translate-y-0 opacity-100 pointer-events-auto'
           : 'translate-y-20 opacity-0 pointer-events-none'
