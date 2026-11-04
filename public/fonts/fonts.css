@@ -1,0 +1,84 @@
+/* Self-hosted type stack (Beiruti for Persian text, Cinzel for the MODARA wordmark).
+ *
+ * Why local: the site used to pull these from fonts.googleapis.com with
+ * `media="print"`, which silently failed on many mobile networks/proxies. The
+ * page then rendered with the 16px system fallback (Arial/Tahoma), which read
+ * as "small and weak" on every phone and made metrics differ between devices.
+ * Keeping the files next to the app removes that dependency entirely.
+ *
+ * Weights: 400 body, 600/700 semibold + bold, 900 display.
+ * Subsets: `arabic` covers Persian glyphs; `latin` covers the MODARA wordmark,
+ * prices rendered in Latin digits and UI words such as "MODARA EDIT". */
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./beiruti-arabic-400-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+2010-2011, U+204F,
+    U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./beiruti-arabic-600-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+2010-2011, U+204F,
+    U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./beiruti-arabic-700-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+2010-2011, U+204F,
+    U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./beiruti-arabic-900-normal.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+2010-2011, U+204F,
+    U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./beiruti-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Beiruti';
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  src: url('./beiruti-latin-700-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url('./cinzel-latin-600-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
