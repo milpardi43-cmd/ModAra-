@@ -283,7 +283,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Product information follows the selected garment; intentionally no card frame. */}
-        <div className="rack-details mx-auto mt-4 w-full max-w-[1100px] px-2 sm:px-0">
+        <div className="mx-auto mt-4 w-full max-w-[1100px] px-2 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -338,7 +338,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </p>
                   )}
 
-                  <div className="rack-stock mt-4 flex flex-wrap items-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
                     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`} aria-hidden="true" />
                       {activeItem.product.stock > 0
@@ -347,14 +347,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </span>
                   </div>
 
-                  <div className="rack-buy mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#cdbb99]/60 pt-4">
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#cdbb99]/60 pt-4">
                     <span className="whitespace-nowrap text-lg font-extrabold text-[#3f3527] sm:text-xl">
                       {formatPrice(activeItem.product.price)}
                     </span>
                     <button
                       type="button"
                       onClick={() => onNavigate('product', activeItem.slug)}
-                      className="rack-cta group inline-flex items-center justify-center gap-2 rounded-full bg-[#241d14] px-5 py-3 text-xs font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
+                      className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#241d14] px-5 py-3 text-xs font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
                     >
                       مشاهدهٔ محصول
                       <ArrowLeft
@@ -370,7 +370,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
 
         {/* The rail, and the garments on it */}
-        <div className="rack-stage relative mt-5 sm:mt-6">
+        <div className="relative mt-5 sm:mt-6">
           <div
             className="pointer-events-none absolute inset-x-0 top-[6px] z-20 h-[16px]"
             aria-hidden="true"

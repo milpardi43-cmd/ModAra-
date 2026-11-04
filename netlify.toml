@@ -42,15 +42,6 @@
   [headers.values]
     Cache-Control = "public, max-age=2592000"
 
-# فونت‌های خودمیزبان (public/fonts) نام ثابت دارند؛ بدون این قاعده Netlify کش
-# پیش‌فرض خودش را می‌گذارد و بعد از هر تغییر فونت، مرورگر نسخهٔ قدیمی را نگه می‌دارد.
-# max-age یک هفته + stale-while-revalidate: سریع، ولی تغییرها هم دیده می‌شوند.
-[[headers]]
-  for = "/fonts/*"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-    Access-Control-Allow-Origin = "*"
-
 # HTML هرگز کش نشود تا نسخهٔ جدید بلافاصله دیده شود
 [[headers]]
   for = "/index.html"

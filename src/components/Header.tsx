@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Menu, ShoppingBag, Store, X } from 'lucide-react';
+import { Store } from 'lucide-react';
 
 type HeaderProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -10,17 +10,6 @@ const HERO_THEME_EVENT = 'modara:hero-theme';
 export default function Header({ onNavigate }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [heroTheme, setHeroTheme] = useState<'light' | 'dark'>('light');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const mobileLinks = [
-    { label: 'خانه', view: 'home' },
-    { label: 'فروشگاه', view: 'shop' },
-    { label: 'بلاگ', view: 'blog' },
-  ];
-
-  const navigateMobile = (view: string) => {
-    setMobileMenuOpen(false);
-    onNavigate(view);
-  };
 
   useEffect(() => {
     let frame = 0;
@@ -54,26 +43,7 @@ export default function Header({ onNavigate }: HeaderProps) {
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 bg-transparent">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mobile-header-bar relative flex h-16 items-center justify-center sm:h-[4.5rem]">
-          <div className="mobile-header-actions" dir="ltr">
-            <button
-              type="button"
-              aria-label={mobileMenuOpen ? 'بستن منو' : 'بازکردن منو'}
-              aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              className="mobile-header-icon"
-            >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-            <button
-              type="button"
-              aria-label="نمایش سبد خرید"
-              onClick={() => window.dispatchEvent(new Event('modara:open-cart'))}
-              className="mobile-header-icon"
-            >
-              <ShoppingBag className="h-5 w-5" />
-            </button>
-          </div>
+        <div className="relative flex h-16 items-center justify-center sm:h-[4.5rem]">
           <button
             type="button"
             aria-label="بازگشت به صفحه اصلی مُدارا"
@@ -114,15 +84,6 @@ export default function Header({ onNavigate }: HeaderProps) {
             </span>
           </button>
         </div>
-        {mobileMenuOpen && (
-          <nav className="mobile-menu-panel" dir="rtl" aria-label="دسترسی سریع">
-            {mobileLinks.map((link) => (
-              <button key={link.view} type="button" onClick={() => navigateMobile(link.view)}>
-                {link.label}
-              </button>
-            ))}
-          </nav>
-        )}
       </div>
     </header>
   );
