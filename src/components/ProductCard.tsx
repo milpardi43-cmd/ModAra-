@@ -91,7 +91,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
       {/* Body */}
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-[10px] font-bold text-gold-700">کالکشن مُدارا</span>
+          <span className="product-card__eyebrow text-[10px] font-bold text-gold-700">کالکشن مُدارا</span>
           <span
             dir="ltr"
             aria-hidden="true"
@@ -104,7 +104,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
         <h3 className="line-clamp-2 min-h-[3.25rem] text-[15px] font-extrabold leading-[1.7] text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:text-base">
           {product.name}
         </h3>
-        <p className="mt-1.5 line-clamp-1 text-[13px] leading-6 text-dark-400">
+        <p className="product-card__desc mt-1.5 line-clamp-1 text-[13px] leading-6 text-dark-400">
           {product.description}
         </p>
 
@@ -118,12 +118,12 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
 
           <div className="flex items-end justify-between gap-3">
             <div>
-              <span className="block text-[10px] font-semibold text-dark-400">قیمت</span>
+              <span className="product-card__pricelabel block text-[10px] font-semibold text-dark-400">قیمت</span>
               <p className="mt-1 flex items-baseline gap-1.5 leading-none">
-                <span className="text-lg font-black tracking-tight text-[#211a12] sm:text-xl">
+                <span className="product-card__price text-lg font-black tracking-tight text-[#211a12] sm:text-xl">
                   {faNumber(product.price)}
                 </span>
-                <span className="text-[11px] font-bold text-gold-700">تومان</span>
+                <span className="product-card__currency text-[11px] font-bold text-gold-700">تومان</span>
               </p>
             </div>
 
