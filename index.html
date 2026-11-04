@@ -2,12 +2,7 @@
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <!-- viewport-fit=cover lets the mobile header/nav honour the notch + home indicator;
-         maximum-scale=5 keeps pinch-zoom available for accessibility. -->
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>مُدارا | فروشگاه آنلاین مد و فشن</title>
     <meta name="description" content="فروشگاه آنلاین مُدارا - جدیدترین لباس‌ها، اکسسوری‌ها، عینک و ساعت‌های لوکس با بهترین قیمت" />
     <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
@@ -34,13 +29,17 @@
     <meta name="twitter:description" content="کت، ترنچ‌کت، هودی و بافت‌ها؛ کالکشن پاییز مُدارا، هر قطعه از بغل روی یک رگال." />
     <meta name="twitter:image" content="__SITE_URL__/images/og-cover.jpg" />
 
-    <!-- Persian + display type is self-hosted (see src/main.tsx → @fontsource), so it no
-         longer depends on fonts.googleapis.com. On mobile networks that host is often
-         slow or blocked, which made the whole site render in the 16px system fallback
-         (Arial/Tahoma) and look small and uneven across devices. -->
-    <link rel="preload" href="%BASE_URL%fonts/beiruti-arabic-600-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="%BASE_URL%fonts/beiruti-arabic-700-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="%BASE_URL%fonts/fonts.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Beiruti:wght@400;500;600;700;800;900&family=Cinzel:wght@500;600&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Beiruti:wght@400;500;600;700;800;900&family=Cinzel:wght@500;600&display=swap" rel="stylesheet" />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>
