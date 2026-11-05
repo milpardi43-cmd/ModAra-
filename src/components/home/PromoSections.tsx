@@ -4,6 +4,7 @@ import { imageSrcSet, optimizedAsset } from '../../lib/format';
 
 type PromoSectionsProps = {
   onNavigate: (view: string, param?: string) => void;
+  hideCampaignOnMobile?: boolean;
 };
 
 const featuredCategories = [
@@ -30,11 +31,11 @@ const featuredCategories = [
   },
 ];
 
-export default function PromoSections({ onNavigate }: PromoSectionsProps) {
+export default function PromoSections({ onNavigate, hideCampaignOnMobile = false }: PromoSectionsProps) {
   return (
     <div className="space-y-8 py-8 sm:space-y-10 sm:py-10">
       {/* Editorial campaign banner */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="پیشنهاد مُدارا">
+      <section className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${hideCampaignOnMobile ? 'hidden md:block' : ''}`} aria-label="پیشنهاد مُدارا">
         <div className="group relative isolate min-h-[340px] overflow-hidden rounded-[2rem] bg-[#30251b] shadow-[0_24px_70px_-38px_rgba(42,29,17,0.65)] sm:min-h-[390px] lg:min-h-[430px]">
           <img
             src="/images/hero-atelier/look-minimal.jpg"

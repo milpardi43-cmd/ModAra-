@@ -9,6 +9,7 @@ import {
 } from '../lib/catalog';
 import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
+import MobileHomeStart from '../components/home/MobileHomeStart';
 import BrandSignature from '../components/BrandSignature';
 import RackHero from '../components/RackHero';
 import PromoSections from '../components/home/PromoSections';
@@ -74,6 +75,7 @@ export default function Home({ onNavigate }: HomeProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(fallbackCategories);
   const [loading, setLoading] = useState(true);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() => window.matchMedia('(min-width: 768px)').matches);
   const [featuredBatch, setFeaturedBatch] = useState(0);
   const [featuredAutoPlay, setFeaturedAutoPlay] = useState(true);
   const [featuredIsInteracting, setFeaturedIsInteracting] = useState(false);
@@ -85,6 +87,13 @@ export default function Home({ onNavigate }: HomeProps) {
   const categorySectionRef = useRef<HTMLDivElement>(null);
   const categoryRequestRef = useRef(0);
   const featuredSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
+    const syncViewport = () => setIsDesktopViewport(desktopQuery.matches);
+    desktopQuery.addEventListener('change', syncViewport);
+    return () => desktopQuery.removeEventListener('change', syncViewport);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +149,12 @@ export default function Home({ onNavigate }: HomeProps) {
       });
     };
     const node = featuredSectionRef.current;
+    if (!window.matchMedia('(min-width: 768px)').matches) {
+      loadFeatured();
+      return () => {
+        cancelled = true;
+      };
+    }
     if (!node || typeof IntersectionObserver === 'undefined') {
       loadFeatured();
       return () => {
@@ -215,8 +230,12 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (
     <div>
-      {/* Rack hero: the whole catalogue, edge-on, with a full stage on hover */}
-      <RackHero onNavigate={onNavigate} />
+      {/* Desktop keeps its interactive rack; phones get a dedicated boutique layout. */}
+      {isDesktopViewport ? (
+        <RackHero onNavigate={onNavigate} />
+      ) : (
+        <MobileHomeStart categories={categories} products={products} loading={loading} onNavigate={onNavigate} />
+      )}
 
       {/* Features bar */}
       <section className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6 lg:px-8">
@@ -243,7 +262,7 @@ export default function Home({ onNavigate }: HomeProps) {
         </div>
       </section>
 
-      <PromoSections onNavigate={onNavigate} />
+      <PromoSections onNavigate={onNavigate} hideCampaignOnMobile />
 
       {/* Categories */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -385,7 +404,7 @@ export default function Home({ onNavigate }: HomeProps) {
       </DeferredSection>
 
       {/* Featured products */}
-      <section ref={featuredSectionRef} className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <section ref={featuredSectionRef} className="hidden md:block mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <BrandSignature inline label="CUSTOMER FAVORITES" text="محبوب‌ترین‌های مُدارا" highlight="" tone="dark" size="compact" className="mb-2" />
