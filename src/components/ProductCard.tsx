@@ -81,9 +81,9 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
           onClick={handleFavorite}
           aria-label={favorite ? `حذف ${product.name} از علاقه‌مندی‌ها` : `افزودن ${product.name} به علاقه‌مندی‌ها`}
           aria-pressed={favorite}
-          className={`absolute left-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/25 shadow-md backdrop-blur-md transition-all active:scale-90 md:left-3 md:top-3 md:h-10 md:w-10 md:shadow-lg ${favorite ? 'bg-[#9b3b37] text-white' : 'bg-[#120d08]/50 text-white hover:bg-[#120d08]/80'}`}
+          className={`absolute left-1 top-1 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 shadow-md backdrop-blur-md transition-all active:scale-90 md:left-3 md:top-3 md:h-10 md:w-10 md:shadow-lg ${favorite ? 'bg-[#9b3b37] text-white' : 'bg-[#120d08]/50 text-white hover:bg-[#120d08]/80'}`}
         >
-          <Heart className={`h-3.5 w-3.5 md:h-5 md:w-5 ${favorite ? 'fill-current' : ''}`} />
+          <Heart className={`h-5 w-5 md:h-5 md:w-5 ${favorite ? 'fill-current' : ''}`} />
         </button>
 
         {/* Rating */}

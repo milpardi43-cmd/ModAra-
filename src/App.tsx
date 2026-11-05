@@ -381,7 +381,7 @@ function AppContent() {
 
       {deferredUiReady && !isUtilityPage && (
         <Suspense fallback={null}>
-          <ChatWidget />
+          <ChatWidget productPage={view.name === 'product'} />
           <ScrollToTop />
         </Suspense>
       )}

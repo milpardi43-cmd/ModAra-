@@ -181,7 +181,7 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
               autoComplete="off"
               className="input-field pr-11"
             />
-            {searchInput && <button aria-label="پاک کردن جستجو" onClick={() => setSearchInput('')} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"><X className="h-5 w-5" /></button>}
+            {searchInput && <button aria-label="پاک کردن جستجو" onClick={() => setSearchInput('')} className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-dark-400 hover:bg-dark-100 hover:text-dark-600"><X className="h-5 w-5" /></button>}
           </div>
           <div className="flex gap-2">
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)} className="input-field min-w-0 flex-1 cursor-pointer sm:w-auto sm:min-w-36">
@@ -203,10 +203,10 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
             onClick={() => setShowFilters(false)}
             className={`${showFilters ? 'fixed inset-0 z-[70] flex items-end bg-dark-950/45 md:static md:block md:bg-transparent' : 'hidden md:block'} w-full shrink-0 md:w-64`}
           >
-            <div onClick={(event) => event.stopPropagation()} role={showFilters ? 'dialog' : undefined} aria-modal={showFilters ? true : undefined} aria-labelledby={showFilters ? 'shop-filter-title' : undefined} className="max-h-[86dvh] w-full space-y-4 overflow-y-auto rounded-t-[1.75rem] bg-[#faf8f5] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-24px_70px_rgba(20,15,8,0.2)] md:sticky md:top-24 md:max-h-none md:overflow-visible md:rounded-none md:bg-transparent md:p-0 md:pb-0 md:shadow-none">
+            <div onClick={(event) => event.stopPropagation()} role={showFilters ? 'dialog' : undefined} aria-modal={showFilters ? true : undefined} aria-labelledby={showFilters ? 'shop-filter-title' : undefined} className="max-h-[86dvh] w-full space-y-4 overflow-y-auto rounded-t-[1.75rem] bg-[#faf8f5] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-24px_70px_rgba(20,15,8,0.2)] before:mx-auto before:mb-3 before:block before:h-1 before:w-10 before:rounded-full before:bg-dark-200 before:content-[''] md:sticky md:top-24 md:max-h-none md:overflow-visible md:rounded-none md:bg-transparent md:p-0 md:pb-0 md:shadow-none md:before:hidden">
               <div className="flex items-center justify-between px-1 md:hidden">
                 <h2 id="shop-filter-title" className="font-bold text-dark-900">فیلترها</h2>
-                <button type="button" onClick={() => setShowFilters(false)} aria-label="بستن فیلترها" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-dark-600 shadow-sm"><X className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setShowFilters(false)} aria-label="بستن فیلترها" className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-dark-600 shadow-sm md:h-10 md:w-10"><X className="h-5 w-5" /></button>
               </div>
               <div className="card p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -230,8 +230,8 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
 
               <div className="card space-y-3 p-4">
                 <h3 className="font-bold text-dark-900">حداقل امتیاز</h3>
-                {[0, 4, 4.5].map((rating) => <button key={rating} onClick={() => setMinRating(rating)} className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${minRating === rating ? 'bg-amber-50 text-amber-700' : 'text-dark-600 hover:bg-dark-50'}`}><Star className={`h-4 w-4 ${rating > 0 ? 'fill-amber-400 text-amber-400' : 'text-dark-300'}`} />{rating === 0 ? 'همه امتیازها' : `${rating}+`}</button>)}
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dark-600 hover:bg-dark-50">
+                {[0, 4, 4.5].map((rating) => <button key={rating} onClick={() => setMinRating(rating)} className={`flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${minRating === rating ? 'bg-amber-50 text-amber-700' : 'text-dark-600 hover:bg-dark-50'}`}><Star className={`h-4 w-4 ${rating > 0 ? 'fill-amber-400 text-amber-400' : 'text-dark-300'}`} />{rating === 0 ? 'همه امتیازها' : `${rating}+`}</button>)}
+                <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-dark-600 hover:bg-dark-50">
                   <input type="checkbox" checked={inStockOnly} onChange={(event) => setInStockOnly(event.target.checked)} className="h-4 w-4 accent-amber-600" />
                   فقط کالاهای موجود
                 </label>
@@ -260,9 +260,9 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
 }
 
 function FilterCategoryButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button onClick={onClick} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-right text-sm font-medium transition-all ${active ? 'bg-amber-50 text-amber-700' : 'text-dark-600 hover:bg-dark-50'}`}>{children}{active && <Check className="h-4 w-4" />}</button>;
+  return <button onClick={onClick} className={`flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2 text-right text-sm font-medium transition-all ${active ? 'bg-amber-50 text-amber-700' : 'text-dark-600 hover:bg-dark-50'}`}>{children}{active && <Check className="h-4 w-4" />}</button>;
 }
 
 function PriceInput({ value, onChange, placeholder }: PriceInputProps) {
-  return <input type="number" min="0" step="100000" value={value ?? ''} onChange={(event) => onChange(event.target.value ? Number(event.target.value) : null)} placeholder={placeholder} aria-label={`حداقل یا حداکثر قیمت ${placeholder}`} className="w-full rounded-lg border border-dark-200 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" />;
+  return <input type="number" min="0" step="100000" value={value ?? ''} onChange={(event) => onChange(event.target.value ? Number(event.target.value) : null)} placeholder={placeholder} aria-label={`حداقل یا حداکثر قیمت ${placeholder}`} className="min-h-11 w-full rounded-lg border border-dark-200 px-3 py-2 text-base outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 sm:text-sm" />;
 }

@@ -88,10 +88,10 @@ export default function Account({ onNavigate }: AccountProps) {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              {isAdmin && <button onClick={() => onNavigate('admin')} className="btn-ghost px-3 py-2 text-sm"><ShieldCheck className="h-4 w-4" /> پنل مدیریت</button>}
+              {isAdmin && <button onClick={() => onNavigate('admin')} className="btn-ghost min-h-11 px-3 py-2 text-sm md:min-h-0"><ShieldCheck className="h-4 w-4" /> پنل مدیریت</button>}
               <button
                 onClick={() => { signOut(); onNavigate('home'); }}
-                className="flex items-center gap-2 rounded-xl border border-error-200 bg-error-50 px-4 py-2 text-sm font-medium text-error-600 transition-all hover:bg-error-100"
+                className="flex min-h-11 items-center gap-2 rounded-xl border border-error-200 bg-error-50 px-4 py-2 text-sm font-medium text-error-600 transition-all hover:bg-error-100 md:min-h-0"
               >
                 <LogOut className="h-4 w-4" />
                 خروج
@@ -203,7 +203,7 @@ export default function Account({ onNavigate }: AccountProps) {
                       {order.address && <span>ارسال به: {order.address.slice(0, 30)}...</span>}
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-3">
-                      <button onClick={() => onNavigate('invoice', order.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50">مشاهده فاکتور</button>
+                      <button onClick={() => onNavigate('invoice', order.id)} className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-50 md:min-h-0">مشاهده فاکتور</button>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-dark-500">مبلغ کل:</span>
                         <span className="text-lg font-bold text-amber-700">{formatPrice(order.total)}</span>

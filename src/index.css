@@ -170,8 +170,25 @@ html.keyboard-open .mobile-product-buybar {
 }
 
 @media (max-width: 767px) {
-  html {
+  html,
+  body {
+    min-height: 100dvh;
     scroll-behavior: auto;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  button,
+  a {
+    touch-action: manipulation;
   }
 }
 

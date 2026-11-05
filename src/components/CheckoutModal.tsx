@@ -135,16 +135,16 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center p-0 md:items-center md:p-4">
       <div className="absolute inset-0 bg-dark-950/60 backdrop-blur-sm animate-fade-in" onClick={handleClose} />
 
       <div className="relative w-full max-w-lg animate-scale-in" dir="rtl">
-        <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="max-h-[calc(100dvh-env(safe-area-inset-top))] overflow-y-auto rounded-t-[1.75rem] bg-white shadow-2xl md:max-h-[90dvh] md:overflow-hidden md:rounded-2xl">
           {/* Header */}
-          <div className="relative bg-gradient-to-br from-amber-600 to-orange-700 px-6 py-6">
+          <div className="relative bg-gradient-to-br from-amber-600 to-orange-700 px-5 py-5 sm:px-6 sm:py-6">
             <button
               onClick={handleClose}
-              className="absolute top-4 left-4 flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/10"
+              className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-lg text-white/80 hover:bg-white/10 md:h-9 md:w-9"
             >
               <X className="h-5 w-5" />
             </button>
@@ -169,7 +169,7 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
           </div>
 
           {/* Body */}
-          <div className="p-6">
+          <div className="p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-6 md:pb-6">
             {error && (
               <div className="mb-4 rounded-xl bg-error-50 border border-error-200 px-4 py-3 text-sm text-error-700 animate-fade-in">
                 {error}

@@ -406,7 +406,7 @@ export default function Home({ onNavigate }: HomeProps) {
                 onClick={() => moveFeaturedBatch(-1)}
                 disabled={loading || featuredBatchCount < 2}
                 aria-label="سه محصول قبلی"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-700 transition-colors hover:border-gold-500 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-700 transition-colors hover:border-gold-500 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-40 md:h-10 md:w-10"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -415,7 +415,7 @@ export default function Home({ onNavigate }: HomeProps) {
                 onClick={() => moveFeaturedBatch(1)}
                 disabled={loading || featuredBatchCount < 2}
                 aria-label="سه محصول بعدی"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-700 transition-colors hover:border-gold-500 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-700 transition-colors hover:border-gold-500 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-40 md:h-10 md:w-10"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -496,8 +496,8 @@ export default function Home({ onNavigate }: HomeProps) {
                     onClick={() => setFeaturedBatch(index)}
                     aria-label={`نمایش گروه ${index + 1}`}
                     aria-current={index === featuredBatch ? 'true' : undefined}
-                    className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 ${
-                      index === featuredBatch ? 'w-8 bg-gold-600' : 'w-2.5 bg-dark-200 hover:bg-gold-400'
+                    className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 before:absolute before:h-2.5 before:rounded-full before:transition-all before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 md:h-8 md:w-8 ${
+                      index === featuredBatch ? 'before:w-8 before:bg-gold-600' : 'before:w-2.5 before:bg-dark-200 hover:before:bg-gold-400'
                     }`}
                   />
                 ))}

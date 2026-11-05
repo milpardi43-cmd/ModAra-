@@ -75,7 +75,7 @@ export default function NewArrivals({ onNavigate }: NewArrivalsProps) {
               onClick={() => moveSlide(-1)}
               aria-label="محصول قبلی"
               disabled={loading || products.length < 2}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#211a12]/15 bg-white text-[#211a12] transition-all duration-300 hover:border-gold-600 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#211a12]/15 bg-white text-[#211a12] transition-all duration-300 hover:border-gold-600 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 md:h-10 md:w-10"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -84,7 +84,7 @@ export default function NewArrivals({ onNavigate }: NewArrivalsProps) {
               onClick={() => moveSlide(1)}
               aria-label="محصول بعدی"
               disabled={loading || products.length < 2}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#211a12]/15 bg-white text-[#211a12] transition-all duration-300 hover:border-gold-600 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#211a12]/15 bg-white text-[#211a12] transition-all duration-300 hover:border-gold-600 hover:bg-gold-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 md:h-10 md:w-10"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -173,8 +173,8 @@ export default function NewArrivals({ onNavigate }: NewArrivalsProps) {
                     onClick={() => selectSlide(index)}
                     aria-label={`نمایش محصول ${new Intl.NumberFormat('fa-IR').format(index + 1)}`}
                     aria-current={index === activeIndex ? 'true' : undefined}
-                    className={`h-2.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 ${
-                      index === activeIndex ? 'w-8 bg-gold-600' : 'w-2.5 bg-[#211a12]/20 hover:bg-gold-400'
+                    className={`relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 before:absolute before:h-2.5 before:rounded-full before:transition-all before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 md:h-8 md:w-8 ${
+                      index === activeIndex ? 'before:w-8 before:bg-gold-600' : 'before:w-2.5 before:bg-[#211a12]/20 hover:before:bg-gold-400'
                     }`}
                   />
                 ))}

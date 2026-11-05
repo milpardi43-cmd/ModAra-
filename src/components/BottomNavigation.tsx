@@ -49,7 +49,7 @@ export default function BottomNavigation({ activeView, onNavigate, onOpenCart, o
               aria-label={label}
               aria-current={active ? 'page' : undefined}
               onClick={() => activate(key)}
-              className={`relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition-colors active:scale-95 ${active ? 'text-[#91651e]' : 'text-dark-400 hover:text-dark-800'}`}
+              className={`relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-semibold transition-colors active:scale-95 ${active ? 'text-[#91651e]' : 'text-dark-400 hover:text-dark-800'}`}
             >
               <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-all duration-300 ${active ? 'bg-[#e2c279]/25' : ''}`}>
                 <Icon className={`h-[19px] w-[19px] transition-transform duration-300 ${active ? 'scale-105' : ''}`} strokeWidth={active ? 2.4 : 1.9} />

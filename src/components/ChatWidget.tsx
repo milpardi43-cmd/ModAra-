@@ -15,7 +15,7 @@ const botResponses = [
   'محصولات ما همگی اصل و با ضمانت بازگشت ۷ روزه هستند.',
 ];
 
-export default function ChatWidget() {
+export default function ChatWidget({ productPage = false }: { productPage?: boolean }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { id: 0, text: botResponses[0], sender: 'bot' },
@@ -50,7 +50,7 @@ export default function ChatWidget() {
       {/* Chat button */}
       <button
         onClick={() => setOpen(!open)}
-        className={`fixed bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full shadow-xl transition-all hover:scale-110 md:bottom-6 md:left-6 md:h-14 md:w-14 ${
+        className={`fixed ${productPage ? 'bottom-[calc(9rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)]'} left-4 z-40 flex h-12 w-12 items-center justify-center rounded-full shadow-xl transition-all hover:scale-110 md:bottom-6 md:left-6 md:h-14 md:w-14 ${
           open ? 'bg-dark-900 text-white rotate-90' : 'bg-gradient-to-br from-amber-500 to-orange-600 text-white'
         }`}
         aria-label="چت پشتیبانی"
@@ -66,7 +66,7 @@ export default function ChatWidget() {
 
       {/* Chat panel */}
       <div
-        className={`fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] left-4 z-40 w-[calc(100vw-2rem)] max-w-sm origin-bottom-left transition-all duration-300 md:bottom-24 md:left-6 md:w-[calc(100vw-3rem)] ${
+        className={`fixed ${productPage ? 'bottom-[calc(13rem+env(safe-area-inset-bottom))]' : 'bottom-[calc(8.5rem+env(safe-area-inset-bottom))]'} left-4 z-40 w-[calc(100vw-2rem)] max-w-sm origin-bottom-left transition-all duration-300 md:bottom-24 md:left-6 md:w-[calc(100vw-3rem)] ${
           open ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'
         }`}
         dir="rtl"

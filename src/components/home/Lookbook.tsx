@@ -121,9 +121,9 @@ export default function Lookbook({ onNavigate }: LookbookProps) {
                       }}
                       aria-label={isFavorite(product.id) ? `حذف ${product.name} از علاقه‌مندی‌ها` : `افزودن ${product.name} به علاقه‌مندی‌ها`}
                       aria-pressed={isFavorite(product.id)}
-                      className={`absolute right-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/30 text-white shadow-md backdrop-blur-sm md:hidden ${isFavorite(product.id) ? 'bg-[#9b3b37]' : 'bg-[#120d08]/55'}`}
+                      className={`absolute right-1 top-1 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/30 text-white shadow-md backdrop-blur-sm md:hidden ${isFavorite(product.id) ? 'bg-[#9b3b37]' : 'bg-[#120d08]/55'}`}
                     >
-                      <Heart className={`h-3.5 w-3.5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                      <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
                     </button>
                   </article>
                 </Reveal>

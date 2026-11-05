@@ -203,7 +203,7 @@ export default function FloatingSearch({ onNavigate, openRequestId = 0 }: Floati
               aria-label="جستجوی محصولات"
               aria-expanded={showResults}
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent text-sm text-dark-900 outline-none placeholder:text-dark-400"
+              className="min-w-0 flex-1 bg-transparent text-base text-dark-900 outline-none placeholder:text-dark-400 sm:text-sm"
             />
             {query && (
               <button
@@ -213,7 +213,7 @@ export default function FloatingSearch({ onNavigate, openRequestId = 0 }: Floati
                   setQuery('');
                   setResults([]);
                 }}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-dark-400 transition-colors hover:bg-white hover:text-dark-700"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-dark-400 transition-colors hover:bg-white hover:text-dark-700 sm:h-8 sm:w-8"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -230,7 +230,7 @@ export default function FloatingSearch({ onNavigate, openRequestId = 0 }: Floati
               setShowResults(false);
               setQuery('');
             }}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-dark-500 transition-colors hover:bg-dark-100 sm:hidden"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-dark-500 transition-colors hover:bg-dark-100 sm:hidden"
           >
             <X className="h-4 w-4" />
           </button>

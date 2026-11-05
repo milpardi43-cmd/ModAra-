@@ -218,10 +218,10 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
             <div className="mb-3 flex items-start justify-between gap-3">
               <h1 className="text-2xl font-bold text-dark-900 sm:text-3xl">{product.name}</h1>
               <div className="flex shrink-0 items-center gap-2">
-                <button type="button" onClick={handleToggleFavorite} aria-pressed={favorite} aria-label={favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors active:scale-95 ${favorite ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-dark-200 bg-white text-dark-600 hover:border-gold-500 hover:text-gold-700'}`}>
+                <button type="button" onClick={handleToggleFavorite} aria-pressed={favorite} aria-label={favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors active:scale-95 md:h-10 md:w-10 ${favorite ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-dark-200 bg-white text-dark-600 hover:border-gold-500 hover:text-gold-700'}`}>
                   <Heart className={`h-5 w-5 ${favorite ? 'fill-current' : ''}`} />
                 </button>
-                <button type="button" onClick={() => void handleShare()} aria-label="اشتراک‌گذاری محصول" className="flex h-10 w-10 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-600 transition-colors hover:border-gold-500 hover:text-gold-700 active:scale-95">
+                <button type="button" onClick={() => void handleShare()} aria-label="اشتراک‌گذاری محصول" className="flex h-11 w-11 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-600 transition-colors hover:border-gold-500 hover:text-gold-700 active:scale-95 md:h-10 md:w-10">
                   <Share2 className="h-5 w-5" />
                 </button>
               </div>
@@ -256,14 +256,14 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50 md:h-9 md:w-9"
                   >
                     <span className="text-lg">−</span>
                   </button>
                   <span className="w-10 text-center font-medium">{new Intl.NumberFormat('fa-IR').format(quantity)}</span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50 md:h-9 md:w-9"
                   >
                     <span className="text-lg">+</span>
                   </button>
@@ -384,10 +384,10 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                           key={s}
                           type="button"
                           onClick={() => setReviewRating(s)}
-                          className="transition-transform hover:scale-110"
+                          className="flex h-11 w-11 items-center justify-center rounded-full transition-transform hover:scale-110 md:h-8 md:w-8"
                         >
                           <Star
-                            className={`h-7 w-7 ${s <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-dark-200'}`}
+                            className={`h-6 w-6 md:h-7 md:w-7 ${s <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-dark-200'}`}
                           />
                         </button>
                       ))}
@@ -504,9 +504,9 @@ function ProductCardLite({ product }: { product: ProductPreview }) {
           }}
           aria-label={favorite ? `حذف ${product.name} از علاقه‌مندی‌ها` : `افزودن ${product.name} به علاقه‌مندی‌ها`}
           aria-pressed={favorite}
-          className={`absolute left-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-white shadow-md backdrop-blur-md md:left-3 md:top-3 md:hidden ${favorite ? 'bg-[#9b3b37]' : 'bg-[#120d08]/50'}`}
+          className={`absolute left-1 top-1 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 text-white shadow-md backdrop-blur-md md:left-3 md:top-3 md:hidden ${favorite ? 'bg-[#9b3b37]' : 'bg-[#120d08]/50'}`}
         >
-          <Heart className={`h-3.5 w-3.5 ${favorite ? 'fill-current' : ''}`} />
+          <Heart className={`h-5 w-5 ${favorite ? 'fill-current' : ''}`} />
         </button>
         <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full border border-white/20 bg-[#120d08]/45 px-2.5 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-md">
           <Star className="h-3.5 w-3.5 fill-gold-300 text-gold-300" />

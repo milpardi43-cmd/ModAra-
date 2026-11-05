@@ -25,7 +25,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 left-0 z-50 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ${
+        className={`fixed top-0 left-0 z-50 h-[100dvh] w-full max-w-md bg-white pt-[env(safe-area-inset-top)] shadow-2xl transition-transform duration-300 md:h-full md:pt-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         dir="rtl"
@@ -44,7 +44,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
             </div>
             <button
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-dark-500 hover:bg-dark-50"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-dark-500 hover:bg-dark-50 md:h-9 md:w-9"
             >
               <X className="h-5 w-5" />
             </button>
@@ -113,23 +113,23 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50 md:h-7 md:w-7"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-4 w-4 md:h-3 md:w-3" />
                           </button>
                           <span className="w-8 text-center text-sm font-medium">
                             {new Intl.NumberFormat('fa-IR').format(item.quantity)}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-dark-200 text-dark-600 hover:bg-dark-50 md:h-7 md:w-7"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-4 w-4 md:h-3 md:w-3" />
                           </button>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-error-500 hover:bg-error-50"
+                          className="flex h-11 w-11 items-center justify-center rounded-lg text-error-500 hover:bg-error-50 md:h-7 md:w-7"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -143,7 +143,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: CartDrawerProp
 
           {/* Footer */}
           {items.length > 0 && (
-            <div className="border-t border-dark-100 p-4 space-y-3">
+            <div className="border-t border-dark-100 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 md:pb-4">
               <div className="flex items-center justify-between">
                 <span className="text-dark-600">مبلغ کل:</span>
                 <span className="text-xl font-bold text-dark-900">{formatPrice(totalPrice)}</span>
