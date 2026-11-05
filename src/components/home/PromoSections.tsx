@@ -43,10 +43,10 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
             height={768}
             loading="lazy"
             decoding="async"
-            className="absolute inset-0 -z-20 h-full w-full object-cover object-center transition-transform duration-[1400ms] ease-out group-hover:scale-[1.035]"
+            className="absolute inset-x-0 top-0 -z-20 h-64 w-full object-cover object-left transition-transform duration-[1400ms] ease-out group-hover:scale-[1.035] sm:h-72 md:inset-0 md:h-full md:object-center"
           />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-l from-[#1d1711]/85 via-[#1d1711]/55 to-[#1d1711]/5" />
-          <div className="flex min-h-[340px] items-center px-6 py-10 sm:min-h-[390px] sm:px-10 lg:min-h-[430px] lg:px-16">
+          <div className="absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-b from-[#1d1711]/5 via-[#1d1711]/20 to-[#30251b] sm:h-80 md:inset-0 md:h-auto md:bg-gradient-to-l md:from-[#1d1711]/85 md:via-[#1d1711]/55 md:to-[#1d1711]/5" />
+          <div className="relative z-10 px-5 pb-7 pt-[15rem] sm:px-8 sm:pb-8 sm:pt-[17rem] md:flex md:min-h-[390px] md:items-center md:px-10 md:py-10 lg:min-h-[430px] lg:px-16">
             <div className="max-w-xl text-right text-white">
               <BrandSignature
                 inline
