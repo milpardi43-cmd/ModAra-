@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { imageSrcSet, optimizedAsset } from '../../lib/format';
+import BrandSignature from '../BrandSignature';
 import SectionHeading, { Reveal } from './SectionHeading';
 
 type EditorialCollectionsProps = {
@@ -80,6 +81,7 @@ function CollectionCard({
         aria-hidden="true"
         className="pointer-events-none absolute inset-3 rounded-[1.35rem] border border-white/0 transition-all duration-500 group-hover:border-gold-300/40 sm:inset-4"
       />
+      <BrandSignature className="left-5 top-5 sm:left-7 sm:top-7" />
       <span className={`absolute inset-x-0 bottom-0 block ${large ? 'p-6 sm:p-9' : 'p-5 sm:p-6'}`}>
         <span
           dir="ltr"

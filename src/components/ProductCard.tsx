@@ -31,7 +31,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
   return (
     <article
       onClick={() => onView(product.slug)}
-      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40"
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_22px_42px_-28px_rgba(94,65,35,0.3)] hover:ring-gold-500/35"
     >
       {/* Golden line that draws itself across the top on hover */}
       <span
@@ -50,19 +50,19 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
           height={640}
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110"
+          className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.04]"
         />
 
         {/* Soft cinematic shade on hover */}
         <span
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#120d08]/50 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#120d08]/40 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-80"
         />
 
         {/* Light sweep */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%]"
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%]"
         />
 
         {/* Rating */}
@@ -89,8 +89,8 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-2 flex items-center justify-between gap-3">
+      <div className="flex flex-1 flex-col p-2 sm:p-3">
+        <div className="mb-0 flex items-center justify-between gap-3">
           <span className="text-[10px] font-bold text-gold-700">کالکشن مُدارا</span>
           <span
             dir="ltr"
@@ -101,16 +101,16 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
           </span>
         </div>
 
-        <h3 className="line-clamp-2 min-h-[3.25rem] text-[15px] font-extrabold leading-[1.7] text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:text-base">
+        <h3 className="line-clamp-2 min-h-[2.7rem] text-sm font-extrabold leading-[1.5] text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:text-[15px]">
           {product.name}
         </h3>
-        <p className="mt-1.5 line-clamp-1 text-[13px] leading-6 text-dark-400">
+        <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-dark-400">
           {product.description}
         </p>
 
         <div className="mt-auto">
           {/* Ornament divider */}
-          <div aria-hidden="true" className="mb-4 mt-5 flex items-center gap-2">
+          <div aria-hidden="true" className="mb-2 mt-2 flex items-center gap-2">
             <span className="h-px flex-1 bg-gradient-to-l from-gold-500/50 to-transparent" />
             <span className="h-1.5 w-1.5 rotate-45 bg-gold-500" />
             <span className="h-px w-5 bg-gold-500/30" />

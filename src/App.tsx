@@ -4,6 +4,7 @@ import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import BackgroundDecor from './components/BackgroundDecor';
+import TextEffects from './components/TextEffects';
 import Home from './pages/Home';
 
 const loadCartDrawer = () => import('./components/CartDrawer');
@@ -202,6 +203,7 @@ function AppContent() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
+      <TextEffects />
       {!isPaymentCallback && <BackgroundDecor />}
       {!isUtilityPage && <Header onNavigate={handleNavigate} />}
 

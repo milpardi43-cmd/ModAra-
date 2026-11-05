@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, Search, SlidersHorizontal, Sparkles, Star, X } from 'lucide-react';
+import { ArrowLeft, Check, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import { supabase, type Product, type Category } from '../lib/supabase';
 import { PRODUCT_CARD_COLUMNS, getCategories } from '../lib/catalog';
 import ProductCard from '../components/ProductCard';
+import BrandSignature from '../components/BrandSignature';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { formatPrice } from '../lib/format';
 
@@ -118,10 +119,13 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
         <div aria-hidden="true" className="promo-poster-shine pointer-events-none absolute inset-y-0 -left-1/3 z-10 w-1/4 bg-gradient-to-r from-transparent via-amber-100/20 to-transparent" />
         <div className="relative z-10 mx-auto flex min-h-[320px] max-w-7xl items-center px-4 py-12 sm:min-h-[360px] sm:px-6 sm:py-16 lg:min-h-[400px] lg:px-8">
           <div className="max-w-2xl text-right text-white">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-200/25 bg-black/20 px-4 py-2 text-xs font-semibold text-amber-100 backdrop-blur-md">
-              <Sparkles className="h-4 w-4 text-amber-300" aria-hidden="true" />
-              انتخاب‌های مُدارا، با نگاه تازه
-            </div>
+            <BrandSignature
+              inline
+              label="DISCOVER MODARA"
+              text="انتخابی هماهنگ،"
+              highlight="با سلیقهٔ شما"
+              className="mb-5"
+            />
             <h1 className="text-balance text-4xl font-black leading-[1.2] sm:text-5xl lg:text-6xl">
               فروشگاه مُدارا
               <span className="mt-2 block text-[#e8c987]">استایل دلخواهتان را کشف کنید</span>
