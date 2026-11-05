@@ -25,6 +25,7 @@ const fileJobs = [
   { file: 'blog-2.jpg', widths: [640, 960] },
   { file: 'blog-3.jpg', widths: [640, 960] },
   { file: 'hero-fashion-poster.png', widths: [720, 1080] },
+  { file: 'modara-story-4k.jpg', widths: [720, 1080] },
   { file: 'hero-boutique/boutique-bg.jpg', widths: [960, 1376] },
   { file: 'hero-boutique/layer-bag.webp', widths: [640], alpha: true },
   { file: 'hero-boutique/layer-fedora.webp', widths: [640], alpha: true },

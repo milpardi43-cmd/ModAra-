@@ -1,4 +1,5 @@
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import BrandSignature from '../BrandSignature';
 import { imageSrcSet, optimizedAsset } from '../../lib/format';
 
 type PromoSectionsProps = {
@@ -47,10 +48,13 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
           <div className="absolute inset-0 -z-10 bg-gradient-to-l from-[#1d1711]/85 via-[#1d1711]/55 to-[#1d1711]/5" />
           <div className="flex min-h-[340px] items-center px-6 py-10 sm:min-h-[390px] sm:px-10 lg:min-h-[430px] lg:px-16">
             <div className="max-w-xl text-right text-white">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-[#f5d99d] backdrop-blur-sm">
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                انتخاب‌های مُدارا برای فصل پیشِ رو
-              </div>
+              <BrandSignature
+                inline
+                label="THE SEASONAL EDIT"
+                text="روایت فصل تازه،"
+                highlight="به سبک شما"
+                className="mb-5"
+              />
               <h2 className="text-balance text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
                 استایل شما،
                 <span className="mt-1 block text-[#e8c987]">روایت خودتان</span>
@@ -84,7 +88,7 @@ export default function PromoSections({ onNavigate }: PromoSectionsProps) {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-labelledby="promo-categories-title">
         <div className="mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-[10px] font-bold tracking-[0.28em] text-amber-700" dir="ltr">THE MODARA EDIT</p>
+            <BrandSignature inline label="THE MODARA EDIT" text="جزئیاتِ مُدارا،" highlight="برای استایل شما" tone="dark" size="compact" className="mb-2" />
             <h2 id="promo-categories-title" className="text-xl font-extrabold text-dark-900 sm:text-2xl">
               جزئیاتی که استایل را کامل می‌کنند
             </h2>

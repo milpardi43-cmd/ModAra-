@@ -12,6 +12,7 @@ const quickSearches = ['لباس', 'ساعت', 'کیف', 'اکسسوری'];
 
 export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
   const [visible, setVisible] = useState(false);
+  const [hiddenByCampaign, setHiddenByCampaign] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProductPreview[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -31,6 +32,18 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
       { threshold: 0 },
     );
     observer.observe(heading);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const campaignSection = document.querySelector('[data-search-hide]');
+    if (!campaignSection || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setHiddenByCampaign(entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(campaignSection);
     return () => observer.disconnect();
   }, []);
 
@@ -69,8 +82,9 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
 
   return (
     <div
+      aria-hidden={!visible || hiddenByCampaign}
       className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 transition-all duration-500 sm:bottom-6 sm:w-[92%] ${
-        visible
+        visible && !hiddenByCampaign
           ? 'translate-y-0 opacity-100 pointer-events-auto'
           : 'translate-y-20 opacity-0 pointer-events-none'
       }`}

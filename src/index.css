@@ -485,3 +485,121 @@
     animation: none !important;
   }
 }
+
+/* A single low-key studio glint travels along the brass rail. */
+.rack-rail-glint {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 24%,
+    rgba(255, 252, 232, 0.78) 50%,
+    rgba(214, 171, 93, 0.28) 72%,
+    transparent 100%
+  );
+  filter: blur(0.7px);
+  opacity: 0;
+  animation: rackRailGlint 9s ease-in-out 1.2s infinite;
+}
+
+@keyframes rackRailGlint {
+  0%, 58% { transform: translateX(-125%); opacity: 0; }
+  63% { opacity: 0.62; }
+  76% { transform: translateX(820%); opacity: 0.42; }
+  84%, 100% { transform: translateX(820%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rack-rail-glint {
+    animation: none !important;
+    opacity: 0;
+  }
+}
+
+/* Site-wide editorial text treatment: a soft ink reveal and a traced gold rule. */
+.text-effect-heading {
+  position: relative;
+}
+
+.text-effect-heading.text-effect-visible {
+  animation: textHeadingFocus 720ms cubic-bezier(0.22, 1, 0.36, 1) var(--text-effect-delay, 0ms) both;
+}
+
+.text-effect-heading::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -0.18em;
+  width: clamp(2.5rem, 16%, 5.25rem);
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9b6e2e 0%, #e7c776 54%, #b2833a 100%);
+  box-shadow: 0 0 14px rgba(211, 170, 92, 0.42);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: right center;
+  pointer-events: none;
+}
+
+.text-effect-heading.text-effect-visible::after {
+  animation: textRuleTrace 820ms cubic-bezier(0.22, 1, 0.36, 1) var(--text-effect-delay, 0ms) forwards;
+}
+
+.text-effect-copy.text-effect-visible {
+  animation: textCopyReveal 640ms cubic-bezier(0.22, 1, 0.36, 1) var(--text-effect-delay, 0ms) both;
+}
+
+@keyframes textHeadingFocus {
+  0% { opacity: 0.38; filter: blur(2.5px); transform: translateY(9px); text-shadow: 0 0 18px rgba(226, 184, 98, 0.38); }
+  68% { opacity: 1; filter: blur(0); text-shadow: 0 0 10px rgba(226, 184, 98, 0.16); }
+  100% { opacity: 1; filter: none; transform: translateY(0); text-shadow: 0 0 0 transparent; }
+}
+
+@keyframes textRuleTrace {
+  0% { opacity: 0; transform: scaleX(0); }
+  65% { opacity: 1; }
+  100% { opacity: 0.9; transform: scaleX(1); }
+}
+
+@keyframes textCopyReveal {
+  from { opacity: 0.48; filter: blur(1.2px); transform: translateY(8px); }
+  to { opacity: 1; filter: none; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-effect-heading.text-effect-visible,
+  .text-effect-heading.text-effect-visible::after,
+  .text-effect-copy.text-effect-visible {
+    animation: none !important;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* Editorial, frameless brand signature overlay. */
+.brand-signature-highlight {
+  color: #f0d58e;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.78), 0 0 22px rgba(221, 181, 93, 0.22);
+}
+
+.brand-signature-highlight-on-light {
+  color: #9b6c1d;
+}
+
+.brand-signature-rule {
+  transform-origin: right center;
+  animation: brandSignatureRule 5s ease-in-out 1s infinite;
+}
+
+@keyframes brandSignatureRule {
+  0%, 70%, 100% { opacity: 0.7; transform: scaleX(0.68); }
+  82% { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-signature-rule {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}

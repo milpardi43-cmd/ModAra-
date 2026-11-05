@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { CheckCircle2, Mail, Send } from 'lucide-react';
+import { CheckCircle2, Send } from 'lucide-react';
+import BrandSignature from '../BrandSignature';
 import { Reveal } from './SectionHeading';
 
 const STORAGE_KEY = 'modara-newsletter-emails';
@@ -36,96 +37,95 @@ export default function Newsletter() {
   const done = status === 'joined' || status === 'already';
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-4 pt-6 sm:px-6 sm:pt-10 lg:px-8" dir="rtl">
+    <section className="mx-auto max-w-7xl px-4 pb-6 pt-8 sm:px-6 sm:pt-12 lg:px-8" dir="rtl">
       <Reveal>
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#171208] px-6 py-12 text-center text-white sm:p-14">
-          {/* Decor */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(213,171,85,0.28),transparent_55%),linear-gradient(160deg,rgba(255,255,255,0.04),transparent_40%)]"
-          />
-          <div aria-hidden="true" className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full border border-gold-400/10" />
-          <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full border border-gold-400/10" />
-          <p
-            aria-hidden="true"
-            dir="ltr"
-            className="pointer-events-none absolute inset-x-0 -top-3 select-none text-center font-display text-[13vw] font-semibold leading-none tracking-[0.14em] text-transparent sm:text-[7rem]"
-            style={{ WebkitTextStroke: '1px rgba(232,201,122,0.07)' }}
-          >
-            MODARA CLUB
-          </p>
+        <div className="relative isolate grid overflow-hidden rounded-[2.5rem] border border-gold-300/20 bg-[#171208] text-white shadow-[0_34px_90px_-46px_rgba(34,23,9,0.78)] lg:grid-cols-[0.92fr_1.08fr]">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_88%_0%,rgba(217,173,84,0.19),transparent_38%),radial-gradient(ellipse_at_5%_100%,rgba(156,100,34,0.18),transparent_42%)]" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold-300/70 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -left-16 h-72 w-72 rounded-full border border-gold-300/10" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-10 h-52 w-52 rounded-full border border-gold-300/[0.07]" />
 
-          <div className="relative">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-gold-400/30 bg-gold-500/10 text-gold-300">
-              <Mail className="h-6 w-6" />
-            </span>
-            <p className="mt-5 text-sm font-bold text-gold-300">باشگاه مشتریان مُدارا</p>
-            <h2 className="mx-auto mt-3 max-w-2xl text-3xl font-extrabold leading-snug text-balance sm:text-4xl">
+          <div className="relative flex flex-col justify-center p-6 sm:p-10 lg:p-12">
+            <BrandSignature
+              inline
+              label="MODARA CLUB"
+              text="خبرهای خوب،"
+              highlight="پیش از همه"
+              className="mb-6"
+            />
+            <h2 className="max-w-xl text-3xl font-extrabold leading-[1.25] text-balance sm:text-4xl lg:text-[2.65rem]">
               اولین نفر باشید که از کالکشن جدید باخبر می‌شود
             </h2>
-            <p className="mx-auto mt-4 max-w-xl leading-8 text-white/60">
+            <p className="mt-5 max-w-xl leading-8 text-white/65">
               عضو باشگاه شوید تا پیشنهادهای ویژهٔ اعضا و تازه‌ترین قطعه‌های هر فصل، زودتر از همه به
               دست شما برسد.
             </p>
+            <p dir="ltr" aria-hidden="true" className="mt-8 select-none font-display text-[10px] font-semibold tracking-[0.35em] text-gold-100/30">
+              MODARA CLUB <span className="text-gold-300/60">·</span> PRIVATE NOTES
+            </p>
+          </div>
 
-            {done ? (
-              <div
-                role="status"
-                className="mx-auto mt-9 flex max-w-xl flex-col items-center gap-3 rounded-3xl border border-gold-400/25 bg-gold-500/10 px-6 py-6"
-              >
-                <CheckCircle2 className="h-9 w-9 text-gold-300" />
-                <p className="text-lg font-extrabold">
-                  {status === 'joined'
-                    ? 'به باشگاه مشتریان مُدارا خوش آمدید'
-                    : 'شما قبلاً عضو باشگاه مُدارا شده‌اید'}
-                </p>
-                <p className="text-sm leading-7 text-white/60">
-                  منتظر خبرهای خوب باشید؛ کالکشن‌های جدید و پیشنهادهای ویژهٔ اعضا را اول برای شما
-                  می‌فرستیم.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} noValidate className="mx-auto mt-9 max-w-xl">
+          <div className="relative flex items-center p-4 sm:p-8 lg:p-10">
+            <div className="w-full rounded-[2rem] border border-white/10 bg-white/[0.055] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_55px_-38px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:p-7">
+              {done ? (
                 <div
-                  className={`flex items-center gap-2 rounded-full border bg-white/[0.07] p-1.5 backdrop-blur-md transition-colors ${
-                    status === 'error' ? 'border-red-400/60' : 'border-white/15 focus-within:border-gold-400/60'
-                  }`}
+                  role="status"
+                  className="flex min-h-[230px] flex-col items-center justify-center rounded-[1.5rem] border border-gold-300/25 bg-gold-300/[0.07] px-5 py-7 text-center"
                 >
-                  <label htmlFor="newsletter-email" className="sr-only">
+                  <CheckCircle2 className="h-10 w-10 text-gold-300" />
+                  <p className="mt-4 text-lg font-extrabold">
+                    {status === 'joined'
+                      ? 'به باشگاه مشتریان مُدارا خوش آمدید'
+                      : 'شما قبلاً عضو باشگاه مُدارا شده‌اید'}
+                  </p>
+                  <p className="mt-3 max-w-md text-sm leading-7 text-white/60">
+                    منتظر خبرهای خوب باشید؛ کالکشن‌های جدید و پیشنهادهای ویژهٔ اعضا را اول برای شما
+                    می‌فرستیم.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} noValidate>
+                  <label htmlFor="newsletter-email" className="mb-3 block text-sm font-bold text-white/85">
                     ایمیل شما
                   </label>
-                  <input
-                    id="newsletter-email"
-                    type="email"
-                    dir="ltr"
-                    autoComplete="email"
-                    placeholder="you@email.com"
-                    value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      if (status === 'error') setStatus('idle');
-                    }}
-                    className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-left text-[15px] text-white outline-none placeholder:text-white/35"
-                  />
-                  <button
-                    type="submit"
-                    className="group inline-flex shrink-0 items-center gap-2.5 rounded-full bg-gradient-to-l from-gold-300 via-gold-500 to-gold-600 px-6 py-3 text-sm font-extrabold text-[#171208] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-10px_rgba(192,145,63,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 active:scale-[0.97] sm:px-7"
+                  <div
+                    className={`flex flex-col gap-2 rounded-[1.4rem] border bg-black/15 p-2 transition-colors sm:flex-row sm:items-center ${
+                      status === 'error' ? 'border-red-400/60' : 'border-white/15 focus-within:border-gold-400/60'
+                    }`}
                   >
-                    عضویت در باشگاه
-                    <Send className="h-4 w-4 -scale-x-100 transition-transform duration-300 group-hover:-translate-x-0.5" />
-                  </button>
-                </div>
-                {status === 'error' && (
-                  <p role="alert" className="mt-3 text-sm font-semibold text-red-300">
-                    لطفاً یک ایمیل معتبر وارد کنید.
+                    <input
+                      id="newsletter-email"
+                      type="email"
+                      dir="ltr"
+                      autoComplete="email"
+                      placeholder="you@email.com"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        if (status === 'error') setStatus('idle');
+                      }}
+                      className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-left text-[15px] text-white outline-none placeholder:text-white/35"
+                    />
+                    <button
+                      type="submit"
+                      className="group inline-flex shrink-0 items-center justify-center gap-2.5 rounded-xl bg-gradient-to-l from-gold-300 via-gold-500 to-gold-600 px-5 py-3.5 text-sm font-extrabold text-[#171208] shadow-[0_12px_28px_-14px_rgba(192,145,63,0.7)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-12px_rgba(192,145,63,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 active:scale-[0.98] sm:px-6"
+                    >
+                      عضویت در باشگاه
+                      <Send className="h-4 w-4 -scale-x-100 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                    </button>
+                  </div>
+                  {status === 'error' && (
+                    <p role="alert" className="mt-3 text-sm font-semibold text-red-300">
+                      لطفاً یک ایمیل معتبر وارد کنید.
+                    </p>
+                  )}
+                  <p className="mt-4 text-xs leading-6 text-white/45">
+                    بدون اسپم؛ فقط کالکشن‌های جدید و پیشنهادهای ویژهٔ اعضا. هر زمان خواستید لغو عضویت
+                    کنید.
                   </p>
-                )}
-                <p className="mt-4 text-xs leading-6 text-white/40">
-                  بدون اسپم؛ فقط کالکشن‌های جدید و پیشنهادهای ویژهٔ اعضا. هر زمان خواستید لغو عضویت
-                  کنید.
-                </p>
-              </form>
-            )}
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </Reveal>
