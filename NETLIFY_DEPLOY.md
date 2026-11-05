@@ -92,10 +92,10 @@ npm run preview      # → http://localhost:4173
 4. در تنظیمات build، مقادیر فایل `netlify.toml` را نگه دارید:
    - **Build command:** `npm run build`
    - **Publish directory:** `dist`
-5. برای اینکه تغییرات شاخهٔ کاری همین نشست مستقیماً روی سایت اصلی منتشر شوند، در **Site configuration → Build & deploy → Branches** مقدار **Production branch** را روی `arena/84ba23af-modara` بگذارید. اگر می‌خواهید `main` سایت اصلی بماند، به‌جای آن **Branch deploys** را برای همین شاخه فعال کنید؛ در آن حالت تغییرات در آدرس جداگانهٔ branch deploy دیده می‌شوند.
-6. **Deploy site** را بزنید.
+5. برای انتشار تغییرات این نشست بدون ساختن PR، **Production branch** را روی `main` نگه دارید و در **Site configuration → Build & deploy → Branches**، بخش **Branch deploys** را برای شاخهٔ `arena/129bf99a-modara` فعال کنید. در این حالت نسخهٔ این شاخه با یک آدرس جداگانهٔ branch deploy منتشر می‌شود و سایت اصلی `main` تغییر نمی‌کند.
+6. **Deploy site** را بزنید (اگر این اولین deploy است).
 
-پس از اتصال GitHub و انتخاب شاخه، هر `push` روی شاخهٔ deployشونده به‌طور خودکار Build و Deploy می‌شود. تغییراتی که در محیط کار انجام می‌شوند تا زمانی که به GitHub push نشوند، به Netlify نمی‌رسند.
+پس از اتصال GitHub و فعال‌کردن Branch deploys، هر `push` روی شاخهٔ `arena/129bf99a-modara` به‌طور خودکار Build و Deploy می‌شود. تغییراتی که در محیط کار انجام می‌شوند تا زمانی که به GitHub push نشوند، به Netlify نمی‌رسند. آدرس دقیق preview را پس از Deploy از Netlify بردارید؛ PR لازم نیست.
 
 ---
 

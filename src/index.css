@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --modara-safe-top: env(safe-area-inset-top, 0px);
+  --modara-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100svh;
+  overscroll-behavior-x: none;
+}
+
+html {
+  scroll-padding-top: calc(4.5rem + var(--modara-safe-top));
+  scroll-padding-bottom: calc(4rem + var(--modara-safe-bottom));
+}
+
+html.capacitor-native,
+html.capacitor-native body {
+  background: #efeae1;
+  -webkit-text-size-adjust: 100%;
+}
+
+html.keyboard-open nav[aria-label="ناوبری اصلی موبایل"] {
+  transform: translateY(110%);
+  pointer-events: none;
+}
+
+html.keyboard-open .mobile-product-buybar {
+  display: none;
+}
+
 @layer base {
   * {
     @apply border-dark-200;

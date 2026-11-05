@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 import { X, MapPin, Phone, Loader2, CheckCircle, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +23,20 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
   const [error, setError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!loading || !Capacitor.isNativePlatform()) return;
+    let disposed = false;
+    let removeListener: () => void = () => {};
+    void Browser.addListener('browserFinished', () => setLoading(false)).then((handle) => {
+      if (disposed) void handle.remove();
+      else removeListener = () => { void handle.remove(); };
+    });
+    return () => {
+      disposed = true;
+      removeListener();
+    };
+  }, [loading]);
+
   if (!open) return null;
 
   const handleInfoSubmit = (e: React.FormEvent) => {
@@ -38,6 +54,12 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
     setError(null);
     setLoading(true);
 
+    if (!navigator.onLine) {
+      setError('اتصال اینترنت در دسترس نیست. پس از اتصال دوباره تلاش کنید.');
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setError('لطفاً ابتدا وارد شوید');
       setLoading(false);
@@ -45,18 +67,29 @@ export default function CheckoutModal({ open, onClose, onOpenInvoice }: Checkout
     }
 
     if (!isDemoMode) {
-      const { data, error: gatewayError } = await supabase.functions.invoke('zarinpal-request', {
-        body: { address, phone },
-      });
+      try {
+        const nativeReturn = Capacitor.isNativePlatform();
+        const { data, error: gatewayError } = await supabase.functions.invoke('zarinpal-request', {
+          body: { address, phone, return_to_app: nativeReturn },
+        });
 
-      if (gatewayError || !data?.payment_url) {
-        setError(gatewayError?.message || 'امکان شروع پرداخت وجود ندارد. تنظیمات درگاه را بررسی کنید.');
+        if (gatewayError || !data?.payment_url) {
+          setError(gatewayError?.message || 'امکان شروع پرداخت وجود ندارد. تنظیمات درگاه را بررسی کنید.');
+          setLoading(false);
+          return;
+        }
+
+        if (nativeReturn) {
+          await Browser.open({ url: data.payment_url as string, toolbarColor: '#efeae1' });
+        } else {
+          window.location.assign(data.payment_url as string);
+        }
+        return;
+      } catch {
+        setError('ارتباط با درگاه برقرار نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.');
         setLoading(false);
         return;
       }
-
-      window.location.assign(data.payment_url as string);
-      return;
     }
 
     // Local demo fallback: never use this branch for production payments.

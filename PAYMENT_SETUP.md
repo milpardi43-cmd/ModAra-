@@ -20,13 +20,14 @@ supabase db push
 supabase secrets set \
   ZARINPAL_MERCHANT_ID=YOUR_MERCHANT_ID \
   ZARINPAL_SANDBOX=true \
-  PUBLIC_SITE_URL=https://mcdonun1-hub.github.io/ModernAra1/ \
-  ALLOWED_ORIGIN=https://mcdonun1-hub.github.io
+  PUBLIC_SITE_URL=https://milanorezaee2.github.io/Modara/ \
+  ALLOWED_ORIGIN=https://milanorezaee2.github.io \
+  MOBILE_RETURN_URL=com.modara.app://payment-callback
 supabase functions deploy zarinpal-request
 supabase functions deploy zarinpal-callback
 ```
 
-مقدار `ZARINPAL_SANDBOX` را ابتدا `true` بگذارید. پس از تست کامل و فعال شدن درگاه پذیرنده، آن را به `false` تغییر دهید. مقدار `PUBLIC_SITE_URL` باید دقیقاً با آدرس منتشرشده‌ی سایت و مسیر پایه‌ی آن هماهنگ باشد.
+مقدار `ZARINPAL_SANDBOX` را ابتدا `true` بگذارید. پس از تست کامل و فعال شدن درگاه پذیرنده، آن را به `false` تغییر دهید. مقدار `PUBLIC_SITE_URL` باید دقیقاً با آدرس منتشرشده‌ی سایت و مسیر پایه‌ی آن هماهنگ باشد. در اپ Native، `MOBILE_RETURN_URL` را روی scheme ثبت‌شده در Android/iOS بگذارید. تابع درخواست callback زرین‌پال را به Edge Function عمومی `zarinpal-callback` می‌فرستد؛ آن تابع authority و مبلغ را بررسی و تراکنش را server-to-server تأیید می‌کند و فقط سپس به این URL یا به `PUBLIC_SITE_URL` redirect می‌کند. برای iOS/Android، راهنمای کامل در [`MOBILE_BUILD.md`](./MOBILE_BUILD.md) است.
 
 متغیرهای `SUPABASE_URL`، `SUPABASE_ANON_KEY` و `SUPABASE_SERVICE_ROLE_KEY` در محیط Edge Function باید از پروژه‌ی Supabase تأمین شوند؛ `SUPABASE_SERVICE_ROLE_KEY` را در کد frontend یا GitHub Pages قرار ندهید.
 

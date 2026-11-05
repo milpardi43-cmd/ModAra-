@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Star, ShoppingCart, Truck, Shield, RefreshCw, Check, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, Heart, Share2, Star, ShoppingCart, Truck, Shield, RefreshCw, Check, MessageSquare, Send } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { supabase, type Product, type Review } from '../lib/supabase';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { formatPrice, formatDate, imageSrcSet, optimizedAsset } from '../lib/format';
@@ -10,6 +12,8 @@ import {
 } from '../lib/catalog';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
+import { successFeedback, tapFeedback } from '../native/feedback';
 
 type ProductDetailProps = {
   slug: string;
@@ -31,6 +35,8 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = product ? isFavorite(product.id) : false;
 
   // Review form state
   const [reviewName, setReviewName] = useState('');
@@ -75,9 +81,37 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
     }
     if (!product) return;
     await addToCart(product.id, quantity);
+    void successFeedback();
     window.dispatchEvent(new CustomEvent('modara:open-cart'));
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleToggleFavorite = () => {
+    if (!product) return;
+    toggleFavorite(product.id);
+    void tapFeedback();
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    const currentUrl = new URL(window.location.href);
+    const shareBase = Capacitor.isNativePlatform()
+      ? (import.meta.env.VITE_PUBLIC_SITE_URL || 'https://milanorezaee2.github.io/Modara/')
+      : `${currentUrl.origin}${currentUrl.pathname}`;
+    const shareUrl = `${shareBase.replace(/\/+$/, '')}/#product/${encodeURIComponent(product.slug)}`;
+    const title = `${product.name} | مُدارا`;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await Share.share({ title, text: product.name, url: shareUrl, dialogTitle: 'اشتراک‌گذاری محصول' });
+      } else if (navigator.share) {
+        await navigator.share({ title, text: product.name, url: shareUrl });
+      } else {
+        await navigator.clipboard?.writeText(shareUrl);
+      }
+    } catch {
+      // A dismissed share sheet is not an error and should not block shopping.
+    }
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -181,7 +215,17 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
 
           {/* Info */}
           <div>
-            <h1 className="mb-3 text-2xl font-bold text-dark-900 sm:text-3xl">{product.name}</h1>
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold text-dark-900 sm:text-3xl">{product.name}</h1>
+              <div className="flex shrink-0 items-center gap-2">
+                <button type="button" onClick={handleToggleFavorite} aria-pressed={favorite} aria-label={favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors active:scale-95 ${favorite ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-dark-200 bg-white text-dark-600 hover:border-gold-500 hover:text-gold-700'}`}>
+                  <Heart className={`h-5 w-5 ${favorite ? 'fill-current' : ''}`} />
+                </button>
+                <button type="button" onClick={() => void handleShare()} aria-label="اشتراک‌گذاری محصول" className="flex h-10 w-10 items-center justify-center rounded-full border border-dark-200 bg-white text-dark-600 transition-colors hover:border-gold-500 hover:text-gold-700 active:scale-95">
+                  <Share2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
             <div className="mb-6 flex flex-wrap items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -392,7 +436,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-dark-900 mb-6">محصولات مرتبط</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
               {related.map((p) => (
                 <div key={p.id} onClick={() => onNavigate('product', p.slug)}>
                   <ProductCardLite product={p} />
@@ -402,75 +446,102 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
           </div>
         )}
       </div>
+      <div className="mobile-product-buybar fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 border-t border-dark-100 bg-[#fffdf9]/95 px-4 py-3 shadow-[0_-12px_32px_rgba(33,26,18,0.1)] backdrop-blur-xl md:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-3" dir="rtl">
+          <div className="min-w-0 flex-1">
+            <span className="block text-[10px] text-dark-400">قیمت</span>
+            <span className="block truncate text-base font-extrabold text-dark-900">{formatPrice(product.price)}</span>
+          </div>
+          <button type="button" onClick={() => void handleAddToCart()} disabled={product.stock === 0} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#211a12] px-4 text-sm font-bold text-[#f6e5b6] shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50">
+            <ShoppingCart className="h-4 w-4" />
+            افزودن به سبد
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function ProductCardLite({ product }: { product: ProductPreview }) {
-  const imageUrl = optimizedAsset(product.image_url, 480);
-  const imageSet = imageSrcSet(product.image_url, [480, 720]);
+  const imageUrl = optimizedAsset(product.image_url, 128);
+  const imageSet = imageSrcSet(product.image_url, [128, 256, 480, 720]);
   const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(product.id);
 
   return (
-    <article className="group relative h-full cursor-pointer overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40">
+    <article className="group relative flex h-full min-h-[76px] cursor-pointer flex-row overflow-hidden rounded-xl bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40 md:min-h-0 md:block md:rounded-[1.75rem]">
       <span
         aria-hidden="true"
         className="absolute inset-x-0 top-0 z-20 h-[3px] origin-right scale-x-0 bg-gradient-to-l from-gold-300 via-gold-500 to-gold-700 transition-transform duration-700 ease-out group-hover:scale-x-100"
       />
-      <div className="relative aspect-[3/4] overflow-hidden bg-[#f3ede0]">
+      <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-[#f3ede0] md:h-auto md:w-full md:aspect-[3/4]">
         <img
           src={imageUrl}
           srcSet={imageSet}
-          sizes="(min-width: 1024px) 300px, (min-width: 640px) 33vw, 50vw"
+          sizes="(min-width: 1024px) 300px, (min-width: 640px) 33vw, 56px"
           alt={product.name}
-          width={480}
-          height={640}
+          width={120}
+          height={160}
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110"
         />
         <span
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#120d08]/50 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="absolute inset-x-0 bottom-0 hidden h-1/2 bg-gradient-to-t from-[#120d08]/50 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 md:block"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%]"
+          className="pointer-events-none absolute inset-y-0 left-0 hidden w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%] md:block"
         />
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full border border-white/20 bg-[#120d08]/45 px-2.5 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-md">
-          <Star className="h-3.5 w-3.5 fill-gold-300 text-gold-300" />
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleFavorite(product.id);
+            void tapFeedback();
+          }}
+          aria-label={favorite ? `حذف ${product.name} از علاقه‌مندی‌ها` : `افزودن ${product.name} به علاقه‌مندی‌ها`}
+          aria-pressed={favorite}
+          className={`absolute left-1 top-1 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-white shadow-md backdrop-blur-md md:left-3 md:top-3 md:hidden ${favorite ? 'bg-[#9b3b37]' : 'bg-[#120d08]/50'}`}
+        >
+          <Heart className={`h-3.5 w-3.5 ${favorite ? 'fill-current' : ''}`} />
+        </button>
+        <div className="absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-full border border-white/20 bg-[#120d08]/55 px-1 py-0.5 text-[8px] font-bold text-white shadow-md backdrop-blur-md md:right-3 md:top-3 md:gap-1.5 md:px-2.5 md:py-1 md:text-xs md:shadow-lg">
+          <Star className="h-2.5 w-2.5 fill-gold-300 text-gold-300 md:h-3.5 md:w-3.5" />
           {faNumber(product.rating)}
         </div>
       </div>
 
-      <div className="p-4 sm:p-5">
+      <div className="flex min-w-0 flex-1 flex-col justify-center p-1.5 sm:p-5 md:block">
         <span
           dir="ltr"
           aria-hidden="true"
-          className="font-display text-[8px] font-semibold tracking-[0.34em] text-[#211a12]/35"
+          className="hidden font-display text-[8px] font-semibold tracking-[0.34em] text-[#211a12]/35 sm:block"
         >
           MODARA
         </span>
-        <h3 className="mt-1.5 line-clamp-1 text-sm font-extrabold text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:text-[15px]">
+        <h3 className="mt-0 line-clamp-2 text-[13px] font-extrabold leading-4 text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:mt-1.5 sm:line-clamp-1 sm:text-[15px]">
           {product.name}
         </h3>
-        <div aria-hidden="true" className="my-3.5 flex items-center gap-2">
+        <div aria-hidden="true" className="my-3.5 hidden items-center gap-2 sm:flex">
           <span className="h-px flex-1 bg-gradient-to-l from-gold-500/50 to-transparent" />
           <span className="h-1.5 w-1.5 rotate-45 bg-gold-500" />
           <span className="h-px w-5 bg-gold-500/30" />
         </div>
-        <div className="flex items-end justify-between gap-3">
-          <p className="flex items-baseline gap-1.5 leading-none">
-            <span className="text-base font-black tracking-tight text-[#211a12] sm:text-lg">
+        <div className="flex items-end justify-between gap-1 sm:gap-3">
+          <p className="flex min-w-0 flex-col items-start gap-0.5 leading-none sm:flex-row sm:items-baseline sm:gap-1.5">
+            <span className="text-xs font-black tracking-tight text-[#211a12] sm:text-lg">
               {faNumber(product.price)}
             </span>
-            <span className="text-[11px] font-bold text-gold-700">تومان</span>
+            <span className="text-[9px] font-bold text-gold-700 sm:text-[11px]">تومان</span>
           </p>
           <span
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700 ring-1 ring-gold-500/25 transition-all duration-300 group-hover:bg-[#171208] group-hover:text-gold-200"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700 ring-1 ring-gold-500/25 transition-all duration-300 group-hover:bg-[#171208] group-hover:text-gold-200 sm:h-9 sm:w-9"
           >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-0.5 sm:h-4 sm:w-4" />
           </span>
         </div>
       </div>

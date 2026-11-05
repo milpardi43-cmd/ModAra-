@@ -65,6 +65,23 @@ npm run images:palette   # می‌سازد src/lib/productPalette.ts (رنگ و 
 | `npm run preview` | سرو کردن خروجی build |
 | `npm run lint` | اجرای ESLint |
 | `npm run typecheck` | بررسی تایپ‌ها با TypeScript |
+| `npm run build:mobile` | ساخت وب‌اپ با مسیر ریشه و همگام‌سازی Android و iOS با Capacitor |
+| `npm run cap:open:android` | بازکردن پروژهٔ Android در Android Studio |
+| `npm run cap:open:ios` | بازکردن پروژهٔ iOS در Xcode (نیازمند macOS) |
+| `npm run assets:mobile` | بازتولید آیکون و صفحهٔ آغازین Native |
+
+## اپ Hybrid برای Android و iOS
+
+پروژهٔ React/Vite فعلی با Capacitor بسته‌بندی می‌شود؛ نسخهٔ وب و مسیر GitHub Pages (`/Modara/`) حفظ شده‌اند. راهنمای فارسی build، امضا، deep link پرداخت، Push و نیازمندی‌های دستگاه در [`MOBILE_BUILD.md`](./MOBILE_BUILD.md) است.
+
+```bash
+npm install
+npm run build:mobile
+npm run cap:open:android # Android Studio
+npm run cap:open:ios     # Xcode روی macOS
+```
+
+`build:mobile` خروجی production را با `BASE_PATH=/` می‌سازد و پروژه‌های Native را sync می‌کند؛ این دستور به‌تنهایی APK/IPA امضاشده تولید نمی‌کند. ساخت و امضای نهایی باید در Android Studio یا Xcode انجام شود. برای پرداخت واقعی، Edge Functionهای ZarinPal باید روی Supabase مستقر و تنظیم شوند؛ نتیجهٔ پرداخت فقط بعد از تأیید سمت سرور معتبر است. Push نیز تا زمان تنظیم FCM/APNs و endpoint امن ثبت توکن خاموش می‌ماند.
 
 ## انتشار روی GitHub Pages
 

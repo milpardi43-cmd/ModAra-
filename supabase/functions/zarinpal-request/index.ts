@@ -4,7 +4,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const merchantId = Deno.env.get('ZARINPAL_MERCHANT_ID') ?? '';
-const publicSiteUrl = Deno.env.get('PUBLIC_SITE_URL') ?? 'http://localhost:5173/';
 const sandbox = (Deno.env.get('ZARINPAL_SANDBOX') ?? 'true').toLowerCase() === 'true';
 const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') ?? '*';
 
@@ -42,7 +41,7 @@ Deno.serve(async (request) => {
   const { data: authData, error: authError } = await authClient.auth.getUser();
   if (authError || !authData.user) return json({ error: 'Invalid session' }, 401);
 
-  let body: { address?: string; phone?: string };
+  let body: { address?: string; phone?: string; return_to_app?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -89,9 +88,9 @@ Deno.serve(async (request) => {
     return json({ error: 'Could not create order items' }, 500);
   }
 
-  const callbackUrl = new URL(publicSiteUrl);
-  callbackUrl.searchParams.set('payment', 'zarinpal');
+  const callbackUrl = new URL('/functions/v1/zarinpal-callback', supabaseUrl);
   callbackUrl.searchParams.set('order_id', order.id);
+  if (body.return_to_app === true) callbackUrl.searchParams.set('platform', 'native');
 
   const gatewayResponse = await fetch(`${gatewayHost}/pg/v4/payment/request.json`, {
     method: 'POST',

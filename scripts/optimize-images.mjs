@@ -11,12 +11,12 @@ const optimizedDir = path.join(imageDir, 'optimized');
 const converter = process.env.IMAGEMAGICK_BIN || 'convert';
 
 const directoryJobs = [
-  { directory: 'accessory', widths: [480, 720] },
-  { directory: 'bag', widths: [480, 720] },
-  { directory: 'clothing', widths: [480, 720] },
-  { directory: 'glasses', widths: [480, 720] },
-  { directory: 'pants', widths: [480, 720] },
-  { directory: 'watch', widths: [480, 720] },
+  { directory: 'accessory', widths: [128, 256, 480, 720] },
+  { directory: 'bag', widths: [128, 256, 480, 720] },
+  { directory: 'clothing', widths: [128, 256, 480, 720] },
+  { directory: 'glasses', widths: [128, 256, 480, 720] },
+  { directory: 'pants', widths: [128, 256, 480, 720] },
+  { directory: 'watch', widths: [128, 256, 480, 720] },
   { directory: 'categories', widths: [480, 720] },
 ];
 

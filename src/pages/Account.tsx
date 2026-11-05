@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Package, Clock, CheckCircle, Truck, LogOut, Mail, ShieldCheck } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Package, Clock, CheckCircle, Truck, LogOut, Mail, ShieldCheck, Bell, BellRing } from 'lucide-react';
 import { isDemoMode, supabase, type Order, type OrderItem } from '../lib/supabase';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useAuth } from '../context/AuthContext';
+import { requestPushRegistration, type PushSetupStatus } from '../native/pushNotifications';
 import { formatPrice, formatDateTime, optimizedAsset } from '../lib/format';
 
 type AccountProps = {
   onNavigate: (view: string, param?: string) => void;
+};
+
+const pushStatusText: Record<PushSetupStatus, string> = {
+  'not-native': 'فعال‌سازی اعلان‌ها فقط در نسخهٔ نصب‌شدهٔ اپ انجام می‌شود.',
+  'not-configured': 'اتصال Firebase/APNs و سرویس امن ثبت توکن هنوز تنظیم نشده؛ مجوز سیستم‌عامل درخواست نشد.',
+  'permission-denied': 'مجوز اعلان‌ها داده نشد. در تنظیمات دستگاه می‌توانید آن را تغییر دهید.',
+  'registration-requested': 'درخواست ثبت دستگاه ارسال شد؛ در انتظار ثبت توکن امن.',
+  'registration-failed': 'ثبت اعلان انجام نشد. تنظیمات Native را بررسی کنید.',
+  'token-saved': 'این دستگاه برای دریافت اعلان‌ها ثبت شد.',
+  'token-save-failed': 'ذخیره امن توکن در سرویس اعلان موفق نبود.',
+  'needs-auth': 'برای ثبت این دستگاه ابتدا دوباره وارد حساب شوید.',
 };
 
 const statusConfig: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
@@ -20,6 +33,16 @@ export default function Account({ onNavigate }: AccountProps) {
   const { user, signOut } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushMessage, setPushMessage] = useState<PushSetupStatus | null>(null);
+  const canEnablePush = Capacitor.isNativePlatform() && Boolean(import.meta.env.VITE_PUSH_TOKEN_ENDPOINT);
+
+  const handleEnablePush = async () => {
+    setPushLoading(true);
+    const result = await requestPushRegistration(setPushMessage);
+    setPushMessage(result);
+    setPushLoading(false);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -76,6 +99,29 @@ export default function Account({ onNavigate }: AccountProps) {
             </div>
           </div>
         </div>
+
+        <section className="mb-8 flex flex-col gap-4 rounded-2xl border border-gold-300/25 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between" aria-labelledby="push-preferences-title">
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold-100/70 text-gold-700">
+              <Bell className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 id="push-preferences-title" className="font-bold text-dark-900">اعلان‌های مُدارا</h2>
+              <p className="mt-1 max-w-xl text-xs leading-6 text-dark-500">برای تغییر وضعیت سفارش‌ها و خبرهای فروشگاه. مجوز فقط پس از انتخاب شما درخواست می‌شود.</p>
+              {pushMessage && <p role="status" className="mt-2 text-xs font-semibold text-gold-800">{pushStatusText[pushMessage]}</p>}
+            </div>
+          </div>
+          {canEnablePush ? (
+            <button type="button" disabled={pushLoading} onClick={() => void handleEnablePush()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#211a12] px-4 py-2.5 text-sm font-bold text-[#f0d58e] transition-colors hover:bg-[#392b1a] disabled:opacity-60">
+              <BellRing className="h-4 w-4" />
+              {pushLoading ? 'در حال آماده‌سازی…' : 'فعال‌سازی اعلان‌ها'}
+            </button>
+          ) : (
+            <p className="max-w-xs text-xs leading-5 text-dark-400">
+              {Capacitor.isNativePlatform() ? pushStatusText['not-configured'] : pushStatusText['not-native']}
+            </p>
+          )}
+        </section>
 
         {/* Orders */}
         <div className="flex items-center gap-2 mb-4">

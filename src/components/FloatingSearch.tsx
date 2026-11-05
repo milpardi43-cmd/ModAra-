@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Search, Sparkles, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { formatPrice, optimizedAsset } from '../lib/format';
+import { formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import { PRODUCT_PREVIEW_COLUMNS, type ProductPreview } from '../lib/catalog';
 
 type FloatingSearchProps = {
   onNavigate: (view: string, param?: string) => void;
+  openRequestId?: number;
 };
 
 const quickSearches = ['لباس', 'ساعت', 'کیف', 'اکسسوری'];
 
-export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
+export default function FloatingSearch({ onNavigate, openRequestId = 0 }: FloatingSearchProps) {
   const [visible, setVisible] = useState(false);
   const [hiddenByCampaign, setHiddenByCampaign] = useState(false);
   const [query, setQuery] = useState('');
@@ -18,6 +19,8 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const searchRequestedRef = useRef(false);
 
   useEffect(() => {
     const heading = Array.from(document.querySelectorAll('h2')).find((item) =>
@@ -40,12 +43,21 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
     if (!campaignSection || typeof IntersectionObserver === 'undefined') return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => setHiddenByCampaign(entry.isIntersecting),
+      ([entry]) => setHiddenByCampaign(entry.isIntersecting && !searchRequestedRef.current),
       { threshold: 0 },
     );
     observer.observe(campaignSection);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (openRequestId === 0) return;
+    searchRequestedRef.current = true;
+    setVisible(true);
+    setHiddenByCampaign(false);
+    setShowResults(true);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  }, [openRequestId]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -82,9 +94,9 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
 
   return (
     <div
-      aria-hidden={!visible || hiddenByCampaign}
-      className={`fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 transition-all duration-500 sm:bottom-6 sm:w-[92%] ${
-        visible && !hiddenByCampaign
+      aria-hidden={!visible || (hiddenByCampaign && !searchRequestedRef.current)}
+      className={`fixed bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 transition-all duration-500 sm:bottom-6 sm:w-[92%] ${
+        visible && (!hiddenByCampaign || searchRequestedRef.current)
           ? 'translate-y-0 opacity-100 pointer-events-auto'
           : 'translate-y-20 opacity-0 pointer-events-none'
       }`}
@@ -132,7 +144,7 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
                         className="group flex w-full items-center gap-3 rounded-xl p-2 text-right transition-colors hover:bg-amber-50 focus:bg-amber-50 focus:outline-none"
                       >
                         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-dark-50 ring-1 ring-dark-100">
-                          {p.image_url && <img src={optimizedAsset(p.image_url, 480)} alt={p.name} width={480} height={640} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
+                          {p.image_url && <img src={optimizedAsset(p.image_url, 128)} srcSet={imageSrcSet(p.image_url, [128, 256, 480, 720])} sizes="48px" alt={p.name} width={96} height={128} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-1 text-sm font-semibold text-dark-900">{p.name}</p>
@@ -175,6 +187,7 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-[1.05rem] bg-dark-50/80 px-3 py-2.5">
             <Search className="h-5 w-5 shrink-0 text-amber-600" />
             <input
+              ref={inputRef}
               type="search"
               value={query}
               onChange={(e) => {
@@ -207,6 +220,20 @@ export default function FloatingSearch({ onNavigate }: FloatingSearchProps) {
             )}
           </div>
           <span className="hidden shrink-0 px-2 text-[10px] font-bold text-dark-400 sm:inline">جستجو</span>
+          <button
+            type="button"
+            aria-label="بستن جستجو"
+            onClick={() => {
+              searchRequestedRef.current = false;
+              setVisible(false);
+              setHiddenByCampaign(false);
+              setShowResults(false);
+              setQuery('');
+            }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-dark-500 transition-colors hover:bg-dark-100 sm:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

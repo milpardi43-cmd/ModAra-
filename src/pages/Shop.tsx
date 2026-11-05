@@ -58,6 +58,20 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    if (!showFilters || !window.matchMedia('(max-width: 767px)').matches) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowFilters(false);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [showFilters]);
+
   const maxCatalogPrice = useMemo(() => Math.max(...products.map((product) => product.price), 0), [products]);
   const activeCategoryId = categories.find((category) => category.slug === activeCategory)?.id;
 
@@ -185,8 +199,15 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
         </div>
 
         <div className="flex items-start gap-4 sm:gap-6">
-          <aside className={`${showFilters ? 'block' : 'hidden'} w-full shrink-0 md:block md:w-64`}>
-            <div className="sticky top-24 space-y-4">
+          <aside
+            onClick={() => setShowFilters(false)}
+            className={`${showFilters ? 'fixed inset-0 z-[70] flex items-end bg-dark-950/45 md:static md:block md:bg-transparent' : 'hidden md:block'} w-full shrink-0 md:w-64`}
+          >
+            <div onClick={(event) => event.stopPropagation()} role={showFilters ? 'dialog' : undefined} aria-modal={showFilters ? true : undefined} aria-labelledby={showFilters ? 'shop-filter-title' : undefined} className="max-h-[86dvh] w-full space-y-4 overflow-y-auto rounded-t-[1.75rem] bg-[#faf8f5] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-24px_70px_rgba(20,15,8,0.2)] md:sticky md:top-24 md:max-h-none md:overflow-visible md:rounded-none md:bg-transparent md:p-0 md:pb-0 md:shadow-none">
+              <div className="flex items-center justify-between px-1 md:hidden">
+                <h2 id="shop-filter-title" className="font-bold text-dark-900">فیلترها</h2>
+                <button type="button" onClick={() => setShowFilters(false)} aria-label="بستن فیلترها" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-dark-600 shadow-sm"><X className="h-5 w-5" /></button>
+              </div>
               <div className="card p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="font-bold text-dark-900">فیلترهای پیشرفته</h2>
@@ -225,11 +246,11 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="rounded-2xl border border-dark-100 bg-white p-4"><div className="mb-4 aspect-square rounded-xl shimmer-bg" /><div className="mb-2 h-4 w-3/4 rounded shimmer-bg" /><div className="h-4 w-1/2 rounded shimmer-bg" /></div>)}</div>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">{[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="flex min-h-[76px] items-center gap-2 rounded-xl border border-dark-100 bg-white p-1.5 md:block md:rounded-2xl md:p-4"><div className="h-16 w-14 shrink-0 rounded-lg shimmer-bg md:mb-4 md:h-auto md:w-full md:aspect-square md:rounded-xl" /><div className="min-w-0 flex-1 space-y-2 md:block"><div className="h-3 w-4/5 rounded shimmer-bg md:mb-2 md:h-4 md:w-3/4" /><div className="h-3 w-1/2 rounded shimmer-bg md:h-4" /></div></div>)}</div>
             ) : visibleProducts.length === 0 ? (
               <div className="card flex flex-col items-center justify-center p-10 text-center sm:p-16"><Search className="mb-4 h-16 w-16 text-dark-300" /><p className="mb-2 text-lg font-medium text-dark-700">محصولی با این مشخصات یافت نشد</p><p className="mb-5 text-sm text-dark-400">عبارت جستجو یا فیلترها را تغییر دهید</p><button onClick={clearFilters} className="btn-primary">پاک کردن فیلترها</button></div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} onView={(slug) => onNavigate('product', slug)} />)}</div>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} onView={(slug) => onNavigate('product', slug)} />)}</div>
             )}
           </div>
         </div>

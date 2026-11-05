@@ -11,8 +11,25 @@ const adminClient = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-function redirect(result: 'success' | 'cancelled' | 'failed', orderId: string | null, refId?: string) {
-  const url = new URL(publicSiteUrl);
+function redirect(
+  result: 'success' | 'cancelled' | 'failed',
+  orderId: string | null,
+  refId?: string,
+  nativeReturn = false,
+) {
+  let url = new URL(publicSiteUrl);
+  if (nativeReturn) {
+    const configured = Deno.env.get('MOBILE_RETURN_URL') ?? 'com.modara.app://payment-callback';
+    try {
+      const appUrl = new URL(configured);
+      if (!appUrl.protocol.startsWith('com.') || appUrl.hostname !== 'payment-callback') {
+        throw new Error('MOBILE_RETURN_URL must use the configured app scheme');
+      }
+      url = appUrl;
+    } catch {
+      url = new URL('com.modara.app://payment-callback');
+    }
+  }
   url.searchParams.set('payment', 'zarinpal');
   url.searchParams.set('result', result);
   if (orderId) url.searchParams.set('order_id', orderId);
@@ -29,8 +46,9 @@ Deno.serve(async (request) => {
   const status = params.get('Status');
   const authority = params.get('Authority');
   const orderId = params.get('order_id');
-  if (!orderId) return redirect('failed', null);
-  if (status !== 'OK' || !authority) return redirect('cancelled', orderId);
+  const nativeReturn = params.get('platform') === 'native';
+  if (!orderId) return redirect('failed', null, undefined, nativeReturn);
+  if (status !== 'OK' || !authority) return redirect('cancelled', orderId, undefined, nativeReturn);
 
   const { data: order, error: orderError } = await adminClient
     .from('orders')
@@ -38,10 +56,10 @@ Deno.serve(async (request) => {
     .eq('id', orderId)
     .maybeSingle();
   if (orderError || !order || order.payment_authority !== authority) {
-    return redirect('failed', orderId);
+    return redirect('failed', orderId, undefined, nativeReturn);
   }
 
-  if (order.status === 'paid') return redirect('success', orderId);
+  if (order.status === 'paid') return redirect('success', orderId, undefined, nativeReturn);
 
   const verifyResponse = await fetch(`${gatewayHost}/pg/v4/payment/verify.json`, {
     method: 'POST',
@@ -60,7 +78,7 @@ Deno.serve(async (request) => {
 
   if (!verified) {
     await adminClient.from('orders').update({ status: 'failed', payment_error: `zarinpal:${code ?? 'unknown'}` }).eq('id', order.id).eq('status', 'pending');
-    return redirect('failed', order.id);
+    return redirect('failed', order.id, undefined, nativeReturn);
   }
 
   const { data: markedOrder, error: updateError } = await adminClient
@@ -76,6 +94,6 @@ Deno.serve(async (request) => {
     .select('id')
     .maybeSingle();
 
-  if (updateError || !markedOrder) return redirect('failed', order.id);
-  return redirect('success', order.id, refId);
+  if (updateError || !markedOrder) return redirect('failed', order.id, undefined, nativeReturn);
+  return redirect('success', order.id, refId, nativeReturn);
 });
