@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
 
 const supabaseStub = fileURLToPath(new URL('./src/lib/supabaseJsStub.ts', import.meta.url));
@@ -44,7 +45,8 @@ export default defineConfig(({ command, mode }) => {
    * including Deploy Previews) to the build, so shared links never point at
    * someone else's domain; local builds fall back to the dev server.
    */
-  const buildBase = command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/';
+  const appBase = command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/';
+  const buildBase = appBase;
   const siteUrl = (
     env.SITE_URL ||
     process.env.SITE_URL ||
@@ -68,8 +70,59 @@ export default defineConfig(({ command, mode }) => {
     // The dev server always runs at "/", while the production build defaults to
     // "/Modara/" because GitHub Pages serves this repository under that sub path.
     // Build with BASE_PATH=/ when deploying to a custom domain or root host.
-    base: command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/',
-    plugins: [backendBoundary, siteMeta, react()],
+    base: appBase,
+    plugins: [
+      backendBoundary,
+      siteMeta,
+      react(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+        manifest: {
+          id: appBase,
+          name: 'مُدارا | فروشگاه آنلاین مد و فشن',
+          short_name: 'مُدارا',
+          description: 'فروشگاه آنلاین مُدارا؛ خرید لباس، اکسسوری، عینک و ساعت.',
+          lang: 'fa',
+          dir: 'rtl',
+          start_url: appBase,
+          scope: appBase,
+          display: 'standalone',
+          display_override: ['standalone', 'minimal-ui'],
+          theme_color: '#efeae1',
+          background_color: '#efeae1',
+          categories: ['shopping', 'lifestyle'],
+          icons: [
+            { src: `${appBase}pwa-192x192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: `${appBase}pwa-512x512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: `${appBase}pwa-maskable-512x512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+          shortcuts: [
+            { name: 'فروشگاه مُدارا', short_name: 'فروشگاه', url: `${appBase}#shop` },
+            { name: 'علاقه‌مندی‌های من', short_name: 'علاقه‌مندی‌ها', url: `${appBase}#favorites` },
+          ],
+        },
+        workbox: {
+          clientsClaim: true,
+          skipWaiting: true,
+          cleanupOutdatedCaches: true,
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+          navigateFallbackDenylist: [/^\/api(?:\/|$)/, /^\/.netlify(?:\/|$)/],
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.includes('/images/'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'modara-public-images-v1',
+                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
+        },
+      }),
+    ],
     optimizeDeps: {
       // Pre-bundling Lucide is essential in dev: otherwise the browser walks
       // its ESM barrel file and requests well over a thousand icon modules.

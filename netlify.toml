@@ -42,9 +42,20 @@
   [headers.values]
     Cache-Control = "public, max-age=2592000"
 
-# HTML هرگز کش نشود تا نسخهٔ جدید بلافاصله دیده شود
+# HTML و فایل‌های PWA هرگز کش نشوند تا نصب‌ها نسخهٔ جدید را سریع دریافت کنند
 [[headers]]
   for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 

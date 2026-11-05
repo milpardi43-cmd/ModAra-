@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Heart, Home, LayoutGrid, Menu, Search, ShoppingBag, UserRound, X } from 'lucide-react';
 import ModaraLogo from './ModaraLogo';
+import PwaInstallAction from './PwaInstallAction';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { tapFeedback } from '../native/feedback';
@@ -110,6 +111,9 @@ export default function Header({ onNavigate, onOpenCart, onOpenAuth }: HeaderPro
               <MobileMenuButton icon={LayoutGrid} label="فروشگاه و دسته‌بندی‌ها" onClick={() => navigateAndClose('shop')} />
               <MobileMenuButton icon={Heart} label="علاقه‌مندی‌ها" onClick={() => navigateAndClose('favorites')} />
               <MobileMenuButton icon={UserRound} label={user ? 'حساب کاربری' : 'ورود یا ثبت‌نام'} onClick={() => { setMenuOpen(false); if (user) onNavigate('account'); else onOpenAuth(); }} />
+              <div className="my-1 border-t border-dark-100 pt-1">
+                <PwaInstallAction />
+              </div>
             </nav>
           </>
         )}
