@@ -56,12 +56,12 @@ export default function Favorites({ onNavigate }: FavoritesProps) {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
             {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="flex min-h-[76px] items-center gap-2 rounded-xl bg-white p-1.5 md:aspect-[3/4] md:flex-col md:rounded-3xl md:p-4">
-                <div className="h-14 w-14 shrink-0 animate-pulse rounded-lg bg-dark-100 md:hidden" />
-                <div className="hidden h-full w-full animate-pulse rounded-2xl bg-dark-100 md:block" />
-                <div className="h-3 flex-1 animate-pulse rounded bg-dark-100 md:hidden" />
+              <div key={item} className="rounded-2xl border border-dark-100 bg-white p-4">
+                <div className="mb-4 aspect-square animate-pulse rounded-xl bg-dark-100" />
+                <div className="hidden" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-dark-100" />
               </div>
             ))}
           </div>
@@ -74,7 +74,7 @@ export default function Favorites({ onNavigate }: FavoritesProps) {
             </button>
           </div>
         ) : products.length ? (
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} onView={(slug) => onNavigate('product', slug)} />
             ))}

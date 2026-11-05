@@ -246,11 +246,11 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">{[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="flex min-h-[76px] items-center gap-2 rounded-xl border border-dark-100 bg-white p-1.5 md:block md:rounded-2xl md:p-4"><div className="h-16 w-14 shrink-0 rounded-lg shimmer-bg md:mb-4 md:h-auto md:w-full md:aspect-square md:rounded-xl" /><div className="min-w-0 flex-1 space-y-2 md:block"><div className="h-3 w-4/5 rounded shimmer-bg md:mb-2 md:h-4 md:w-3/4" /><div className="h-3 w-1/2 rounded shimmer-bg md:h-4" /></div></div>)}</div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{[1, 2, 3, 4, 5, 6, 7, 8].map((item) => <div key={item} className="rounded-2xl border border-dark-100 bg-white p-4"><div className="mb-4 aspect-square rounded-xl shimmer-bg" /><div className="contents"><div className="mb-2 h-4 w-3/4 rounded shimmer-bg" /><div className="h-4 w-1/2 rounded shimmer-bg" /></div></div>)}</div>
             ) : visibleProducts.length === 0 ? (
               <div className="card flex flex-col items-center justify-center p-10 text-center sm:p-16"><Search className="mb-4 h-16 w-16 text-dark-300" /><p className="mb-2 text-lg font-medium text-dark-700">محصولی با این مشخصات یافت نشد</p><p className="mb-5 text-sm text-dark-400">عبارت جستجو یا فیلترها را تغییر دهید</p><button onClick={clearFilters} className="btn-primary">پاک کردن فیلترها</button></div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} onView={(slug) => onNavigate('product', slug)} />)}</div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} onView={(slug) => onNavigate('product', slug)} />)}</div>
             )}
           </div>
         </div>

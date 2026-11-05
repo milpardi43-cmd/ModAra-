@@ -347,13 +347,13 @@ export default function Home({ onNavigate }: HomeProps) {
           </div>
 
           {categoryLoading ? (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex min-h-[76px] items-center gap-2 rounded-xl border border-dark-100 bg-white p-1.5 md:block md:rounded-2xl md:p-4">
-                  <div className="h-16 w-14 shrink-0 rounded-lg shimmer-bg md:mb-4 md:h-auto md:w-full md:aspect-square md:rounded-xl" />
-                  <div className="min-w-0 flex-1 space-y-2 md:block">
-                    <div className="h-3 w-4/5 rounded shimmer-bg md:mb-2 md:h-4 md:w-3/4" />
-                    <div className="h-3 w-1/2 rounded shimmer-bg md:h-4" />
+                <div key={i} className="rounded-2xl border border-dark-100 bg-white p-4">
+                  <div className="mb-4 aspect-square rounded-xl shimmer-bg" />
+                  <div className="contents">
+                    <div className="mb-2 h-4 w-3/4 rounded shimmer-bg" />
+                    <div className="h-4 w-1/2 rounded shimmer-bg" />
                   </div>
                 </div>
               ))}
@@ -363,7 +363,7 @@ export default function Home({ onNavigate }: HomeProps) {
               <p className="text-dark-500">محصولاتی برای این دسته‌بندی یافت نشد.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {categoryProducts.map((p, index) => (
                 <Reveal key={p.id} delay={Math.min(index * 0.025, 0.3)} className="min-w-0">
                   <ProductCard product={p} onView={(slug) => onNavigate('product', slug)} />
@@ -432,21 +432,21 @@ export default function Home({ onNavigate }: HomeProps) {
               setFeaturedIsInteracting(false);
             }
           }}
-          className="rounded-2xl border border-gold-200/70 bg-gradient-to-br from-white via-[#fffdf9] to-[#f5efe3] p-2 shadow-[0_24px_70px_-44px_rgba(66,45,18,0.45)] md:rounded-[2rem] md:p-5"
+          className="rounded-[2rem] border border-gold-200/70 bg-gradient-to-br from-white via-[#fffdf9] to-[#f5efe3] p-3 shadow-[0_24px_70px_-44px_rgba(66,45,18,0.45)] sm:p-5"
         >
           {loading ? (
-            <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-0 lg:grid-cols-3">
+            <div className="grid w-full grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((item) => (
-                <div key={item} className="relative w-full md:aspect-[0.58]">
-                  <div className="relative flex min-h-[76px] w-full items-center gap-2 overflow-hidden rounded-xl border border-gold-300/70 bg-white p-1.5 shadow-[0_12px_28px_-20px_rgba(218,175,92,0.3)] md:absolute md:right-0 md:top-0 md:block md:w-[200%] md:origin-top-right md:scale-50 md:rounded-[1.75rem] md:border-2 md:p-3 md:shadow-[0_20px_48px_-30px_rgba(218,175,92,0.35)]">
-                    <div className="h-16 w-14 shrink-0 rounded-lg shimmer-bg md:mb-4 md:h-auto md:w-full md:aspect-[3/4] md:rounded-2xl" />
-                    <div className="min-w-0 flex-1 space-y-2 md:block">
-                      <div className="hidden h-3 w-1/3 rounded shimmer-bg md:mb-3 md:block" />
-                      <div className="h-3 w-4/5 rounded shimmer-bg md:mb-2 md:h-4" />
-                      <div className="hidden h-3 w-2/3 rounded shimmer-bg md:block" />
-                      <div className="flex items-center justify-between md:mt-5">
-                        <div className="h-4 w-2/5 rounded shimmer-bg md:h-5" />
-                        <div className="h-7 w-7 rounded-full shimmer-bg md:h-10 md:w-10" />
+                <div key={item} className="relative aspect-[0.58] w-full">
+                  <div className="absolute right-0 top-0 w-[200%] origin-top-right scale-50 overflow-hidden rounded-[1.75rem] border-2 border-gold-300/70 bg-white p-2 shadow-[0_20px_48px_-30px_rgba(218,175,92,0.35)] sm:p-3">
+                    <div className="mb-4 aspect-[3/4] rounded-2xl shimmer-bg" />
+                    <div className="contents">
+                      <div className="mb-3 h-3 w-1/3 rounded shimmer-bg" />
+                      <div className="mb-2 h-4 w-4/5 rounded shimmer-bg" />
+                      <div className="h-3 w-2/3 rounded shimmer-bg" />
+                      <div className="mt-5 flex items-center justify-between">
+                        <div className="h-5 w-2/5 rounded shimmer-bg" />
+                        <div className="h-10 w-10 rounded-full shimmer-bg" />
                       </div>
                     </div>
                   </div>
@@ -461,20 +461,20 @@ export default function Home({ onNavigate }: HomeProps) {
                 animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, x: -36, scale: 0.97, filter: 'blur(8px)' }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="relative grid w-full grid-cols-1 gap-2 md:grid-cols-2 md:gap-0 lg:grid-cols-3"
+                className="relative grid w-full grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-3"
               >
                 {visibleFeaturedProducts.map((product, index) => (
                   <div
                     key={`${featuredBatch}-${product.id}`}
-                    className="relative w-full md:aspect-[0.58]"
+                    className="relative aspect-[0.58] w-full"
                   >
-                    <div className="relative w-full md:absolute md:right-0 md:top-0 md:w-[200%] md:origin-top-right md:scale-50">
+                    <div className="absolute right-0 top-0 w-[200%] origin-top-right scale-50">
                       <motion.div
                         initial={{ opacity: 0, y: 18 }}
                         animate={{ opacity: 1, y: 0 }}
                         whileHover={{ y: -8, scale: 1.06, zIndex: 10 }}
                         transition={{ duration: 0.3, delay: index * 0.08, ease: 'easeOut' }}
-                        className="group/card relative rounded-xl border border-gold-400/70 bg-gradient-to-b from-gold-100/70 via-white to-gold-100/40 p-1 shadow-[0_12px_28px_-20px_rgba(174,127,44,0.45)] transition-colors duration-300 hover:border-gold-600 md:rounded-[2rem] md:border-2 md:p-1.5 md:shadow-[0_24px_54px_-30px_rgba(174,127,44,0.55)]"
+                        className="group/card relative rounded-[2rem] border-2 border-gold-400/70 bg-gradient-to-b from-gold-100/70 via-white to-gold-100/40 p-1.5 shadow-[0_24px_54px_-30px_rgba(174,127,44,0.55)] transition-colors duration-300 hover:border-gold-600"
                       >
                         <div className="pointer-events-none absolute -inset-2 -z-10 rounded-[2rem] bg-gradient-to-br from-gold-300/65 via-amber-500/20 to-transparent opacity-35 blur-xl transition-opacity duration-500 group-hover/card:opacity-90" />
                         <ProductCard product={product} onView={(slug) => onNavigate('product', slug)} />

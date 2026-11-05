@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Search, Sparkles, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { formatPrice, optimizedAsset } from '../lib/format';
 import { PRODUCT_PREVIEW_COLUMNS, type ProductPreview } from '../lib/catalog';
 
 type FloatingSearchProps = {
@@ -144,7 +144,7 @@ export default function FloatingSearch({ onNavigate, openRequestId = 0 }: Floati
                         className="group flex w-full items-center gap-3 rounded-xl p-2 text-right transition-colors hover:bg-amber-50 focus:bg-amber-50 focus:outline-none"
                       >
                         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-dark-50 ring-1 ring-dark-100">
-                          {p.image_url && <img src={optimizedAsset(p.image_url, 128)} srcSet={imageSrcSet(p.image_url, [128, 256, 480, 720])} sizes="48px" alt={p.name} width={96} height={128} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
+                          {p.image_url && <img src={optimizedAsset(p.image_url, 480)} alt={p.name} width={480} height={640} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="line-clamp-1 text-sm font-semibold text-dark-900">{p.name}</p>

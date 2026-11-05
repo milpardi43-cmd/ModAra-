@@ -71,47 +71,46 @@ export default function Lookbook({ onNavigate }: LookbookProps) {
       <div className="relative isolate overflow-hidden rounded-[2.5rem] border border-[#211a12]/10 bg-[#201a13] p-3 shadow-[0_28px_80px_-48px_rgba(45,31,13,0.62)] sm:p-5 lg:p-6">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_90%_0%,rgba(212,164,76,0.16),transparent_38%),radial-gradient(ellipse_at_0%_100%,rgba(181,120,40,0.10),transparent_40%)]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-[9px] rounded-[2rem] border border-white/[0.07] sm:inset-3" />
-        <div className="relative -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-2 scrollbar-hide md:mx-0 md:grid md:auto-rows-[210px] md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 md:pb-0 lg:auto-rows-[230px]">
+        <div className="relative grid auto-rows-[150px] grid-cols-2 gap-2.5 sm:auto-rows-[190px] sm:gap-4 md:auto-rows-[210px] md:grid-cols-4 lg:auto-rows-[230px]">
           {loading
             ? Array.from({ length: 8 }, (_, index) => (
-                <div key={index} className={`flex h-[72px] w-[min(11rem,68vw)] shrink-0 snap-start items-center gap-2 rounded-xl p-2 opacity-70 md:block md:h-auto md:w-auto md:rounded-[1.35rem] md:p-0 ${spanPattern[index]}`}>
-                <div className="h-14 w-14 shrink-0 rounded-lg shimmer-bg md:hidden" />
-                <div className="h-3 flex-1 rounded shimmer-bg md:hidden" />
-                <div className="hidden h-full w-full rounded-[1.35rem] shimmer-bg md:block" />
+                <div key={index} className={`shimmer-bg rounded-[1.35rem] opacity-70 ${spanPattern[index]}`}>
+                <div className="hidden" />
+                <div className="hidden" />
+                <div className="hidden" />
               </div>
               ))
             : tiles.map((product, index) => (
-                <Reveal key={product.id} delay={0.05 * index} className={`w-[min(11rem,68vw)] shrink-0 snap-start md:w-auto md:shrink ${spanPattern[index % spanPattern.length]}`}>
-                  <article className="group/look relative flex h-[72px] w-full items-center overflow-hidden rounded-xl border border-white/10 bg-[#30251b] text-right shadow-[0_8px_22px_-14px_rgba(0,0,0,0.7)] transition-all duration-500 hover:-translate-y-1 hover:border-gold-300/60 hover:shadow-[0_30px_60px_-34px_rgba(218,174,83,0.38)] md:block md:h-full md:w-full md:rounded-[1.35rem] md:shadow-[0_20px_50px_-34px_rgba(0,0,0,0.9)]">
+                <Reveal key={product.id} delay={0.05 * index} className={spanPattern[index % spanPattern.length]}>
+                  <article className="group/look relative block h-full w-full overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#30251b] text-right shadow-[0_20px_50px_-34px_rgba(0,0,0,0.9)] transition-all duration-500 hover:-translate-y-1 hover:border-gold-300/60 hover:shadow-[0_30px_60px_-34px_rgba(218,174,83,0.38)]">
                     <button
                       type="button"
                       onClick={() => onNavigate('product', product.slug)}
                       aria-label={`مشاهده ${product.name}`}
-                      className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 md:rounded-[1.35rem]"
+                      className="absolute inset-0 z-0 rounded-[1.35rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
                     />
                     <img
-                      src={optimizedAsset(product.image_url, 128)}
-                      srcSet={imageSrcSet(product.image_url, [128, 256, 480, 720])}
-                      sizes="(min-width: 768px) 25vw, 56px"
-                      alt=""
-                      aria-hidden="true"
-                      width={120}
-                      height={160}
+                      src={optimizedAsset(product.image_url, 480)}
+                      srcSet={imageSrcSet(product.image_url, [480, 720])}
+                      sizes="(min-width: 768px) 25vw, 50vw"
+                      alt={product.name}
+                      width={480}
+                      height={640}
                       loading="lazy"
                       decoding="async"
-                      className="pointer-events-none relative h-14 w-14 shrink-0 object-cover transition-transform duration-[1100ms] ease-out group-hover/look:scale-[1.07] md:absolute md:inset-0 md:h-full md:w-full"
+                      className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-[1100ms] ease-out group-hover/look:scale-[1.07]"
                     />
-                    <span aria-hidden="true" className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-[#100c08]/90 via-[#100c08]/10 to-transparent opacity-80 transition-opacity duration-500 group-hover/look:opacity-100 md:block" />
-                    <span aria-hidden="true" className="pointer-events-none absolute inset-3 hidden rounded-[1.05rem] border border-white/0 transition-colors duration-500 group-hover/look:border-white/35 md:inset-4 md:block" />
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#100c08]/90 via-[#100c08]/10 to-transparent opacity-80 transition-opacity duration-500 group-hover/look:opacity-100" />
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-3 rounded-[1.05rem] border border-white/0 transition-colors duration-500 group-hover/look:border-white/35 sm:inset-4" />
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute left-4 top-4 hidden h-10 w-10 translate-y-1 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white opacity-0 backdrop-blur-sm transition-all duration-500 group-hover/look:translate-y-0 group-hover/look:opacity-100 md:flex"
+                      className="pointer-events-none absolute left-4 top-4 flex h-10 w-10 translate-y-1 items-center justify-center rounded-full border border-white/25 bg-black/20 text-white opacity-0 backdrop-blur-sm transition-all duration-500 group-hover/look:translate-y-0 group-hover/look:opacity-100"
                     >
                       <ArrowUpLeft className="h-4 w-4" />
                     </span>
-                    <span className="pointer-events-none relative z-[1] flex min-w-0 flex-1 flex-col items-start p-2 transition-transform duration-500 md:absolute md:inset-x-0 md:bottom-0 md:block md:translate-y-1 md:p-4 md:group-hover/look:translate-y-0 lg:p-5">
-                      <span className="block w-full truncate text-xs font-bold text-white md:text-[15px]">{product.name}</span>
-                      <span className="mt-1 block text-[11px] font-semibold text-gold-300 md:text-sm">{formatPrice(product.price)}</span>
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 block translate-y-1 p-4 transition-transform duration-500 group-hover/look:translate-y-0 sm:p-5">
+                      <span className="block truncate text-sm font-bold text-white sm:text-[15px]">{product.name}</span>
+                      <span className="mt-1 block text-xs font-semibold text-gold-300 sm:text-sm">{formatPrice(product.price)}</span>
                     </span>
                     <button
                       type="button"

@@ -123,7 +123,7 @@ export default function NewArrivals({ onNavigate }: NewArrivalsProps) {
               )}
             </div>
 
-            <div className="mx-auto w-full max-w-[320px] rounded-2xl border border-gold-400/70 bg-white p-1 shadow-[0_18px_45px_-22px_rgba(133,94,35,0.55)] md:rounded-[1.75rem] md:border-2 md:p-2">
+            <div className="mx-auto w-full max-w-[320px] rounded-[1.75rem] border-2 border-gold-400/70 bg-white p-1.5 shadow-[0_18px_45px_-22px_rgba(133,94,35,0.55)] sm:p-2">
               <div className="mb-2 flex items-center justify-center gap-2 rounded-full bg-[#211a12] px-3 py-1.5 text-[10px] font-bold tracking-wide text-gold-200 sm:text-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold-400 shadow-[0_0_10px_rgba(216,173,87,0.8)]" />
                 پیش‌نمایش محصول
@@ -146,7 +146,7 @@ export default function NewArrivals({ onNavigate }: NewArrivalsProps) {
                   </motion.div>
                 </AnimatePresence>
               ) : (
-                <div className="flex min-h-[76px] items-center justify-center rounded-xl bg-[#f3ede0] px-3 text-center text-xs text-dark-400 md:aspect-[3/4] md:rounded-2xl md:text-sm">
+                <div className="flex aspect-[3/4] items-center justify-center rounded-2xl bg-[#f3ede0] text-sm text-dark-400">
                   محصولی برای نمایش وجود ندارد
                 </div>
               )}
@@ -250,19 +250,19 @@ function ProductCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="flex min-h-[76px] items-center gap-2 overflow-hidden rounded-xl bg-[#fffdf9] p-1.5 shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] md:block md:rounded-[1.75rem] md:p-0"
+      className="overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07]"
     >
-      <div className="h-16 w-14 shrink-0 rounded-lg shimmer-bg md:mb-4 md:h-auto md:w-full md:aspect-[3/4] md:rounded-none" />
-      <div className="min-w-0 flex-1 space-y-2 md:p-4 md:pt-0">
-        <div className="hidden items-center justify-between md:mb-2 md:flex">
+      <div className="shimmer-bg aspect-[3/4]" />
+      <div className="p-3 sm:p-4">
+        <div className="mb-2 flex items-center justify-between">
           <div className="h-3 w-1/3 rounded shimmer-bg" />
           <div className="h-2 w-1/4 rounded shimmer-bg" />
         </div>
-        <div className="h-3 w-4/5 rounded shimmer-bg md:mb-2 md:h-4" />
-        <div className="hidden h-3 w-2/3 rounded shimmer-bg md:block" />
-        <div className="flex items-center justify-between gap-2 md:mt-5">
-          <div className="h-4 w-2/5 rounded shimmer-bg md:h-5" />
-          <div className="h-7 w-7 rounded-full shimmer-bg md:h-10 md:w-10" />
+        <div className="shimmer-bg mb-2 h-4 w-4/5 rounded" />
+        <div className="h-3 w-2/3 rounded shimmer-bg" />
+        <div className="mt-5 flex items-center justify-between">
+          <div className="h-5 w-2/5 rounded shimmer-bg" />
+          <div className="h-10 w-10 rounded-full shimmer-bg" />
         </div>
       </div>
     </div>

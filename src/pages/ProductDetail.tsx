@@ -436,7 +436,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-dark-900 mb-6">محصولات مرتبط</h2>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
               {related.map((p) => (
                 <div key={p.id} onClick={() => onNavigate('product', p.slug)}>
                   <ProductCardLite product={p} />
@@ -463,37 +463,37 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
 }
 
 function ProductCardLite({ product }: { product: ProductPreview }) {
-  const imageUrl = optimizedAsset(product.image_url, 128);
-  const imageSet = imageSrcSet(product.image_url, [128, 256, 480, 720]);
+  const imageUrl = optimizedAsset(product.image_url, 480);
+  const imageSet = imageSrcSet(product.image_url, [480, 720]);
   const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(product.id);
 
   return (
-    <article className="group relative flex h-full min-h-[76px] cursor-pointer flex-row overflow-hidden rounded-xl bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40 md:min-h-0 md:block md:rounded-[1.75rem]">
+    <article className="group relative h-full cursor-pointer overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_32px_64px_-24px_rgba(94,65,35,0.38)] hover:ring-gold-500/40">
       <span
         aria-hidden="true"
         className="absolute inset-x-0 top-0 z-20 h-[3px] origin-right scale-x-0 bg-gradient-to-l from-gold-300 via-gold-500 to-gold-700 transition-transform duration-700 ease-out group-hover:scale-x-100"
       />
-      <div className="relative h-16 w-14 shrink-0 overflow-hidden bg-[#f3ede0] md:h-auto md:w-full md:aspect-[3/4]">
+      <div className="relative aspect-[3/4] overflow-hidden bg-[#f3ede0]">
         <img
           src={imageUrl}
           srcSet={imageSet}
-          sizes="(min-width: 1024px) 300px, (min-width: 640px) 33vw, 56px"
+          sizes="(min-width: 1024px) 300px, (min-width: 640px) 33vw, 50vw"
           alt={product.name}
-          width={120}
-          height={160}
+          width={480}
+          height={640}
           loading="lazy"
           decoding="async"
           className="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-110"
         />
         <span
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 hidden h-1/2 bg-gradient-to-t from-[#120d08]/50 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 md:block"
+          className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#120d08]/50 via-[#120d08]/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 hidden w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%] md:block"
+          className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -translate-x-[190%] -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-[430%]"
         />
         <button
           type="button"
@@ -508,40 +508,40 @@ function ProductCardLite({ product }: { product: ProductPreview }) {
         >
           <Heart className={`h-3.5 w-3.5 ${favorite ? 'fill-current' : ''}`} />
         </button>
-        <div className="absolute right-1 top-1 z-10 flex items-center gap-0.5 rounded-full border border-white/20 bg-[#120d08]/55 px-1 py-0.5 text-[8px] font-bold text-white shadow-md backdrop-blur-md md:right-3 md:top-3 md:gap-1.5 md:px-2.5 md:py-1 md:text-xs md:shadow-lg">
-          <Star className="h-2.5 w-2.5 fill-gold-300 text-gold-300 md:h-3.5 md:w-3.5" />
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full border border-white/20 bg-[#120d08]/45 px-2.5 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-md">
+          <Star className="h-3.5 w-3.5 fill-gold-300 text-gold-300" />
           {faNumber(product.rating)}
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-center p-1.5 sm:p-5 md:block">
+      <div className="p-4 sm:p-5">
         <span
           dir="ltr"
           aria-hidden="true"
-          className="hidden font-display text-[8px] font-semibold tracking-[0.34em] text-[#211a12]/35 sm:block"
+          className="font-display text-[8px] font-semibold tracking-[0.34em] text-[#211a12]/35"
         >
           MODARA
         </span>
-        <h3 className="mt-0 line-clamp-2 text-[13px] font-extrabold leading-4 text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:mt-1.5 sm:line-clamp-1 sm:text-[15px]">
+        <h3 className="mt-1.5 line-clamp-1 text-sm font-extrabold text-[#211a12] transition-colors duration-300 group-hover:text-gold-700 sm:text-[15px]">
           {product.name}
         </h3>
-        <div aria-hidden="true" className="my-3.5 hidden items-center gap-2 sm:flex">
+        <div aria-hidden="true" className="my-3.5 flex items-center gap-2">
           <span className="h-px flex-1 bg-gradient-to-l from-gold-500/50 to-transparent" />
           <span className="h-1.5 w-1.5 rotate-45 bg-gold-500" />
           <span className="h-px w-5 bg-gold-500/30" />
         </div>
-        <div className="flex items-end justify-between gap-1 sm:gap-3">
-          <p className="flex min-w-0 flex-col items-start gap-0.5 leading-none sm:flex-row sm:items-baseline sm:gap-1.5">
-            <span className="text-xs font-black tracking-tight text-[#211a12] sm:text-lg">
+        <div className="flex items-end justify-between gap-3">
+          <p className="flex items-baseline gap-1.5 leading-none">
+            <span className="text-base font-black tracking-tight text-[#211a12] sm:text-lg">
               {faNumber(product.price)}
             </span>
-            <span className="text-[9px] font-bold text-gold-700 sm:text-[11px]">تومان</span>
+            <span className="text-[11px] font-bold text-gold-700">تومان</span>
           </p>
           <span
             aria-hidden="true"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700 ring-1 ring-gold-500/25 transition-all duration-300 group-hover:bg-[#171208] group-hover:text-gold-200 sm:h-9 sm:w-9"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold-50 text-gold-700 ring-1 ring-gold-500/25 transition-all duration-300 group-hover:bg-[#171208] group-hover:text-gold-200"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-0.5 sm:h-4 sm:w-4" />
+            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
           </span>
         </div>
       </div>
