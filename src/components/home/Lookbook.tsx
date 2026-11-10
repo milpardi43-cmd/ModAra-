@@ -62,7 +62,7 @@ export default function Lookbook({ onNavigate }: LookbookProps) {
         eyebrow="لوک‌بوک این فصل"
         eyebrowEn="SHOP THE LOOK"
         title="استایل‌ها، آمادهٔ خرید"
-        description="قطعه‌های برگزیدهٔ این فصل از نگاه دوربین ما؛ روی هر تصویر بزنید تا همان محصول را ببینید."
+        description="محصولات منتخب این فصل؛ روی هر تصویر بزنید تا همان کالا را ببینید."
       />
 
       <div className="relative isolate overflow-hidden rounded-[2.5rem] border border-[#211a12]/10 bg-[#201a13] p-3 shadow-[0_28px_80px_-48px_rgba(45,31,13,0.62)] sm:p-5 lg:p-6">

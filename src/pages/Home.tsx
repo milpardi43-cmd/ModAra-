@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt, Glasses, Watch, ShoppingBag, Gem, Package, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt, Glasses, Watch, ShoppingBag, Gem, Package } from 'lucide-react';
 import type { Product, Category } from '../lib/supabase';
 import {
   getCategories,
@@ -12,6 +12,7 @@ import ProductCard from '../components/ProductCard';
 import BrandSignature from '../components/BrandSignature';
 import RackHero from '../components/RackHero';
 import PromoSections from '../components/home/PromoSections';
+import StyleEditorial from '../components/home/StyleEditorial';
 import DeferredMount from '../components/DeferredMount';
 import { Reveal } from '../components/home/SectionHeading';
 
@@ -245,132 +246,123 @@ export default function Home({ onNavigate }: HomeProps) {
 
       <PromoSections onNavigate={onNavigate} />
 
-      {/* Categories */}
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      {/* Women's and men's editorial looks establish the collection architecture. */}
+      <StyleEditorial onNavigate={onNavigate} />
+
+      {/* Categories and selected products: category selector becomes a sidebar without changing the catalogue or copy. */}
+      <section ref={categorySectionRef} className="mx-auto max-w-7xl scroll-mt-20 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="mb-8 text-center sm:mb-10">
           <BrandSignature inline label="THE COLLECTIONS" text="کالکشن‌های مُدارا" highlight="" tone="dark" size="compact" className="mx-auto mb-3" />
           <h2 className="mb-2 text-2xl font-bold text-dark-900 sm:text-3xl">دسته‌بندی محصولات</h2>
           <p className="text-sm text-dark-500 sm:text-base">روی هر دسته‌بندی کلیک کنید تا محصولات آن را ببینید</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-          {categories.map((cat, i) => {
-            const Icon = iconMap[cat.icon || ''] || Shirt;
-            const isActive = activeCategory === cat.slug;
-            return (
-              <Reveal key={cat.id} delay={i * 0.035} className="h-full">
-                <button
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => handleCategoryClick(cat.slug)}
-                  className={`group relative h-full w-full overflow-hidden rounded-2xl border transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_24px_44px_-24px_rgba(130,91,36,0.38)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 ${
-                    isActive
-                      ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-xl shadow-amber-500/10'
-                      : 'border-dark-100 bg-white'
-                  }`}
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden bg-dark-50">
-                    <img
-                      src={optimizedAsset(categoryImages[cat.slug], 480)}
-                      srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                      sizes="(min-width: 1024px) 190px, (min-width: 640px) 33vw, 50vw"
-                      alt={cat.name}
-                      width={480}
-                      height={640}
-                      loading="lazy"
-                      decoding="async"
-                      className={`h-full w-full object-cover transition-transform duration-700 ease-out ${isActive ? 'scale-[1.045]' : 'group-hover:scale-[1.045]'}`}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-dark-950/75 via-dark-950/5 to-transparent" />
-                    <span aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-[0.9rem] border border-white/0 transition-colors duration-500 group-hover:border-white/35 group-focus-visible:border-white/50" />
-                    <span
-                      aria-hidden="true"
-                      className="absolute left-3 top-3 flex h-8 w-8 translate-y-1 items-center justify-center rounded-full border border-white/25 bg-[#171208]/30 text-gold-100 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-7">
+          <aside aria-label="دسته‌بندی محصولات" className="min-w-0 rounded-[1.75rem] border border-[#8b6a3f]/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ef] to-[#f5ecdd] p-3 shadow-[0_18px_55px_-38px_rgba(76,56,33,0.55)] sm:p-4 lg:sticky lg:top-24">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
+              {categories.map((cat, i) => {
+                const Icon = iconMap[cat.icon || ''] || Shirt;
+                const isActive = activeCategory === cat.slug;
+                return (
+                  <Reveal key={cat.id} delay={i * 0.035} className="shrink-0 lg:w-full">
+                    <button
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => handleCategoryClick(cat.slug)}
+                      className={`group relative flex min-h-[74px] w-[172px] items-center gap-3 overflow-hidden rounded-2xl border p-2 text-right transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[190px] lg:min-h-[72px] lg:w-full ${
+                        isActive
+                          ? 'border-[#9b7138]/45 bg-white shadow-[0_12px_26px_-18px_rgba(112,77,34,0.65)] ring-1 ring-[#c59b5b]/30'
+                          : 'border-transparent bg-white/55 hover:border-[#c9a66e]/35 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(112,77,34,0.65)]'
+                      }`}
                     >
-                      <ArrowLeft className="h-4 w-4" />
-                    </span>
-                    {isActive && (
-                      <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg">
-                        <X className="h-4 w-4" />
-                      </div>
-                    )}
-                    <div className="absolute bottom-0 right-0 left-0 p-3 text-center">
-                      <div className="mb-1.5 flex justify-center">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-white transition-all duration-500 group-hover:scale-105 group-hover:bg-gold-500/80 group-hover:text-[#211a12] group-hover:shadow-[0_8px_22px_-10px_rgba(226,181,92,0.8)]">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                      </div>
-                      <span className="font-semibold text-white text-sm">{cat.name}</span>
-                    </div>
-                  </div>
-                </button>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Selected category products; clothing is the sample category shown by default */}
-      {activeCategory && (
-        <section ref={categorySectionRef} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 scroll-mt-20">
-          <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <BrandSignature
-                inline
-                label="THE COLLECTION"
-                text="از کالکشن‌های مُدارا،"
-                highlight={activeCat?.name || 'لباس'}
-                tone="dark"
-                size="compact"
-                className="mb-2"
-              />
-              <h2 className="mb-1 text-2xl font-bold text-dark-900 sm:text-3xl">
-                محصولات {activeCat?.name || 'لباس'}
-              </h2>
-              <p className="text-dark-500">
-                {categoryLoading
-                  ? 'در حال بارگذاری...'
-                  : `${categoryProducts.length} محصول در این دسته‌بندی`}
-              </p>
+                      <span className="relative h-[56px] w-[48px] shrink-0 overflow-hidden rounded-xl bg-[#e8dcc7] sm:w-[54px]">
+                        <img
+                          src={optimizedAsset(categoryImages[cat.slug], 480)}
+                          srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
+                          sizes="54px"
+                          alt=""
+                          width={54}
+                          height={72}
+                          loading="lazy"
+                          decoding="async"
+                          className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
+                        />
+                        <span className="absolute inset-0 bg-gradient-to-t from-[#211a12]/35 to-transparent" />
+                      </span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? 'bg-[#79582e] text-[#fff8e9]' : 'bg-[#f5eddf] text-[#8b6a3f] group-hover:bg-[#ead9bb]'}`}>
+                          <Icon className="h-[18px] w-[18px]" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#392c1b]">{cat.name}</span>
+                        <ArrowLeft className={`h-4 w-4 shrink-0 transition-all ${isActive ? 'translate-x-0 text-[#9a7138]' : 'translate-x-1 text-[#a58c69] opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} aria-hidden="true" />
+                      </span>
+                      {isActive && <span aria-hidden="true" className="absolute inset-y-3 right-0 w-1 rounded-l-full bg-gradient-to-b from-[#d8b875] to-[#8b642e]" />}
+                    </button>
+                  </Reveal>
+                );
+              })}
             </div>
-            {activeCategory !== 'clothing' && (
-              <button
-                onClick={() => {
-                  setActiveCategory('clothing');
-                  fetchCategoryProducts('clothing');
-                }}
-                className="flex w-fit items-center gap-2 rounded-xl border border-dark-200 bg-white px-4 py-2 text-sm font-medium text-dark-700 transition-all hover:border-amber-300 hover:text-amber-700"
-              >
-                <Shirt className="h-4 w-4" />
-                بازگشت به لباس
-              </button>
-            )}
-          </div>
+          </aside>
 
-          {categoryLoading ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="rounded-2xl border border-dark-100 bg-white p-4">
-                  <div className="aspect-square rounded-xl shimmer-bg mb-4" />
-                  <div className="h-4 w-3/4 rounded shimmer-bg mb-2" />
-                  <div className="h-4 w-1/2 rounded shimmer-bg" />
+          {activeCategory && (
+            <div className="min-w-0">
+              <div className="mb-6 flex flex-col gap-3 rounded-[1.5rem] border border-[#8b6a3f]/10 bg-white/80 p-4 shadow-[0_14px_38px_-32px_rgba(76,56,33,0.45)] sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-5">
+                <div>
+                  <BrandSignature
+                    inline
+                    label="THE COLLECTION"
+                    text="از کالکشن‌های مُدارا،"
+                    highlight={activeCat?.name || 'لباس'}
+                    tone="dark"
+                    size="compact"
+                    className="mb-2"
+                  />
+                  <h2 className="mb-1 text-2xl font-bold text-dark-900 sm:text-3xl">
+                    محصولات {activeCat?.name || 'لباس'}
+                  </h2>
+                  <p className="text-dark-500">
+                    {categoryLoading
+                      ? 'در حال بارگذاری...'
+                      : `${categoryProducts.length} محصول در این دسته‌بندی`}
+                  </p>
                 </div>
-              ))}
-            </div>
-          ) : categoryProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-dark-500">محصولاتی برای این دسته‌بندی یافت نشد.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {categoryProducts.map((p, index) => (
-                <Reveal key={p.id} delay={Math.min(index * 0.025, 0.3)} className="min-w-0">
-                  <ProductCard product={p} onView={(slug) => onNavigate('product', slug)} />
-                </Reveal>
-              ))}
+                {activeCategory !== 'clothing' && (
+                  <button
+                    onClick={() => {
+                      setActiveCategory('clothing');
+                      fetchCategoryProducts('clothing');
+                    }}
+                    className="flex w-fit items-center gap-2 rounded-xl border border-dark-200 bg-white px-4 py-2 text-sm font-medium text-dark-700 transition-all hover:border-amber-300 hover:text-amber-700"
+                  >
+                    <Shirt className="h-4 w-4" />
+                    بازگشت به لباس
+                  </button>
+                )}
+              </div>
+
+              {categoryLoading ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="rounded-2xl border border-dark-100 bg-white p-4"><div className="mb-4 aspect-square rounded-xl shimmer-bg" /><div className="mb-2 h-4 w-3/4 rounded shimmer-bg" /><div className="h-4 w-1/2 rounded shimmer-bg" /></div>
+                  ))}
+                </div>
+              ) : categoryProducts.length === 0 ? (
+                <div className="rounded-2xl border border-dark-100 bg-white px-5 py-16 text-center">
+                  <p className="text-dark-500">محصولاتی برای این دسته‌بندی یافت نشد.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-3">
+                  {categoryProducts.map((p, index) => (
+                    <Reveal key={p.id} delay={Math.min(index * 0.025, 0.3)} className="min-w-0">
+                      <ProductCard product={p} onView={(slug) => onNavigate('product', slug)} />
+                    </Reveal>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Editorial collections */}
       <DeferredSection minHeight={780}>

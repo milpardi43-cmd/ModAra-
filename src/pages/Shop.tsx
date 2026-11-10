@@ -12,6 +12,19 @@ type ShopProps = {
   initialCategory?: string;
 };
 
+type Audience = 'all' | 'women' | 'men';
+
+function audienceFromRoute(value: string | undefined): Audience {
+  return value === 'women' || value === 'men' ? value : 'all';
+}
+
+function audienceForProduct(product: Product): Audience {
+  const identity = `${product.slug} ${product.name}`.toLocaleLowerCase('fa-IR');
+  if (/(women|womens|woman|female|زنانه|دخترانه)/i.test(identity)) return 'women';
+  if (/(?:^|[-\s])mens?(?:$|[-\s])|مردانه|پسرانه/i.test(identity)) return 'men';
+  return 'all';
+}
+
 type PriceInputProps = {
   value: number | null;
   onChange: (value: number | null) => void;
@@ -24,7 +37,10 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory ?? null);
+  const [audience, setAudience] = useState<Audience>(audienceFromRoute(initialCategory));
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    audienceFromRoute(initialCategory) === 'all' ? initialCategory ?? null : null,
+  );
   const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'price-asc' | 'price-desc' | 'newest'>('relevance');
   const [priceMin, setPriceMin] = useState<number | null>(null);
   const [priceMax, setPriceMax] = useState<number | null>(null);
@@ -38,7 +54,9 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
   }, [searchInput]);
 
   useEffect(() => {
-    setActiveCategory(initialCategory ?? null);
+    const routeAudience = audienceFromRoute(initialCategory);
+    setAudience(routeAudience);
+    setActiveCategory(routeAudience === 'all' ? initialCategory ?? null : null);
   }, [initialCategory]);
 
   useEffect(() => {
@@ -66,12 +84,14 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
     const filtered = products.filter((product) => {
       const searchableText = `${product.name} ${product.description || ''}`.toLocaleLowerCase('fa-IR');
       const matchesSearch = !needle || searchableText.includes(needle);
+      const productAudience = audienceForProduct(product);
+      const matchesAudience = audience === 'all' || productAudience === 'all' || productAudience === audience;
       const matchesCategory = !activeCategory || product.category_id === activeCategoryId || product.category_id === `cat-${activeCategory}`;
       const matchesMinPrice = priceMin === null || product.price >= priceMin;
       const matchesMaxPrice = priceMax === null || product.price <= priceMax;
       const matchesRating = product.rating >= minRating;
       const matchesStock = !inStockOnly || product.stock > 0;
-      return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice && matchesRating && matchesStock;
+      return matchesSearch && matchesAudience && matchesCategory && matchesMinPrice && matchesMaxPrice && matchesRating && matchesStock;
     });
 
     return filtered.sort((a, b) => {
@@ -88,13 +108,14 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
       }
       return b.rating - a.rating;
     });
-  }, [activeCategory, activeCategoryId, inStockOnly, minRating, priceMax, priceMin, products, search, sortBy]);
+  }, [activeCategory, activeCategoryId, audience, inStockOnly, minRating, priceMax, priceMin, products, search, sortBy]);
 
-  const activeFilterCount = [activeCategory, priceMin !== null, priceMax !== null, minRating > 0, inStockOnly].filter(Boolean).length;
+  const activeFilterCount = [activeCategory, audience !== 'all', priceMin !== null, priceMax !== null, minRating > 0, inStockOnly].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearchInput('');
     setSearch('');
+    setAudience('all');
     setActiveCategory(null);
     setPriceMin(null);
     setPriceMax(null);
@@ -154,7 +175,47 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <Breadcrumbs items={[{ label: activeCategory ? categories.find((category) => category.slug === activeCategory)?.name || 'فروشگاه' : 'فروشگاه' }]} onNavigate={onNavigate} />
+        <Breadcrumbs
+          items={[
+            {
+              label: activeCategory
+                ? categories.find((category) => category.slug === activeCategory)?.name || 'فروشگاه'
+                : audience === 'women'
+                  ? 'کالکشن زنانه'
+                  : audience === 'men'
+                    ? 'کالکشن مردانه'
+                    : 'فروشگاه',
+            },
+          ]}
+          onNavigate={onNavigate}
+        />
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#8b6a3f]/15 bg-[#fbf7ef] p-3 sm:p-4">
+          <p className="text-sm font-bold text-[#211a12]">انتخاب کالکشن</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="فیلتر بر اساس کالکشن">
+            {[
+              { value: 'all' as const, label: 'همه' },
+              { value: 'women' as const, label: 'زنانه' },
+              { value: 'men' as const, label: 'مردانه' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={audience === option.value}
+                onClick={() => {
+                  setAudience(option.value);
+                  setActiveCategory(null);
+                }}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
+                  audience === option.value
+                    ? 'border-[#6f4d24] bg-[#6f4d24] text-white'
+                    : 'border-[#8b6a3f]/20 bg-white text-[#4c3821] hover:border-[#8b6a3f]/50'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div id="shop-filters" className="mb-6 flex scroll-mt-24 flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-dark-400" />
