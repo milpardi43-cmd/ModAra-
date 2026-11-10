@@ -16,7 +16,7 @@ type RackItem = {
   slug: string;
   /** Accessible name. */
   name: string;
-  /** What hangs on the rail: the profile when it has been shot. */
+  /** Complete coordinated outfit: top, matching lower garment and shoes. */
   image: string;
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
@@ -31,10 +31,13 @@ type RackItem = {
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** Air between two hangers. */
 const PIECE_GAP = 6;
-/** Never shrink a piece below this; below it the row scrolls instead. */
-const MIN_PIECE_HEIGHT = 104;
-/** And never let a short catalogue stretch them into giants. */
-const MAX_PIECE_HEIGHT = 220;
+/** Keep complete coordinated looks readable; the rail scrolls rather than shrinking them. */
+const MIN_PIECE_HEIGHT = 230;
+const MAX_PIECE_HEIGHT = 280;
+const outfitAspectOverrides: Record<string, number> = {
+  'denim-jacket-men': 536 / 960,
+  'wool-blazer-navy-men': 640 / 857,
+};
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -62,7 +65,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Hang each product's matching front garment cutout; no extra imagery or props. */
+        /* Use the full, product-matched outfit cut-out for this rack slot. */
         const hanging = products
           .map((product) => {
             const garment = hangerFor(product.slug);
@@ -71,15 +74,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               id: product.id,
               slug: product.slug,
               name: product.name,
-              image: garment.image,
+              image: `/images/rack/outfits/${product.slug}.webp`,
               hex: garment.hex,
-              aspect: garment.aspect,
+              aspect: outfitAspectOverrides[product.slug] ?? 0.67,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
           })
           .filter((item): item is RackItem => item !== null)
-          /* a calm rhythm: silhouettes widen smoothly along the rail */
+          /* keep the rack's measured rhythm, from narrower to wider outfit images */
           .sort((a, b) => a.aspect - b.aspect);
         setItems(hanging);
         setActiveId((current) => current ?? hanging[0]?.id ?? null);
@@ -422,7 +425,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   aria-hidden="true"
                   className="shrink-0 animate-pulse rounded-[10px] bg-[#ded6c8]"
                   style={{
-                    width: `calc(var(--piece-h) * 0.26)`,
+                    width: `calc(var(--piece-h) * 0.67)`,
                     height: 'var(--piece-h)',
                     marginInlineStart: index === 0 ? 0 : PIECE_GAP,
                   }}
