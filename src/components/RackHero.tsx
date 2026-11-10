@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice } from '../lib/format';
+import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
@@ -22,8 +22,10 @@ type RackItem = {
   outfitImage: string;
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
-  /** width / height of `image`. */
+  /** width / height of the side-profile rack image. */
   aspect: number;
+  /** width / height of the complete outfit cut-out, shown on the rack when active. */
+  outfitAspect: number;
   /** Full catalogue record: what the product card reads out. */
   product: Product;
   /** Department label, e.g. «لباس». */
@@ -36,6 +38,25 @@ const PIECE_GAP = 6;
 /** Keep profile silhouettes readable; the rail scrolls rather than shrinking them. */
 const MIN_PIECE_HEIGHT = 230;
 const MAX_PIECE_HEIGHT = 280;
+const outfitAspects: Record<string, number> = {
+  'basic-tshirt-black-men': 0.6011,
+  'classic-white-shirt': 0.6995,
+  'denim-jacket-men': 0.6446,
+  'elegant-pink-blouse': 0.6196,
+  'hoodie-blush-women': 0.6783,
+  'hoodie-charcoal-men': 0.6543,
+  'knit-cardigan-cream-women': 0.6533,
+  'knit-sweater-gray-men': 0.7143,
+  'midi-dress-floral-women': 0.512,
+  'oversize-tshirt-white-women': 0.6761,
+  'oxford-blue-shirt-men': 0.6489,
+  'polo-shirt-green-men': 0.6935,
+  'satin-blazer-black-women': 0.6987,
+  'silk-blouse-cream-women': 0.6674,
+  'trench-coat-camel-women': 0.587,
+  'turtleneck-sweater-beige-women': 0.7151,
+  'wool-blazer-navy-men': 0.588,
+};
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -77,6 +98,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               outfitImage: `/images/rack/outfits-cleaned/${product.slug}.webp`,
               hex: garment.hex,
               aspect: profile.aspect,
+              outfitAspect: outfitAspects[product.slug] ?? 0.67,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
@@ -125,7 +147,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
-  const activeImageSrc = activeItem ? asset(activeItem.outfitImage) : '';
+  const activeImageSrc = activeItem
+    ? activeItem.product.image_url
+      ? optimizedAsset(activeItem.product.image_url, 720)
+      : asset(activeItem.image)
+    : '';
 
   const updateScrollHints = useCallback(() => {
     const track = trackRef.current;
@@ -301,11 +327,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   </span>
                   <img
                     src={activeImageSrc}
+                    srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
+                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 40vw, 100vw"
                     alt={activeItem.product.name}
+                    width={720}
+                    height={964}
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-700 ease-out"
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out"
                   />
                 </div>
                 <div className="min-w-0">
@@ -427,7 +457,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             {!loading &&
               items.map((item, index) => {
                 const isActive = item.id === activeItem?.id;
-                const slotWidth = `calc(var(--piece-h) * ${item.aspect})`;
+                const displayedAspect = isActive ? item.outfitAspect : item.aspect;
+                const slotWidth = `calc(var(--piece-h) * ${displayedAspect})`;
 
                 return (
                   <li
@@ -467,7 +498,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         }`}
                       />
 
-                      {/* the garment: profile photo, or turned away when it has none */}
+                      {/* Idle pieces hang in profile; the active piece opens to its full look. */}
                       <span
                         className="rack-sway absolute inset-0 block"
                         style={
@@ -483,7 +514,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                           }`}
                         >
                           <img
-                            src={asset(item.image)}
+                            src={asset(isActive ? item.outfitImage : item.image)}
                             alt=""
                             aria-hidden="true"
                             loading={index < 2 ? 'eager' : 'lazy'}
