@@ -259,20 +259,20 @@ export default function Home({ onNavigate }: HomeProps) {
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => handleCategoryClick(cat.slug)}
-                      className={`group relative w-[132px] overflow-hidden rounded-2xl border p-1.5 text-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[148px] lg:w-full ${
+                      className={`group relative w-[88px] overflow-hidden rounded-2xl border p-1.5 text-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[96px] lg:w-full ${
                         isActive
                           ? 'border-[#9b7138]/50 bg-white shadow-[0_12px_26px_-18px_rgba(112,77,34,0.65)] ring-1 ring-[#c59b5b]/35'
                           : 'border-transparent bg-white/55 hover:border-[#c9a66e]/40 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(112,77,34,0.65)]'
                       }`}
                     >
-                      <span className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-[#e8dcc7]">
+                      <span className="relative mx-auto block h-[44px] w-[56px] overflow-hidden rounded-lg bg-[#e8dcc7]">
                         <img
                           src={optimizedAsset(categoryImages[cat.slug], 480)}
                           srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                          sizes="(min-width: 1024px) 110px, 148px"
+                          sizes="56px"
                           alt=""
-                          width={480}
-                          height={360}
+                          width={56}
+                          height={44}
                           loading="lazy"
                           decoding="async"
                           className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
