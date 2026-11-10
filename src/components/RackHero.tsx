@@ -3,8 +3,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
-import { hangerFor } from '../lib/hangerGarments';
+import { asset, formatPrice } from '../lib/format';
+import { hangerFor, sideFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -16,8 +16,10 @@ type RackItem = {
   slug: string;
   /** Accessible name. */
   name: string;
-  /** Complete coordinated outfit: top, matching lower garment and shoes. */
+  /** Photoreal side profile used on the shared rack while idle. */
   image: string;
+  /** Complete coordinated cut-out shown in the selected-item display. */
+  outfitImage: string;
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
   /** width / height of `image`. */
@@ -31,28 +33,9 @@ type RackItem = {
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** Air between two hangers. */
 const PIECE_GAP = 6;
-/** Keep complete coordinated looks readable; the rail scrolls rather than shrinking them. */
+/** Keep profile silhouettes readable; the rail scrolls rather than shrinking them. */
 const MIN_PIECE_HEIGHT = 230;
 const MAX_PIECE_HEIGHT = 280;
-const outfitAspects: Record<string, number> = {
-  'basic-tshirt-black-men': 0.6011,
-  'classic-white-shirt': 0.6995,
-  'denim-jacket-men': 0.6446,
-  'elegant-pink-blouse': 0.6196,
-  'hoodie-blush-women': 0.6783,
-  'hoodie-charcoal-men': 0.6543,
-  'knit-cardigan-cream-women': 0.6533,
-  'knit-sweater-gray-men': 0.7143,
-  'midi-dress-floral-women': 0.512,
-  'oversize-tshirt-white-women': 0.6761,
-  'oxford-blue-shirt-men': 0.6489,
-  'polo-shirt-green-men': 0.6935,
-  'satin-blazer-black-women': 0.6987,
-  'silk-blouse-cream-women': 0.6674,
-  'trench-coat-camel-women': 0.587,
-  'turtleneck-sweater-beige-women': 0.7151,
-  'wool-blazer-navy-men': 0.588,
-};
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -80,24 +63,26 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Use the full, product-matched outfit cut-out for this rack slot. */
+        /* Hang each product in profile; its complete cut-out is shown when selected. */
         const hanging = products
           .map((product) => {
             const garment = hangerFor(product.slug);
             if (!garment) return null;
+            const profile = sideFor(product.slug) ?? garment;
             return {
               id: product.id,
               slug: product.slug,
               name: product.name,
-              image: `/images/rack/outfits-cleaned/${product.slug}.webp`,
+              image: profile.image,
+              outfitImage: `/images/rack/outfits-cleaned/${product.slug}.webp`,
               hex: garment.hex,
-              aspect: outfitAspects[product.slug] ?? 0.67,
+              aspect: profile.aspect,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
           })
           .filter((item): item is RackItem => item !== null)
-          /* keep the rack's measured rhythm, from narrower to wider outfit images */
+          /* keep a natural rhythm, from narrower to wider side-profile silhouettes */
           .sort((a, b) => a.aspect - b.aspect);
         setItems(hanging);
         setActiveId((current) => current ?? hanging[0]?.id ?? null);
@@ -140,11 +125,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
-  const activeImageSrc = activeItem
-    ? activeItem.product.image_url
-      ? optimizedAsset(activeItem.product.image_url, 720)
-      : asset(activeItem.image)
-    : '';
+  const activeImageSrc = activeItem ? asset(activeItem.outfitImage) : '';
 
   const updateScrollHints = useCallback(() => {
     const track = trackRef.current;
@@ -320,15 +301,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   </span>
                   <img
                     src={activeImageSrc}
-                    srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 40vw, 100vw"
                     alt={activeItem.product.name}
-                    width={720}
-                    height={964}
                     loading="eager"
                     fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out"
+                    className="absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-700 ease-out"
                   />
                 </div>
                 <div className="min-w-0">
@@ -440,7 +417,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   aria-hidden="true"
                   className="shrink-0 animate-pulse rounded-[10px] bg-[#ded6c8]"
                   style={{
-                    width: `calc(var(--piece-h) * 0.67)`,
+                    width: `calc(var(--piece-h) * 0.27)`,
                     height: 'var(--piece-h)',
                     marginInlineStart: index === 0 ? 0 : PIECE_GAP,
                   }}
@@ -501,8 +478,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         }
                       >
                         <span
-                          className={`absolute inset-0 block origin-top transition-transform duration-700 ease-out ${
-                            isActive ? '-translate-y-4 scale-[1.06]' : ''
+                          className={`absolute inset-0 block origin-top transition-transform duration-500 ease-out motion-reduce:transition-none ${
+                            isActive ? '-translate-y-3 scale-[1.12] rotate-[0.8deg]' : ''
                           }`}
                         >
                           <img
@@ -513,9 +490,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             fetchPriority={index === 0 ? 'high' : 'auto'}
                             decoding="async"
                             draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
+                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 motion-reduce:transition-none ${
                               isActive
-                                ? 'drop-shadow-[0_30px_30px_rgba(56,42,22,0.3)]'
+                                ? 'brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
                                 : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
                             }`}
                           />
