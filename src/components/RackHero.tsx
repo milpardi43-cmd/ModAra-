@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
@@ -16,12 +16,14 @@ type RackItem = {
   slug: string;
   /** Accessible name. */
   name: string;
-  /** What hangs on the rail: the profile when it has been shot. */
+  /** Full upper-garment cut-out hanging from its wooden hanger. */
   image: string;
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
   /** width / height of `image`. */
   aspect: number;
+  /** Trousers selected from the existing catalogue to complete the look. */
+  pantsSlug: string | undefined;
   /** Full catalogue record: what the product card reads out. */
   product: Product;
   /** Department label, e.g. «لباس». */
@@ -29,12 +31,124 @@ type RackItem = {
 };
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/** Air between two hangers. */
-const PIECE_GAP = 6;
-/** Never shrink a piece below this; below it the row scrolls instead. */
-const MIN_PIECE_HEIGHT = 104;
-/** And never let a short catalogue stretch them into giants. */
-const MAX_PIECE_HEIGHT = 220;
+/** Visual breathing room between complete outfit sets. */
+const LOOK_GAP = 18;
+const MIN_LOOK_WIDTH = 108;
+const MAX_LOOK_WIDTH = 148;
+
+/** Each look pairs current upperwear with a real trouser product; dresses stay whole. */
+const pantsForTop: Record<string, string | null> = {
+  'wool-blazer-navy-men': 'formal-trousers-charcoal-men',
+  'trench-coat-camel-women': 'wide-leg-trousers-black-women',
+  'satin-blazer-black-women': 'paperbag-pants-cream-women',
+  'denim-jacket-men': 'slim-jeans-men',
+  'midi-dress-floral-women': null,
+  'knit-cardigan-cream-women': 'mom-jeans-light-women',
+  'silk-blouse-cream-women': 'linen-pants-women',
+  'hoodie-charcoal-men': 'jogger-navy-men',
+  'hoodie-blush-women': 'jogger-gray-women',
+  'knit-sweater-gray-men': 'corduroy-pants-brown-men',
+  'turtleneck-sweater-beige-women': 'leggings-black-women',
+  'elegant-pink-blouse': 'paperbag-pants-cream-women',
+  'oxford-blue-shirt-men': 'chino-olive-men',
+  'classic-white-shirt': 'straight-jeans-dark-men',
+  'polo-shirt-green-men': 'cargo-pants-khaki-men',
+  'oversize-tshirt-white-women': 'cargo-pants-sage-women',
+  'basic-tshirt-black-men': 'chino-beige-men',
+};
+
+const trouserColours: Record<string, string> = {
+  'formal-trousers-charcoal-men': '#45464b',
+  'wide-leg-trousers-black-women': '#202023',
+  'paperbag-pants-cream-women': '#c8b89f',
+  'slim-jeans-men': '#345078',
+  'mom-jeans-light-women': '#859bb8',
+  'linen-pants-women': '#d4c6ad',
+  'jogger-navy-men': '#303a50',
+  'jogger-gray-women': '#898887',
+  'corduroy-pants-brown-men': '#765840',
+  'leggings-black-women': '#242426',
+  'chino-olive-men': '#77765b',
+  'straight-jeans-dark-men': '#27334a',
+  'cargo-pants-khaki-men': '#999078',
+  'cargo-pants-sage-women': '#96977c',
+  'chino-beige-men': '#bda27d',
+};
+
+/** Clean, front-view trousers on a wooden clip hanger, keyed to the exact pant product. */
+function PantsOnHanger({ slug }: { slug: string }) {
+  const id = useId().replace(/:/g, '');
+  const colour = trouserColours[slug] ?? '#77736b';
+  const isDenim = slug.includes('jean');
+  const isCargo = slug.includes('cargo');
+  const isJogger = slug.includes('jogger');
+  const isPaperbag = slug.includes('paperbag');
+  return (
+    <svg viewBox="0 0 120 250" preserveAspectRatio="none" className="h-full w-full overflow-visible" aria-hidden="true">
+      <defs>
+        <linearGradient id={`pants-${id}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor={colour} />
+          <stop offset="0.28" stopColor={colour} />
+          <stop offset="0.52" stopColor="white" stopOpacity="0.14" />
+          <stop offset="0.78" stopColor={colour} />
+          <stop offset="1" stopColor="#171613" stopOpacity="0.18" />
+        </linearGradient>
+        <linearGradient id={`wood-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#e2c99f" />
+          <stop offset="1" stopColor="#9e7c4f" />
+        </linearGradient>
+        <filter id={`shadow-${id}`} x="-30%" y="-20%" width="160%" height="150%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#4b3923" floodOpacity="0.2" />
+        </filter>
+      </defs>
+      <g filter={`url(#shadow-${id})`}>
+        <path d="M60 7c-10 0-14 8-14 14 0 6 4 9 8 9" fill="none" stroke="#9a8a70" strokeWidth="2" strokeLinecap="round" />
+        <path d="M54 30 26 43h68L66 30" fill={`url(#wood-${id})`} stroke="#9b7b50" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M26 43h68" stroke="#f5e8d0" strokeOpacity="0.7" strokeWidth="1.2" />
+        <path d="M37 43v8m46-8v8" stroke="#9b7b50" strokeWidth="2" strokeLinecap="round" />
+        <rect x="33" y="49" width="8" height="9" rx="1.5" fill="#c9ad7d" stroke="#92754d" />
+        <rect x="79" y="49" width="8" height="9" rx="1.5" fill="#c9ad7d" stroke="#92754d" />
+        <path d="M35 57h50l5 17-5 22 7 112q-13 6-27 0l-5-98-5 98q-14 6-27 0l7-112-5-22z" fill={`url(#pants-${id})`} stroke="#473b2d" strokeOpacity="0.55" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M35 72q25 8 50 0" fill="none" stroke="#f0e5d3" strokeOpacity="0.45" strokeWidth="1.2" />
+        <path d="M60 75v35m-1 0-4 29m6-29 4 29" fill="none" stroke="#443a2c" strokeOpacity="0.42" strokeWidth="1.1" />
+        <path d="M41 62v9m10-9v9m18-9v9m10-9v9" stroke="#eee1cf" strokeOpacity="0.6" strokeWidth="1.1" />
+        {isPaperbag && <path d="M35 67q25 10 50 0" fill="none" stroke="#5a4b39" strokeOpacity="0.55" strokeWidth="2" />}
+        {isDenim && <g fill="none" stroke="#d5c3a2" strokeOpacity="0.72" strokeWidth="1.2"><path d="m38 77 12 4-3 15-13-3m48-16-12 4 3 15 13-3"/><path d="M38 79q3 9 8 14m36-14q-3 9-8 14"/></g>}
+        {isCargo && <g fill={colour} stroke="#5b5545" strokeOpacity="0.6" strokeWidth="1.2"><path d="M28 112h15l2 27H26z"/><path d="M77 112h15l2 27H75z"/><path d="M28 117h15m34 0h15" fill="none"/></g>}
+        {isJogger && <g fill="none" stroke="#e2d5c2" strokeOpacity="0.72" strokeWidth="1.3"><path d="M35 196q10 4 19 0m12 0q10 4 19 0"/><path d="M57 67v15m6-15v15"/></g>}
+        <path d="M35 224q10 4 22 0m7 0q12 4 22 0" fill="none" stroke="#f3e8d8" strokeOpacity="0.65" strokeWidth="1.1" />
+      </g>
+    </svg>
+  );
+}
+
+/** Shoes are shown from the toe/front and styled to suit each trouser set. */
+function FrontShoes({ sporty }: { sporty: boolean }) {
+  const id = useId().replace(/:/g, '');
+  const outline = sporty ? '#77736b' : '#59432e';
+  const stitch = sporty ? '#aaa69d' : '#ead8b7';
+  return (
+    <svg viewBox="0 0 100 54" className="h-full w-full" aria-hidden="true">
+      <defs>
+        <linearGradient id={`shoe-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop stopColor={sporty ? '#f5f2eb' : '#b39163'} />
+          <stop offset="0.55" stopColor={sporty ? '#d6d1c7' : '#80603e'} />
+          <stop offset="1" stopColor={sporty ? '#aaa59b' : '#57432f'} />
+        </linearGradient>
+        <linearGradient id={`sole-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor="#fffdf7" />
+          <stop offset="1" stopColor={sporty ? '#ddd8cf' : '#cbbb9e'} />
+        </linearGradient>
+      </defs>
+      <g stroke={outline} strokeWidth="1.2" strokeLinejoin="round">
+        <path d="M20 5c-8 0-12 5-13 13L5 38c0 7 6 11 20 11s20-4 20-11l-2-20C42 10 37 5 30 5z" fill={`url(#shoe-${id})`} />
+        <path d="M56 5c-8 0-12 5-13 13l-2 20c0 7 6 11 20 11s20-4 20-11l-2-20C78 10 73 5 66 5z" fill={`url(#shoe-${id})`} />
+        <path d="M6 37c4 5 10 7 19 7s16-2 20-7v3c0 7-6 10-20 10S5 47 5 40zm36 0c4 5 10 7 19 7s16-2 20-7v3c0 7-6 10-20 10s-19-3-19-10z" fill={`url(#sole-${id})`} />
+        <path d="M12 25q13 7 26 0m-19 2 1 7m7-6v7m7-8-1 7m7-7q13 7 26 0m-19 2 1 7m7-6v7m7-8-1 7" fill="none" stroke={stitch} strokeWidth="1.2" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -46,8 +160,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [canScrollMore, setCanScrollMore] = useState(false);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
   const shellRef = useRef<HTMLDivElement>(null);
-  /** Piece height that makes the whole line fit the row exactly. */
-  const [rackSize, setRackSize] = useState({ height: 240, fits: true });
+  /** Stable outfit-cell dimensions keep the garments and shoes large and legible. */
+  const [rackSize, setRackSize] = useState({ width: 120, height: 228, fits: false });
   const suppressClick = useRef(false);
   const [rackPaused, setRackPaused] = useState(false);
 
@@ -62,7 +176,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Hang each product's matching front garment cutout; no extra imagery or props. */
+        /* Compose each upper garment with its catalogue-matched lower half. */
         const hanging = products
           .map((product) => {
             const garment = hangerFor(product.slug);
@@ -74,6 +188,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               image: garment.image,
               hex: garment.hex,
               aspect: garment.aspect,
+              pantsSlug: pantsForTop[product.slug] ?? undefined,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
@@ -96,22 +211,24 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   }, []);
 
   /**
-   * Fit the line to the row: the sum of every garment's aspect ratio decides
-   * the height, so 17 different silhouettes share the width perfectly and
-   * nothing is cropped or scrolled on a normal screen.
+   * Give each outfit room for both full garments and the front-facing shoes.
+   * When the complete collection is wider than the viewport, the rack scrolls
+   * instead of squeezing a coordinated look into a tiny thumbnail.
    */
   useEffect(() => {
     const shell = shellRef.current;
     if (!shell || !items.length) return;
 
     const measure = () => {
-      const width = shell.clientWidth;
-      const gaps = PIECE_GAP * Math.max(0, items.length - 1);
-      const totalAspect = items.reduce((sum, item) => sum + item.aspect, 0);
-      if (!width || !totalAspect) return;
-      const ideal = (width - gaps) / totalAspect;
-      const height = Math.min(MAX_PIECE_HEIGHT, Math.max(MIN_PIECE_HEIGHT, ideal));
-      setRackSize({ height, fits: ideal >= MIN_PIECE_HEIGHT });
+      const available = shell.clientWidth;
+      if (!available) return;
+      const width = Math.max(
+        MIN_LOOK_WIDTH,
+        Math.min(MAX_LOOK_WIDTH, (available - LOOK_GAP * 7) / 8),
+      );
+      const height = Math.round(width * 1.9);
+      const totalWidth = items.length * width + Math.max(0, items.length - 1) * LOOK_GAP;
+      setRackSize({ width, height, fits: totalWidth <= available });
     };
 
     measure();
@@ -413,7 +530,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 ? 'justify-center overflow-x-visible'
                 : 'cursor-grab overflow-x-auto active:cursor-grabbing'
             }`}
-            style={{ '--piece-h': `${rackSize.height}px` } as CSSProperties}
+            style={{
+              '--piece-h': `${rackSize.height}px`,
+              '--outfit-w': `${rackSize.width}px`,
+            } as CSSProperties}
           >
             {loading &&
               Array.from({ length: 17 }).map((_, index) => (
@@ -422,9 +542,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   aria-hidden="true"
                   className="shrink-0 animate-pulse rounded-[10px] bg-[#ded6c8]"
                   style={{
-                    width: `calc(var(--piece-h) * 0.26)`,
+                    width: 'var(--outfit-w)',
                     height: 'var(--piece-h)',
-                    marginInlineStart: index === 0 ? 0 : PIECE_GAP,
+                    marginInlineStart: index === 0 ? 0 : LOOK_GAP,
                   }}
                 />
               ))}
@@ -432,7 +552,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             {!loading &&
               items.map((item, index) => {
                 const isActive = item.id === activeItem?.id;
-                const slotWidth = `calc(var(--piece-h) * ${item.aspect})`;
+                const isDress = item.slug === 'midi-dress-floral-women';
+                const sportyFootwear = Boolean(
+                  item.pantsSlug && /jean|jogger|cargo|legging/.test(item.pantsSlug),
+                );
+                const slotWidth = 'var(--outfit-w)';
 
                 return (
                   <li
@@ -445,7 +569,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     style={{
                       width: slotWidth,
                       height: 'var(--piece-h)',
-                      marginInlineStart: index === 0 ? 0 : PIECE_GAP,
+                      marginInlineStart: index === 0 ? 0 : LOOK_GAP,
                       animationDelay: `${index * 65}ms`,
                       zIndex: isActive ? 30 : 1,
                     }}
@@ -464,43 +588,59 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       onClick={() => setActiveId(item.id)}
                       className="group/piece absolute inset-0 block cursor-pointer outline-none"
                     >
-                      {/* soft glow of the garment's own colour */}
                       <span
                         aria-hidden="true"
-                        className={`pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md transition-opacity duration-500 ${
-                          isActive ? 'opacity-100' : 'opacity-0'
+                        className={`pointer-events-none absolute inset-x-0 top-1/4 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_38%,rgba(255,250,238,0.9),rgba(255,240,212,0.2)_58%,transparent_76%)] blur-md transition-opacity duration-500 ${
+                          isActive ? 'opacity-100' : 'opacity-45'
                         }`}
                       />
 
-                      {/* the garment: profile photo, or turned away when it has none */}
+                      {/* The whole look hangs together: upperwear and its matched trousers. */}
                       <span
-                        className="rack-sway absolute inset-0 block"
-                        style={
-                          {
-                            '--rack-sway-delay': `${(index % 7) * 0.55}s`,
-                            '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
-                          } as CSSProperties
-                        }
+                        className="rack-sway absolute left-0 top-0 z-10 block"
+                        style={{
+                          width: isDress ? '100%' : '62%',
+                          height: isDress ? '80%' : '64%',
+                          '--rack-sway-delay': `${(index % 7) * 0.55}s`,
+                          '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
+                        } as CSSProperties}
                       >
-                        <span
-                          className={`absolute inset-0 block origin-top transition-transform duration-700 ease-out ${
-                            isActive ? '-translate-y-4 scale-[1.06]' : ''
+                        <img
+                          src={asset(item.image)}
+                          alt=""
+                          aria-hidden="true"
+                          loading={index < 2 ? 'eager' : 'lazy'}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
+                          decoding="async"
+                          draggable={false}
+                          className={`h-full w-full select-none object-contain object-top transition-[filter,transform] duration-700 ${
+                            isActive
+                              ? 'scale-[1.04] drop-shadow-[0_20px_22px_rgba(56,42,22,0.32)]'
+                              : 'drop-shadow-[0_12px_14px_rgba(56,42,22,0.2)]'
                           }`}
+                        />
+                      </span>
+
+                      {item.pantsSlug && (
+                        <span
+                          aria-hidden="true"
+                          className="rack-sway absolute right-0 top-0 z-10 block h-[82%] w-[58%]"
+                          style={{
+                            '--rack-sway-delay': `${(index % 7) * 0.55 + 0.15}s`,
+                            '--rack-sway-duration': `${6.8 + (index % 5) * 0.85}s`,
+                          } as CSSProperties}
                         >
-                          <img
-                            src={asset(item.image)}
-                            alt=""
-                            aria-hidden="true"
-                            loading={index < 2 ? 'eager' : 'lazy'}
-                            fetchPriority={index === 0 ? 'high' : 'auto'}
-                            decoding="async"
-                            draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
-                              isActive
-                                ? 'drop-shadow-[0_30px_30px_rgba(56,42,22,0.3)]'
-                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
-                            }`}
-                          />
+                          <PantsOnHanger slug={item.pantsSlug} />
+                        </span>
+                      )}
+
+                      {/* A real little wooden shoe shelf, with the shoes facing forward. */}
+                      <span aria-hidden="true" className="absolute inset-x-[5%] bottom-[5%] z-20 h-[14%]">
+                        <span className="absolute inset-x-[7%] bottom-0 h-[5px] rounded-full bg-[linear-gradient(180deg,#ddc69c,#967448)] shadow-[0_4px_7px_rgba(64,45,22,0.28)]" />
+                        <span className="absolute bottom-0 left-[16%] h-[12px] w-[3px] rounded-full bg-[#a78a5d]" />
+                        <span className="absolute bottom-0 right-[16%] h-[12px] w-[3px] rounded-full bg-[#a78a5d]" />
+                        <span className="absolute inset-x-[17%] bottom-[3px] h-[92%] transition-transform duration-500 group-hover/piece:-translate-y-0.5">
+                          <FrontShoes sporty={sportyFootwear} />
                         </span>
                       </span>
                     </button>
