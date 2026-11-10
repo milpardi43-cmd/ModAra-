@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
 import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
-import { hangerFor, sideFor } from '../lib/hangerGarments';
+import { hangerFor } from '../lib/hangerGarments';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -62,10 +62,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Every piece hangs as its real profile — nothing is faked by rotation. */
+        /* Hang each product's matching front garment cutout; no extra imagery or props. */
         const hanging = products
           .map((product) => {
-            const garment = sideFor(product.slug) ?? hangerFor(product.slug);
+            const garment = hangerFor(product.slug);
             if (!garment) return null;
             return {
               id: product.id,
