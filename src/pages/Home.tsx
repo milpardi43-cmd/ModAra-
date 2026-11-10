@@ -265,14 +265,14 @@ export default function Home({ onNavigate }: HomeProps) {
                           : 'border-transparent bg-white/55 hover:border-[#c9a66e]/40 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(112,77,34,0.65)]'
                       }`}
                     >
-                      <span className="relative mx-auto block h-[44px] w-[56px] overflow-hidden rounded-lg bg-[#e8dcc7]">
+                      <span className="relative mx-auto block h-[22px] w-[28px] overflow-hidden rounded-md bg-[#e8dcc7]">
                         <img
                           src={optimizedAsset(categoryImages[cat.slug], 480)}
                           srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                          sizes="56px"
+                          sizes="28px"
                           alt=""
-                          width={56}
-                          height={44}
+                          width={28}
+                          height={22}
                           loading="lazy"
                           decoding="async"
                           className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
