@@ -259,16 +259,16 @@ export default function Home({ onNavigate }: HomeProps) {
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => handleCategoryClick(cat.slug)}
-                      className={`group relative w-[120px] overflow-hidden p-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[128px] lg:w-full lg:py-2 ${i < categories.length - 1 ? 'lg:border-b lg:border-[#8b6a3f]/10 lg:pb-4' : ''}`}
+                      className={`group relative w-[136px] overflow-hidden p-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[144px] lg:w-full lg:py-2 ${i < categories.length - 1 ? 'lg:border-b lg:border-[#8b6a3f]/10 lg:pb-4' : ''}`}
                     >
-                      <span className="relative mx-auto block h-[78px] w-[104px] overflow-hidden rounded-md bg-[#e8dcc7]">
+                      <span className="relative mx-auto block h-[90px] w-[120px] overflow-hidden rounded-md bg-[#e8dcc7]">
                         <img
                           src={optimizedAsset(categoryImages[cat.slug], 480)}
                           srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                          sizes="104px"
+                          sizes="120px"
                           alt=""
-                          width={104}
-                          height={78}
+                          width={120}
+                          height={90}
                           loading="lazy"
                           decoding="async"
                           className="h-full w-full object-cover"
