@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt, Package } from 'lucide-react';
 import type { Product, Category } from '../lib/supabase';
 import {
   getCategories,
@@ -287,38 +287,52 @@ export default function Home({ onNavigate }: HomeProps) {
 
           {activeCategory && (
             <div className="min-w-0 flex-1">
-              <div className="mb-6 flex flex-col gap-3 rounded-[1.5rem] border border-[#8b6a3f]/10 bg-white/80 p-4 shadow-[0_14px_38px_-32px_rgba(76,56,33,0.45)] sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-5">
-                <div>
-                  <BrandSignature
-                    inline
-                    label="THE COLLECTION"
-                    text="از کالکشن‌های مُدارا،"
-                    highlight={activeCat?.name || 'لباس'}
-                    tone="dark"
-                    size="compact"
-                    className="mb-2"
-                  />
-                  <h2 className="mb-1 text-2xl font-bold text-dark-900 sm:text-3xl">
-                    محصولات {activeCat?.name || 'لباس'}
-                  </h2>
-                  <p className="text-dark-500">
-                    {categoryLoading
-                      ? 'در حال بارگذاری...'
-                      : `${categoryProducts.length} محصول در این دسته‌بندی`}
-                  </p>
+              <div className="relative mb-6 overflow-hidden rounded-[1.5rem] border border-[#8b6a3f]/15 bg-gradient-to-l from-[#fbf6ed] via-white to-[#f7f0e4] p-4 shadow-[0_18px_46px_-36px_rgba(74,52,27,0.5)] sm:mb-8 sm:p-5">
+                <span aria-hidden="true" className="pointer-events-none absolute -left-8 -top-12 h-36 w-36 rounded-full bg-[#d6b779]/10 blur-2xl" />
+                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+                    <span aria-hidden="true" className="mt-1 hidden h-12 w-1 shrink-0 rounded-full bg-gradient-to-b from-[#d8bc83] to-[#8a6332] sm:block" />
+                    <div>
+                      <BrandSignature
+                        inline
+                        label="THE COLLECTION"
+                        text="از کالکشن‌های مُدارا،"
+                        highlight={activeCat?.name || 'لباس'}
+                        tone="dark"
+                        size="compact"
+                        className="mb-2"
+                      />
+                      <h2 className="text-2xl font-bold leading-tight text-dark-900 sm:text-3xl">
+                        محصولات {activeCat?.name || 'لباس'}
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5 sm:shrink-0">
+                    <div role="status" aria-live="polite" className="flex min-h-12 items-center gap-3 rounded-xl border border-[#8b6a3f]/15 bg-white/80 px-3.5 py-2 shadow-sm shadow-[#72552e]/5">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3ead9] text-[#8b6a3f]">
+                        <Package className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="text-sm font-semibold text-[#5b4932]">
+                        {categoryLoading
+                          ? 'در حال بارگذاری...'
+                          : `${categoryProducts.length} محصول در این دسته‌بندی`}
+                      </span>
+                    </div>
+                    {activeCategory !== 'clothing' && (
+                      <button
+                        onClick={() => {
+                          setActiveCategory('clothing');
+                          fetchCategoryProducts('clothing');
+                        }}
+                        className="flex min-h-12 items-center gap-2 rounded-xl border border-[#8b6a3f]/20 bg-white/80 px-4 py-2 text-sm font-semibold text-[#5b4932] transition-colors hover:bg-[#f8f1e5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                      >
+                        <Shirt className="h-4 w-4" aria-hidden="true" />
+                        بازگشت به لباس
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {activeCategory !== 'clothing' && (
-                  <button
-                    onClick={() => {
-                      setActiveCategory('clothing');
-                      fetchCategoryProducts('clothing');
-                    }}
-                    className="flex w-fit items-center gap-2 rounded-xl border border-dark-200 bg-white px-4 py-2 text-sm font-medium text-dark-700 transition-all hover:border-amber-300 hover:text-amber-700"
-                  >
-                    <Shirt className="h-4 w-4" />
-                    بازگشت به لباس
-                  </button>
-                )}
               </div>
 
               {categoryLoading ? (
