@@ -248,7 +248,7 @@ export default function Home({ onNavigate }: HomeProps) {
           <p className="text-sm text-dark-500 sm:text-base">روی هر دسته‌بندی کلیک کنید تا محصولات آن را ببینید</p>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-7">
+        <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-7">
           <aside aria-label="دسته‌بندی محصولات" className="min-w-0 rounded-[1.75rem] border border-[#8b6a3f]/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ef] to-[#f5ecdd] p-3 shadow-[0_18px_55px_-38px_rgba(76,56,33,0.55)] sm:p-4 lg:sticky lg:top-24">
             <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
               {categories.map((cat, i) => {
