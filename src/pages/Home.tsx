@@ -259,11 +259,7 @@ export default function Home({ onNavigate }: HomeProps) {
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => handleCategoryClick(cat.slug)}
-                      className={`group relative w-[102px] overflow-hidden rounded-2xl p-1.5 text-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[112px] lg:w-full ${
-                        isActive
-                          ? 'bg-white/55'
-                          : 'hover:bg-white/40'
-                      }`}
+                      className="group relative w-[102px] overflow-hidden rounded-2xl p-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[112px] lg:w-full"
                     >
                       <span className="relative mx-auto block h-[77px] w-[86px] overflow-hidden rounded-lg bg-[#e8dcc7]">
                         <img
@@ -275,14 +271,12 @@ export default function Home({ onNavigate }: HomeProps) {
                           height={77}
                           loading="lazy"
                           decoding="async"
-                          className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
+                          className="h-full w-full object-cover"
                         />
-                        <span className="pointer-events-none absolute inset-1.5 rounded-lg border border-white/0 transition-colors duration-300 group-hover:border-white/60" />
                       </span>
                       <span className={`mt-2 block truncate px-1 pb-1 text-sm font-bold transition-colors ${isActive ? 'text-[#79582e]' : 'text-[#392c1b] group-hover:text-[#79582e]'}`}>
                         {cat.name}
                       </span>
-                      {isActive && <span aria-hidden="true" className="absolute inset-x-4 bottom-1 h-0.5 rounded-full bg-gradient-to-l from-[#d8b875] to-[#8b642e]" />}
                     </button>
                   </Reveal>
                 );
