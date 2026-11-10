@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt, Glasses, Watch, ShoppingBag, Gem, Package } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Truck, Shield, Sparkles, RefreshCw, Shirt } from 'lucide-react';
 import type { Product, Category } from '../lib/supabase';
 import {
   getCategories,
@@ -42,15 +42,6 @@ function DeferredSection({
 
 type HomeProps = {
   onNavigate: (view: string, param?: string) => void;
-};
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  shirt: Shirt,
-  pants: Package,
-  glasses: Glasses,
-  watch: Watch,
-  bag: ShoppingBag,
-  gem: Gem,
 };
 
 const categoryImages: Record<string, string> = {
@@ -261,7 +252,6 @@ export default function Home({ onNavigate }: HomeProps) {
           <aside aria-label="دسته‌بندی محصولات" className="min-w-0 rounded-[1.75rem] border border-[#8b6a3f]/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ef] to-[#f5ecdd] p-3 shadow-[0_18px_55px_-38px_rgba(76,56,33,0.55)] sm:p-4 lg:sticky lg:top-24">
             <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
               {categories.map((cat, i) => {
-                const Icon = iconMap[cat.icon || ''] || Shirt;
                 const isActive = activeCategory === cat.slug;
                 return (
                   <Reveal key={cat.id} delay={i * 0.035} className="shrink-0 lg:w-full">
@@ -269,34 +259,30 @@ export default function Home({ onNavigate }: HomeProps) {
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => handleCategoryClick(cat.slug)}
-                      className={`group relative flex min-h-[74px] w-[172px] items-center gap-3 overflow-hidden rounded-2xl border p-2 text-right transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[190px] lg:min-h-[72px] lg:w-full ${
+                      className={`group relative w-[132px] overflow-hidden rounded-2xl border p-1.5 text-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[148px] lg:w-full ${
                         isActive
-                          ? 'border-[#9b7138]/45 bg-white shadow-[0_12px_26px_-18px_rgba(112,77,34,0.65)] ring-1 ring-[#c59b5b]/30'
-                          : 'border-transparent bg-white/55 hover:border-[#c9a66e]/35 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(112,77,34,0.65)]'
+                          ? 'border-[#9b7138]/50 bg-white shadow-[0_12px_26px_-18px_rgba(112,77,34,0.65)] ring-1 ring-[#c59b5b]/35'
+                          : 'border-transparent bg-white/55 hover:border-[#c9a66e]/40 hover:bg-white hover:shadow-[0_10px_24px_-20px_rgba(112,77,34,0.65)]'
                       }`}
                     >
-                      <span className="relative h-[56px] w-[48px] shrink-0 overflow-hidden rounded-xl bg-[#e8dcc7] sm:w-[54px]">
+                      <span className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-[#e8dcc7]">
                         <img
                           src={optimizedAsset(categoryImages[cat.slug], 480)}
                           srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                          sizes="54px"
+                          sizes="(min-width: 1024px) 110px, 148px"
                           alt=""
-                          width={54}
-                          height={72}
+                          width={480}
+                          height={360}
                           loading="lazy"
                           decoding="async"
-                          className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}
+                          className={`h-full w-full object-cover transition-transform duration-500 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
                         />
-                        <span className="absolute inset-0 bg-gradient-to-t from-[#211a12]/35 to-transparent" />
+                        <span className="pointer-events-none absolute inset-1.5 rounded-lg border border-white/0 transition-colors duration-300 group-hover:border-white/60" />
                       </span>
-                      <span className="flex min-w-0 flex-1 items-center gap-2">
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? 'bg-[#79582e] text-[#fff8e9]' : 'bg-[#f5eddf] text-[#8b6a3f] group-hover:bg-[#ead9bb]'}`}>
-                          <Icon className="h-[18px] w-[18px]" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-bold text-[#392c1b]">{cat.name}</span>
-                        <ArrowLeft className={`h-4 w-4 shrink-0 transition-all ${isActive ? 'translate-x-0 text-[#9a7138]' : 'translate-x-1 text-[#a58c69] opacity-0 group-hover:translate-x-0 group-hover:opacity-100'}`} aria-hidden="true" />
+                      <span className={`mt-2 block truncate px-1 pb-1 text-sm font-bold transition-colors ${isActive ? 'text-[#79582e]' : 'text-[#392c1b] group-hover:text-[#79582e]'}`}>
+                        {cat.name}
                       </span>
-                      {isActive && <span aria-hidden="true" className="absolute inset-y-3 right-0 w-1 rounded-l-full bg-gradient-to-b from-[#d8b875] to-[#8b642e]" />}
+                      {isActive && <span aria-hidden="true" className="absolute inset-x-4 bottom-1 h-0.5 rounded-full bg-gradient-to-l from-[#d8b875] to-[#8b642e]" />}
                     </button>
                   </Reveal>
                 );
