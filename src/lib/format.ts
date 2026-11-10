@@ -1,4 +1,4 @@
-const IMAGE_REVISION = 'modara-editorial-v5-20261110';
+const IMAGE_REVISION = 'modara-categories-v6-20261110';
 
 function versionedImageUrl(url: string): string {
   return `${url}${url.includes('?') ? '&' : '?'}v=${IMAGE_REVISION}`;
