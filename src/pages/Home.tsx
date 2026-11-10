@@ -248,8 +248,8 @@ export default function Home({ onNavigate }: HomeProps) {
           <p className="text-sm text-dark-500 sm:text-base">روی هر دسته‌بندی کلیک کنید تا محصولات آن را ببینید</p>
         </div>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-7">
-          <aside aria-label="دسته‌بندی محصولات" className="min-w-0 rounded-[1.75rem] border border-[#8b6a3f]/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ef] to-[#f5ecdd] p-3 shadow-[0_18px_55px_-38px_rgba(76,56,33,0.55)] sm:p-4 lg:sticky lg:top-24">
+        <div dir="rtl" className="flex flex-col items-stretch gap-5 lg:flex-row lg:gap-7">
+          <aside aria-label="دسته‌بندی محصولات" className="min-w-0 rounded-[1.75rem] border border-[#8b6a3f]/15 bg-gradient-to-br from-[#fffdf9] via-[#fbf7ef] to-[#f5ecdd] p-3 shadow-[0_18px_55px_-38px_rgba(76,56,33,0.55)] sm:p-4 lg:sticky lg:top-24 lg:w-[260px] lg:shrink-0">
             <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
               {categories.map((cat, i) => {
                 const isActive = activeCategory === cat.slug;
@@ -291,7 +291,7 @@ export default function Home({ onNavigate }: HomeProps) {
           </aside>
 
           {activeCategory && (
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="mb-6 flex flex-col gap-3 rounded-[1.5rem] border border-[#8b6a3f]/10 bg-white/80 p-4 shadow-[0_14px_38px_-32px_rgba(76,56,33,0.45)] sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-5">
                 <div>
                   <BrandSignature
