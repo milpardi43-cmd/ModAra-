@@ -34,9 +34,24 @@ const PIECE_GAP = 6;
 /** Keep complete coordinated looks readable; the rail scrolls rather than shrinking them. */
 const MIN_PIECE_HEIGHT = 230;
 const MAX_PIECE_HEIGHT = 280;
-const outfitAspectOverrides: Record<string, number> = {
-  'denim-jacket-men': 536 / 960,
-  'wool-blazer-navy-men': 640 / 857,
+const outfitAspects: Record<string, number> = {
+  'basic-tshirt-black-men': 0.6011,
+  'classic-white-shirt': 0.6995,
+  'denim-jacket-men': 0.6446,
+  'elegant-pink-blouse': 0.6196,
+  'hoodie-blush-women': 0.6783,
+  'hoodie-charcoal-men': 0.6543,
+  'knit-cardigan-cream-women': 0.6533,
+  'knit-sweater-gray-men': 0.7143,
+  'midi-dress-floral-women': 0.512,
+  'oversize-tshirt-white-women': 0.6761,
+  'oxford-blue-shirt-men': 0.6489,
+  'polo-shirt-green-men': 0.6935,
+  'satin-blazer-black-women': 0.6987,
+  'silk-blouse-cream-women': 0.6674,
+  'trench-coat-camel-women': 0.587,
+  'turtleneck-sweater-beige-women': 0.7151,
+  'wool-blazer-navy-men': 0.588,
 };
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
@@ -74,9 +89,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               id: product.id,
               slug: product.slug,
               name: product.name,
-              image: `/images/rack/outfits/${product.slug}.webp`,
+              image: `/images/rack/outfits-cleaned/${product.slug}.webp`,
               hex: garment.hex,
-              aspect: outfitAspectOverrides[product.slug] ?? 0.67,
+              aspect: outfitAspects[product.slug] ?? 0.67,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
