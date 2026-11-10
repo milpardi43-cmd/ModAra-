@@ -250,7 +250,7 @@ export default function Home({ onNavigate }: HomeProps) {
 
         <div dir="rtl" className="flex flex-col items-stretch gap-5 lg:flex-row lg:gap-7">
           <aside aria-label="دسته‌بندی محصولات" className="min-w-0 p-0 lg:sticky lg:top-24 lg:w-[260px] lg:shrink-0">
-            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
+            <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1 lg:grid lg:grid-cols-2 lg:gap-x-3 lg:gap-y-4 lg:overflow-visible lg:pb-0" role="group" aria-label="انتخاب دسته‌بندی">
               {categories.map((cat, i) => {
                 const isActive = activeCategory === cat.slug;
                 return (
@@ -259,22 +259,22 @@ export default function Home({ onNavigate }: HomeProps) {
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => handleCategoryClick(cat.slug)}
-                      className="group relative w-[102px] overflow-hidden rounded-2xl p-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[112px] lg:w-full"
+                      className="group relative w-[120px] overflow-hidden p-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 sm:w-[128px] lg:w-full"
                     >
-                      <span className="relative mx-auto block h-[77px] w-[86px] overflow-hidden rounded-lg bg-[#e8dcc7]">
+                      <span className="relative mx-auto block h-[78px] w-[104px] overflow-hidden rounded-md bg-[#e8dcc7]">
                         <img
                           src={optimizedAsset(categoryImages[cat.slug], 480)}
                           srcSet={imageSrcSet(categoryImages[cat.slug], [480, 720])}
-                          sizes="86px"
+                          sizes="104px"
                           alt=""
-                          width={86}
-                          height={77}
+                          width={104}
+                          height={78}
                           loading="lazy"
                           decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </span>
-                      <span className={`mt-2 block truncate px-1 pb-1 text-sm font-bold transition-colors ${isActive ? 'text-[#79582e]' : 'text-[#392c1b] group-hover:text-[#79582e]'}`}>
+                      <span className={`mt-2 block truncate px-1 pb-1 text-[13px] font-semibold leading-5 tracking-wide ${isActive ? 'text-[#79582e]' : 'text-[#392c1b]'}`}>
                         {cat.name}
                       </span>
                     </button>
