@@ -31,7 +31,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
   return (
     <article
       onClick={() => onView(product.slug)}
-      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.75rem] bg-[#fffdf9] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#211a12]/[0.07] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_22px_42px_-28px_rgba(94,65,35,0.3)] hover:ring-gold-500/35"
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[1.5rem] bg-[#fbf7ef] shadow-[0_2px_14px_rgba(33,26,18,0.05)] ring-1 ring-[#8b6a3f]/20 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_22px_42px_-28px_rgba(94,65,35,0.3)] hover:ring-gold-500/45"
     >
       {/* Golden line that draws itself across the top on hover */}
       <span
@@ -40,7 +40,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
       />
 
       {/* Image */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-[#f3ede0]">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#efe2cc]">
         <img
           src={imageUrl}
           srcSet={imageSet}
@@ -52,6 +52,7 @@ export default function ProductCard({ product, onView }: ProductCardProps) {
           decoding="async"
           className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.04]"
         />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-2.5 z-[1] rounded-[1.15rem] border border-white/45 shadow-[inset_0_0_0_1px_rgba(139,106,63,0.12)] sm:inset-3" />
 
         {/* Soft cinematic shade on hover */}
         <span

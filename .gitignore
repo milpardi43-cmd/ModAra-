@@ -2,3 +2,6 @@ node_modules
 dist
 .env
 .env.local
+
+# Local Python environment used for offline image tooling
+.venv/

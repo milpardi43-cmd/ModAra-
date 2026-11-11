@@ -3,11 +3,18 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { asset, formatPrice } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
+import { rackOutfitLayerInfo } from '../lib/rackOutfitLayerInfo';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
+};
+
+type RackOutfitLayer = {
+  id: 'top' | 'trousers' | 'shoes' | 'full';
+  src: string;
+  delay: number;
 };
 
 type RackItem = {
@@ -16,11 +23,13 @@ type RackItem = {
   slug: string;
   /** Accessible name. */
   name: string;
-  /** What hangs on the rail: the profile when it has been shot. */
+  /** Photoreal side profile used on the shared rack while idle. */
   image: string;
+  /** Pixel-accurate transparent top, trousers and shoe layers for the selected look. */
+  outfitLayers: RackOutfitLayer[];
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
-  /** width / height of `image`. */
+  /** width / height of the side-profile rack image. */
   aspect: number;
   /** Full catalogue record: what the product card reads out. */
   product: Product;
@@ -31,10 +40,22 @@ type RackItem = {
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** Air between two hangers. */
 const PIECE_GAP = 6;
-/** Never shrink a piece below this; below it the row scrolls instead. */
-const MIN_PIECE_HEIGHT = 104;
-/** And never let a short catalogue stretch them into giants. */
-const MAX_PIECE_HEIGHT = 220;
+/** Give side-profile silhouettes enough height to read clearly. */
+const MIN_PIECE_HEIGHT = 240;
+const MAX_PIECE_HEIGHT = 300;
+const warmedOutfitSources = new Set<string>();
+
+function warmOutfitImages(item: RackItem) {
+  item.outfitLayers.forEach((layer) => {
+    const src = asset(layer.src);
+    if (warmedOutfitSources.has(src)) return;
+    warmedOutfitSources.add(src);
+    const image = new Image();
+    image.fetchPriority = 'high';
+    image.decoding = 'async';
+    image.src = src;
+  });
+}
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -49,7 +70,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   /** Piece height that makes the whole line fit the row exactly. */
   const [rackSize, setRackSize] = useState({ height: 240, fits: true });
   const suppressClick = useRef(false);
-  const [rackPaused, setRackPaused] = useState(false);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
@@ -62,25 +82,58 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Every piece hangs as its real profile — nothing is faked by rotation. */
+        /* Hang each product in profile; build a composed preview from its original layers. */
         const hanging = products
           .map((product) => {
-            const garment = sideFor(product.slug) ?? hangerFor(product.slug);
+            const garment = hangerFor(product.slug);
             if (!garment) return null;
+            const profile = sideFor(product.slug) ?? garment;
+            const layerInfo = rackOutfitLayerInfo[product.slug];
+            const outfitLayers: RackOutfitLayer[] = layerInfo
+              ? [
+                  ...(layerInfo.hasTrousers
+                    ? [
+                        {
+                          id: 'trousers' as const,
+                          src: `/images/rack/outfit-layers/${product.slug}-trousers.webp`,
+                          delay: 0.045,
+                        },
+                      ]
+                    : []),
+                  {
+                    id: 'top',
+                    src: `/images/rack/outfit-layers/${product.slug}-top.webp`,
+                    delay: 0,
+                  },
+                  {
+                    id: 'shoes',
+                    src: `/images/rack/outfit-layers/${product.slug}-shoes.webp`,
+                    delay: 0.09,
+                  },
+                ]
+              : [
+                  {
+                    id: 'full',
+                    src: `/images/rack/outfits-cleaned/${product.slug}.webp`,
+                    delay: 0,
+                  },
+                ];
             return {
               id: product.id,
               slug: product.slug,
               name: product.name,
-              image: garment.image,
+              image: profile.image,
+              outfitLayers,
               hex: garment.hex,
-              aspect: garment.aspect,
+              aspect: profile.aspect,
               product,
               categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
             } satisfies RackItem;
           })
           .filter((item): item is RackItem => item !== null)
-          /* a calm rhythm: silhouettes widen smoothly along the rail */
+          /* keep a natural rhythm, from narrower to wider side-profile silhouettes */
           .sort((a, b) => a.aspect - b.aspect);
+        if (hanging[0]) warmOutfitImages(hanging[0]);
         setItems(hanging);
         setActiveId((current) => current ?? hanging[0]?.id ?? null);
       })
@@ -122,11 +175,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
-  const activeImageSrc = activeItem
-    ? activeItem.product.image_url
-      ? optimizedAsset(activeItem.product.image_url, 720)
-      : asset(activeItem.image)
-    : '';
 
   const updateScrollHints = useCallback(() => {
     const track = trackRef.current;
@@ -159,7 +207,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       if (!piece) return;
       const pieceRect = piece.getBoundingClientRect();
       const trackRect = track.getBoundingClientRect();
-      if (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left) {
+      if (
+        !rackSize.fits &&
+        (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left)
+      ) {
         piece.scrollIntoView({
           inline: 'center',
           block: 'nearest',
@@ -167,27 +218,21 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         });
       }
     },
-    [reduceMotion],
+    [rackSize.fits, reduceMotion],
   );
 
-  // Cinematic product changes pause while the visitor is interacting with the rack.
-  useEffect(() => {
-    if (loading || items.length < 2 || rackPaused) return;
-    const timer = window.setTimeout(() => {
-      setActiveId((current) => {
-        const currentIndex = items.findIndex((item) => item.id === current);
-        return items[(currentIndex + 1 + items.length) % items.length].id;
-      });
-    }, 3000);
-    return () => window.clearTimeout(timer);
-  }, [activeId, items, loading, rackPaused]);
+  const selectRackItem = (id: string) => {
+    const selected = items.find((item) => item.id === id);
+    if (selected) warmOutfitImages(selected);
+    setActiveId(id);
+    window.requestAnimationFrame(() => revealPiece(id));
+  };
 
   const moveActive = (step: 1 | -1) => {
     if (items.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
     const next = items[(from + step + items.length) % items.length];
-    setActiveId(next.id);
-    revealPiece(next.id);
+    selectRackItem(next.id);
   };
 
   /** In RTL the next piece sits to the left, so the arrows and keys invert. */
@@ -209,14 +254,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       moveActive(-1);
     } else if (event.key === 'Home' && items[0]) {
       event.preventDefault();
-      setActiveId(items[0].id);
-      revealPiece(items[0].id);
+      selectRackItem(items[0].id);
     } else if (event.key === 'End') {
       event.preventDefault();
       const last = items[items.length - 1];
       if (last) {
-        setActiveId(last.id);
-        revealPiece(last.id);
+        selectRackItem(last.id);
       }
     }
   };
@@ -247,11 +290,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     suppressClick.current = drag.current.moved;
     drag.current.active = false;
   };
+  const activeHasTrousers = activeItem?.outfitLayers.some((layer) => layer.id === 'trousers') ?? false;
 
   return (
     <section
       aria-label="رگال لباس مُدارا"
-      className="relative isolate overflow-hidden bg-[#efeae1] pb-8 pt-16 sm:pb-10 sm:pt-20"
+      className="relative isolate overflow-hidden bg-[#efeae1] pb-6 pt-12 sm:pb-8 sm:pt-16"
     >
       {/* Studio light */}
       <div
@@ -283,38 +327,45 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Product information follows the selected garment; intentionally no card frame. */}
-        <div className="mx-auto mt-4 w-full max-w-[1100px] px-2 sm:px-0">
+        <div className="mx-auto mt-2 w-full max-w-[1100px] px-2 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
                 key={activeItem.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.72, ease: EASE }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
+                transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
                 className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative mx-auto aspect-[8/11] w-full max-w-[200px] overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)]">
-                  <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[#241d14]/75 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
-                    <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#e6b95e]" aria-hidden="true" />
-                    {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
-                  </span>
-                  <img
-                    src={activeImageSrc}
-                    srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 40vw, 100vw"
-                    alt={activeItem.product.name}
-                    width={720}
-                    height={964}
-                    loading="eager"
-                    fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out"
-                  />
+                <div
+                  className={`rack-outfit-stage ${
+                    activeHasTrousers ? 'rack-outfit-stage--two-piece' : 'rack-outfit-stage--one-piece'
+                  }`}
+                >
+                  <div
+                    role="img"
+                    aria-label={`${activeItem.product.name}، چیدمان کامل و مرتب ست`}
+                    className="absolute inset-0"
+                  >
+                    {activeItem.outfitLayers.map((layer) => (
+                      <img
+                        key={`${activeItem.slug}-${layer.id}`}
+                        src={asset(layer.src)}
+                        alt=""
+                        aria-hidden="true"
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
+                        draggable={false}
+                        className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <div className="min-w-0">
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="mb-3 flex flex-wrap items-center gap-3">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
                       <span
                         className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
@@ -322,6 +373,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         aria-hidden="true"
                       />
                       {activeItem.categoryName}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums text-[#7d6636]">
+                      <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#c49639]" aria-hidden="true" />
+                      {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
                     </span>
                     <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
                       {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
@@ -370,7 +425,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
 
         {/* The rail, and the garments on it */}
-        <div className="relative mt-5 sm:mt-6">
+        <div className="relative mt-2 sm:mt-3">
           <div
             className="pointer-events-none absolute inset-x-0 top-[6px] z-20 h-[16px]"
             aria-hidden="true"
@@ -386,21 +441,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             ref={trackRef}
             aria-label="لباس‌های مُدارا روی رگال"
             onKeyDown={onRackKeyDown}
-            onPointerEnter={() => setRackPaused(true)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            onPointerLeave={() => {
-              onPointerUp();
-              setRackPaused(false);
-            }}
-            onFocusCapture={() => setRackPaused(true)}
-            onBlurCapture={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                setRackPaused(false);
-              }
-            }}
+            onPointerLeave={onPointerUp}
             onClickCapture={(event) => {
               /* a drag should not select a garment accidentally */
               if (!suppressClick.current) return;
@@ -422,7 +467,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   aria-hidden="true"
                   className="shrink-0 animate-pulse rounded-[10px] bg-[#ded6c8]"
                   style={{
-                    width: `calc(var(--piece-h) * 0.26)`,
+                    width: `calc(var(--piece-h) * 0.27)`,
                     height: 'var(--piece-h)',
                     marginInlineStart: index === 0 ? 0 : PIECE_GAP,
                   }}
@@ -439,7 +484,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     key={item.id}
                     data-piece={item.id}
                     onPointerEnter={(event) => {
-                      if (event.pointerType !== 'touch') setActiveId(item.id);
+                      if (event.pointerType !== 'touch') selectRackItem(item.id);
                     }}
                     className="rack-drop relative shrink-0"
                     style={{
@@ -453,56 +498,57 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     <button
                       type="button"
                       aria-pressed={isActive}
-                      aria-label={item.name}
-                      onPointerEnter={(event) => {
-                        if (event.pointerType !== 'touch') setActiveId(item.id);
-                      }}
-                      onFocus={() => {
-                        setRackPaused(true);
-                        setActiveId(item.id);
-                      }}
-                      onClick={() => setActiveId(item.id)}
-                      className="group/piece absolute inset-0 block cursor-pointer outline-none"
+                      aria-label={
+                        isActive
+                          ? `${item.name}، نمایش ست بالا`
+                          : `${item.name}، انتخاب برای نمایش ست بالا`
+                      }
+                      onFocus={() => selectRackItem(item.id)}
+                      onClick={() => selectRackItem(item.id)}
+                      className="group/piece absolute inset-0 block cursor-pointer outline-none focus-visible:z-40 focus-visible:rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a3783a]"
                     >
                       {/* soft glow of the garment's own colour */}
                       <span
                         aria-hidden="true"
+                        style={
+                          isActive
+                            ? {
+                                left: '50%',
+                                right: 'auto',
+                                width: rackSize.height * item.aspect,
+                                marginLeft: -(rackSize.height * item.aspect) / 2,
+                                transform: 'none',
+                              }
+                            : undefined
+                        }
                         className={`pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md transition-opacity duration-500 ${
                           isActive ? 'opacity-100' : 'opacity-0'
                         }`}
                       />
 
-                      {/* the garment: profile photo, or turned away when it has none */}
-                      <span
-                        className="rack-sway absolute inset-0 block"
+                      {/* The rail always stays a side-profile rack; selection updates the hero above. */}
+                      <motion.img
+                        src={asset(item.image)}
+                        alt=""
+                        aria-hidden="true"
+                        initial={false}
+                        animate={{ opacity: 1 }}
+                        loading={index < 2 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        decoding="async"
+                        draggable={false}
                         style={
                           {
                             '--rack-sway-delay': `${(index % 7) * 0.55}s`,
                             '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
                           } as CSSProperties
                         }
-                      >
-                        <span
-                          className={`absolute inset-0 block origin-top transition-transform duration-700 ease-out ${
-                            isActive ? '-translate-y-4 scale-[1.06]' : ''
-                          }`}
-                        >
-                          <img
-                            src={asset(item.image)}
-                            alt=""
-                            aria-hidden="true"
-                            loading={index < 2 ? 'eager' : 'lazy'}
-                            fetchPriority={index === 0 ? 'high' : 'auto'}
-                            decoding="async"
-                            draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
-                              isActive
-                                ? 'drop-shadow-[0_30px_30px_rgba(56,42,22,0.3)]'
-                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
-                            }`}
-                          />
-                        </span>
-                      </span>
+                        className={`rack-sway absolute inset-0 h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
+                          isActive
+                            ? 'brightness-[1.04] drop-shadow-[0_18px_20px_rgba(56,42,22,0.26)]'
+                            : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
+                        }`}
+                      />
                     </button>
                   </li>
                 );
@@ -558,8 +604,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             </span>
           </div>
 
-          <p className="mx-auto mt-2 hidden max-w-md text-center text-[10px] text-[#a99c86] sm:block">
-            هاور، یا کلیدهای ← →، قطعه را جلو می‌آورند
+          <p className="mx-auto mt-2 flex max-w-md items-center justify-center gap-2 text-center text-[11px] font-medium text-[#87785f]">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#b08440]" aria-hidden="true" />
+            <span className="hidden sm:inline">برای دیدن ست کامل، روی لباس بروید یا آن را انتخاب کنید</span>
+            <span className="sm:hidden">برای دیدن ست کامل، روی لباس بزنید</span>
           </p>
 
           {/* phones only: the line really does not fit, so it can be pushed */}
@@ -573,7 +621,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
-              <span className="text-[9.5px] text-[#a99c86]">یا رگال را بکشید</span>
+              <span className="text-[9.5px] text-[#a99c86]">برای مرور، رگال را بکشید</span>
               <button
                 type="button"
                 onClick={() => nudgeTrack(-1)}

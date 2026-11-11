@@ -159,7 +159,7 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
           {/* Image */}
           <div className="relative">
             <div className="lg:sticky lg:top-24">
-              <div className="relative aspect-square overflow-hidden rounded-2xl border border-dark-100 bg-white shadow-lg">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-[#8b6a3f]/20 bg-[#efe2cc] p-2 shadow-[0_24px_60px_-36px_rgba(82,58,27,0.4)] sm:p-3">
                 <img
                   src={optimizedAsset(product.image_url, 720)}
                   srcSet={imageSrcSet(product.image_url, [480, 720])}
@@ -169,8 +169,9 @@ export default function ProductDetail({ slug, onNavigate, onOpenAuth }: ProductD
                   height={960}
                   fetchPriority="high"
                   decoding="async"
-                  className="h-full w-full object-cover"
+                  className="h-full w-full rounded-[1.45rem] object-cover"
                 />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-[1.5rem] border border-white/55 sm:inset-3" />
                 <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-dark-950/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   {new Intl.NumberFormat('fa-IR').format(avgRating)}

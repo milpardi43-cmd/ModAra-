@@ -1,3 +1,9 @@
+const IMAGE_REVISION = 'modara-categories-v6-20261110';
+
+function versionedImageUrl(url: string): string {
+  return `${url}${url.includes('?') ? '&' : '?'}v=${IMAGE_REVISION}`;
+}
+
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
 }
@@ -49,7 +55,7 @@ function optimizedImagePath(path: string | null | undefined, width: number): str
  */
 export function optimizedAsset(path: string | null | undefined, width = 720): string {
   const optimized = optimizedImagePath(path, width);
-  return optimized ? asset(optimized) : asset(path);
+  return optimized ? versionedImageUrl(asset(optimized)) : asset(path);
 }
 
 export function imageSrcSet(
@@ -58,7 +64,7 @@ export function imageSrcSet(
 ): string | undefined {
   const entries = widths.flatMap((width) => {
     const optimized = optimizedImagePath(path, width);
-    return optimized ? [`${asset(optimized)} ${width}w`] : [];
+    return optimized ? [`${versionedImageUrl(asset(optimized))} ${width}w`] : [];
   });
   return entries.length ? entries.join(', ') : undefined;
 }
