@@ -35,9 +35,9 @@ type RackItem = {
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** Air between two hangers. */
 const PIECE_GAP = 6;
-/** Keep profile silhouettes readable; the rail scrolls rather than shrinking them. */
-const MIN_PIECE_HEIGHT = 230;
-const MAX_PIECE_HEIGHT = 280;
+/** Give side-profile silhouettes enough height to read clearly. */
+const MIN_PIECE_HEIGHT = 240;
+const MAX_PIECE_HEIGHT = 300;
 const outfitAspects: Record<string, number> = {
   'basic-tshirt-black-men': 0.6011,
   'classic-white-shirt': 0.6995,
@@ -71,7 +71,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   /** Piece height that makes the whole line fit the row exactly. */
   const [rackSize, setRackSize] = useState({ height: 240, fits: true });
   const suppressClick = useRef(false);
-  const [rackPaused, setRackPaused] = useState(false);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
@@ -182,9 +181,13 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       if (!track) return;
       const piece = track.querySelector<HTMLElement>(`[data-piece="${id}"]`);
       if (!piece) return;
-      const pieceRect = piece.getBoundingClientRect();
+      const activeOutfit = piece.querySelector<HTMLElement>('[data-active-outfit="true"]');
+      const pieceRect = (activeOutfit ?? piece).getBoundingClientRect();
       const trackRect = track.getBoundingClientRect();
-      if (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left) {
+      if (
+        !rackSize.fits &&
+        (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left)
+      ) {
         piece.scrollIntoView({
           inline: 'center',
           block: 'nearest',
@@ -192,27 +195,19 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         });
       }
     },
-    [reduceMotion],
+    [rackSize.fits, reduceMotion],
   );
 
-  // Cinematic product changes pause while the visitor is interacting with the rack.
-  useEffect(() => {
-    if (loading || items.length < 2 || rackPaused) return;
-    const timer = window.setTimeout(() => {
-      setActiveId((current) => {
-        const currentIndex = items.findIndex((item) => item.id === current);
-        return items[(currentIndex + 1 + items.length) % items.length].id;
-      });
-    }, 3000);
-    return () => window.clearTimeout(timer);
-  }, [activeId, items, loading, rackPaused]);
+  const selectRackItem = (id: string) => {
+    setActiveId(id);
+    window.requestAnimationFrame(() => revealPiece(id));
+  };
 
   const moveActive = (step: 1 | -1) => {
     if (items.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
     const next = items[(from + step + items.length) % items.length];
-    setActiveId(next.id);
-    revealPiece(next.id);
+    selectRackItem(next.id);
   };
 
   /** In RTL the next piece sits to the left, so the arrows and keys invert. */
@@ -234,14 +229,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       moveActive(-1);
     } else if (event.key === 'Home' && items[0]) {
       event.preventDefault();
-      setActiveId(items[0].id);
-      revealPiece(items[0].id);
+      selectRackItem(items[0].id);
     } else if (event.key === 'End') {
       event.preventDefault();
       const last = items[items.length - 1];
       if (last) {
-        setActiveId(last.id);
-        revealPiece(last.id);
+        selectRackItem(last.id);
       }
     }
   };
@@ -395,7 +388,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
 
         {/* The rail, and the garments on it */}
-        <div className="relative mt-5 sm:mt-6">
+        <div className="relative mt-3 sm:mt-4">
           <div
             className="pointer-events-none absolute inset-x-0 top-[6px] z-20 h-[16px]"
             aria-hidden="true"
@@ -411,21 +404,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             ref={trackRef}
             aria-label="لباس‌های مُدارا روی رگال"
             onKeyDown={onRackKeyDown}
-            onPointerEnter={() => setRackPaused(true)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
-            onPointerLeave={() => {
-              onPointerUp();
-              setRackPaused(false);
-            }}
-            onFocusCapture={() => setRackPaused(true)}
-            onBlurCapture={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                setRackPaused(false);
-              }
-            }}
+            onPointerLeave={onPointerUp}
             onClickCapture={(event) => {
               /* a drag should not select a garment accidentally */
               if (!suppressClick.current) return;
@@ -464,7 +447,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     key={item.id}
                     data-piece={item.id}
                     onPointerEnter={(event) => {
-                      if (event.pointerType !== 'touch') setActiveId(item.id);
+                      if (event.pointerType !== 'touch') selectRackItem(item.id);
                     }}
                     className="rack-drop relative shrink-0"
                     style={{
@@ -478,16 +461,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     <button
                       type="button"
                       aria-pressed={isActive}
-                      aria-label={item.name}
-                      onPointerEnter={(event) => {
-                        if (event.pointerType !== 'touch') setActiveId(item.id);
-                      }}
-                      onFocus={() => {
-                        setRackPaused(true);
-                        setActiveId(item.id);
-                      }}
-                      onClick={() => setActiveId(item.id)}
-                      className="group/piece absolute inset-0 block cursor-pointer outline-none"
+                      aria-label={
+                        isActive
+                          ? `${item.name}، ست کامل در حال نمایش`
+                          : `${item.name}، انتخاب برای نمایش ست کامل`
+                      }
+                      onFocus={() => selectRackItem(item.id)}
+                      onClick={() => selectRackItem(item.id)}
+                      className="group/piece absolute inset-0 block cursor-pointer outline-none focus-visible:z-40 focus-visible:rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a3783a]"
                     >
                       {/* soft glow of the garment's own colour */}
                       <span
@@ -519,7 +500,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       >
                         <span
                           className={`absolute inset-0 block origin-top transition-transform duration-500 ease-out motion-reduce:transition-none ${
-                            isActive ? '-translate-y-4 scale-[1.18] rotate-[1deg]' : ''
+                            isActive ? '-translate-y-4 scale-[1.1] rotate-[1deg]' : ''
                           }`}
                         >
                           <img
@@ -538,6 +519,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             src={asset(item.outfitImage)}
                             alt=""
                             aria-hidden="true"
+                            data-active-outfit={isActive ? 'true' : undefined}
                             loading={index < 2 || isActive ? 'eager' : 'lazy'}
                             fetchPriority={isActive ? 'high' : 'auto'}
                             decoding="async"
@@ -545,7 +527,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             style={{
                               left: '50%',
                               width: `calc(var(--piece-h) * ${item.outfitAspect})`,
-                              transform: `translateX(-50%) scale(${isActive ? 1.18 : 0.78})`,
+                              transform: `translateX(-50%) scale(${isActive ? 1.08 : 0.76})`,
                               transition: reduceMotion
                                 ? 'none'
                                 : 'opacity 500ms ease-out, filter 500ms ease-out, transform 650ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -613,8 +595,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             </span>
           </div>
 
-          <p className="mx-auto mt-2 hidden max-w-md text-center text-[10px] text-[#a99c86] sm:block">
-            هاور، یا کلیدهای ← →، قطعه را جلو می‌آورند
+          <p className="mx-auto mt-2 flex max-w-md items-center justify-center gap-2 text-center text-[11px] font-medium text-[#87785f]">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#b08440]" aria-hidden="true" />
+            <span className="hidden sm:inline">برای دیدن ست کامل، روی لباس بروید یا آن را انتخاب کنید</span>
+            <span className="sm:hidden">برای دیدن ست کامل، روی لباس بزنید</span>
           </p>
 
           {/* phones only: the line really does not fit, so it can be pushed */}
@@ -628,7 +612,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
-              <span className="text-[9.5px] text-[#a99c86]">یا رگال را بکشید</span>
+              <span className="text-[9.5px] text-[#a99c86]">برای مرور، رگال را بکشید</span>
               <button
                 type="button"
                 onClick={() => nudgeTrack(-1)}
