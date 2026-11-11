@@ -479,26 +479,9 @@
   will-change: transform;
 }
 
-@keyframes rackLayerSway {
-  0%,
-  100% {
-    transform: rotate(-0.28deg);
-  }
-  50% {
-    transform: rotate(0.28deg);
-  }
-}
-
-.rack-layer-sway {
-  animation: rackLayerSway var(--rack-layer-duration, 7s) ease-in-out infinite;
-  animation-delay: var(--rack-layer-delay, 0s);
-  will-change: transform;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .rack-drop,
-  .rack-sway,
-  .rack-layer-sway {
+  .rack-sway {
     animation: none !important;
   }
 }
