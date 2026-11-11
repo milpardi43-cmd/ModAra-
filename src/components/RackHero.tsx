@@ -43,6 +43,19 @@ const PIECE_GAP = 6;
 /** Give side-profile silhouettes enough height to read clearly. */
 const MIN_PIECE_HEIGHT = 240;
 const MAX_PIECE_HEIGHT = 300;
+const warmedOutfitSources = new Set<string>();
+
+function warmOutfitImages(item: RackItem) {
+  item.outfitLayers.forEach((layer) => {
+    const src = asset(layer.src);
+    if (warmedOutfitSources.has(src)) return;
+    warmedOutfitSources.add(src);
+    const image = new Image();
+    image.fetchPriority = 'high';
+    image.decoding = 'async';
+    image.src = src;
+  });
+}
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -120,6 +133,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           .filter((item): item is RackItem => item !== null)
           /* keep a natural rhythm, from narrower to wider side-profile silhouettes */
           .sort((a, b) => a.aspect - b.aspect);
+        if (hanging[0]) warmOutfitImages(hanging[0]);
         setItems(hanging);
         setActiveId((current) => current ?? hanging[0]?.id ?? null);
       })
@@ -208,6 +222,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   );
 
   const selectRackItem = (id: string) => {
+    const selected = items.find((item) => item.id === id);
+    if (selected) warmOutfitImages(selected);
     setActiveId(id);
     window.requestAnimationFrame(() => revealPiece(id));
   };
@@ -316,10 +332,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             {activeItem && (
               <motion.div
                 key={activeItem.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                initial={reduceMotion ? false : { opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-                transition={{ duration: 0.72, ease: EASE }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
+                transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
                 className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
@@ -334,20 +350,13 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     className="absolute inset-0"
                   >
                     {activeItem.outfitLayers.map((layer) => (
-                      <motion.img
+                      <img
                         key={`${activeItem.slug}-${layer.id}`}
                         src={asset(layer.src)}
                         alt=""
                         aria-hidden="true"
-                        initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.985 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{
-                          duration: reduceMotion ? 0 : 0.5,
-                          delay: reduceMotion ? 0 : layer.delay,
-                          ease: EASE,
-                        }}
                         loading="eager"
-                        fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
+                        fetchPriority="high"
                         decoding="async"
                         draggable={false}
                         className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
