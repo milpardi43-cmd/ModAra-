@@ -18,7 +18,7 @@ type RackItem = {
   name: string;
   /** Photoreal side profile used on the shared rack while idle. */
   image: string;
-  /** Complete coordinated cut-out shown in the selected-item display. */
+  /** Transparent look cut-out: top, clip-hung trousers and shoes on separate hangers. */
   outfitImage: string;
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
@@ -478,8 +478,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             ? {
                                 left: '50%',
                                 right: 'auto',
-                                width: `calc(var(--piece-h) * ${item.outfitAspect})`,
-                                transform: 'translateX(-50%)',
+                                width: rackSize.height * item.outfitAspect,
+                                marginLeft: -(rackSize.height * item.outfitAspect) / 2,
+                                transform: 'none',
                               }
                             : undefined
                         }
@@ -503,39 +504,48 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             isActive ? '-translate-y-4 scale-[1.1] rotate-[1deg]' : ''
                           }`}
                         >
-                          <img
+                          <motion.img
                             src={asset(item.image)}
                             alt=""
                             aria-hidden="true"
+                            initial={false}
+                            animate={{ opacity: isActive ? 0 : 1 }}
+                            transition={{ duration: reduceMotion ? 0 : 0.42, ease: EASE }}
                             loading={index < 2 ? 'eager' : 'lazy'}
                             fetchPriority={index === 0 ? 'high' : 'auto'}
                             decoding="async"
                             draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-opacity duration-500 ease-out motion-reduce:transition-none ${
-                              isActive ? 'opacity-0' : 'opacity-100'
-                            } drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]`}
+                            className="h-full w-full select-none object-contain object-top drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]"
                           />
-                          <img
+                          <motion.img
                             src={asset(item.outfitImage)}
                             alt=""
                             aria-hidden="true"
                             data-active-outfit={isActive ? 'true' : undefined}
+                            initial={false}
+                            animate={{
+                              opacity: isActive ? 1 : 0,
+                              scale: isActive ? 1 : 0.78,
+                              rotateY: isActive ? 0 : -12,
+                              y: isActive ? -10 : 8,
+                            }}
+                            transition={{ duration: reduceMotion ? 0 : 0.62, ease: EASE }}
                             loading={index < 2 || isActive ? 'eager' : 'lazy'}
                             fetchPriority={isActive ? 'high' : 'auto'}
                             decoding="async"
                             draggable={false}
                             style={{
                               left: '50%',
-                              width: `calc(var(--piece-h) * ${item.outfitAspect})`,
-                              transform: `translateX(-50%) scale(${isActive ? 1.08 : 0.76})`,
-                              transition: reduceMotion
-                                ? 'none'
-                                : 'opacity 500ms ease-out, filter 500ms ease-out, transform 650ms cubic-bezier(0.22, 1, 0.36, 1)',
+                              width: rackSize.height * item.outfitAspect,
+                              height: '100%',
+                              marginLeft: -(rackSize.height * item.outfitAspect) / 2,
+                              transformOrigin: 'top center',
+                              transformPerspective: 1000,
                             }}
-                            className={`pointer-events-none absolute top-0 h-full max-w-none select-none object-contain object-top ${
+                            className={`pointer-events-none absolute top-0 max-w-none select-none object-contain object-top transition-[filter] duration-500 ${
                               isActive
-                                ? 'opacity-100 brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
-                                : 'opacity-0 drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
+                                ? 'brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
+                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
                             }`}
                           />
                         </span>
