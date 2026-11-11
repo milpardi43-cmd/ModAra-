@@ -519,7 +519,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       >
                         <span
                           className={`absolute inset-0 block origin-top transition-transform duration-500 ease-out motion-reduce:transition-none ${
-                            isActive ? '-translate-y-3 scale-[1.12] rotate-[0.8deg]' : ''
+                            isActive ? '-translate-y-4 scale-[1.18] rotate-[1deg]' : ''
                           }`}
                         >
                           <img
@@ -545,9 +545,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                             style={{
                               left: '50%',
                               width: `calc(var(--piece-h) * ${item.outfitAspect})`,
-                              transform: 'translateX(-50%)',
+                              transform: `translateX(-50%) scale(${isActive ? 1.18 : 0.78})`,
+                              transition: reduceMotion
+                                ? 'none'
+                                : 'opacity 500ms ease-out, filter 500ms ease-out, transform 650ms cubic-bezier(0.22, 1, 0.36, 1)',
                             }}
-                            className={`absolute top-0 h-full max-w-none select-none object-contain object-top transition-[opacity,filter] duration-500 ease-out motion-reduce:transition-none ${
+                            className={`pointer-events-none absolute top-0 h-full max-w-none select-none object-contain object-top ${
                               isActive
                                 ? 'opacity-100 brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
                                 : 'opacity-0 drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
