@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { asset, formatPrice } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 import { rackOutfitLayerInfo } from '../lib/rackOutfitLayerInfo';
 
@@ -193,11 +193,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   const activeIndex = items.findIndex((item) => item.id === activeId);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
-  const activeImageSrc = activeItem
-    ? activeItem.product.image_url
-      ? optimizedAsset(activeItem.product.image_url, 720)
-      : asset(activeItem.image)
-    : '';
 
   const updateScrollHints = useCallback(() => {
     const track = trackRef.current;
@@ -360,23 +355,37 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative mx-auto aspect-[8/11] w-full max-w-[200px] overflow-hidden rounded-[1.5rem] bg-[#e9e2d6] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)]">
+                <div className="relative mx-auto aspect-[8/11] w-full max-w-[280px] overflow-hidden rounded-[1.5rem] bg-[radial-gradient(ellipse_at_50%_38%,#f8f4ec_0%,#eee8dd_58%,#e3dbcd_100%)] shadow-[0_20px_55px_-24px_rgba(45,33,18,0.5)] ring-1 ring-white/50">
+                  <div
+                    role="img"
+                    aria-label={`${activeItem.product.name}، نمای کامل ست روی رگال`}
+                    className="absolute inset-0"
+                  >
+                    {activeItem.outfitLayers.map((layer) => (
+                      <motion.img
+                        key={`${activeItem.slug}-${layer.id}`}
+                        src={asset(layer.src)}
+                        alt=""
+                        aria-hidden="true"
+                        initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.985 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{
+                          duration: reduceMotion ? 0 : 0.5,
+                          delay: reduceMotion ? 0 : layer.delay,
+                          ease: EASE,
+                        }}
+                        loading="eager"
+                        fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
+                        decoding="async"
+                        draggable={false}
+                        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain p-3 drop-shadow-[0_18px_18px_rgba(56,42,22,0.18)] sm:p-4"
+                      />
+                    ))}
+                  </div>
                   <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[#241d14]/75 px-3 py-1.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm">
                     <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#e6b95e]" aria-hidden="true" />
                     {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
                   </span>
-                  <img
-                    src={activeImageSrc}
-                    srcSet={imageSrcSet(activeItem.product.image_url, [480, 720])}
-                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 40vw, 100vw"
-                    alt={activeItem.product.name}
-                    width={720}
-                    height={964}
-                    loading="eager"
-                    fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out"
-                  />
                 </div>
                 <div className="min-w-0">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
