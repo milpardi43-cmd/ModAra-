@@ -14,6 +14,7 @@
     "seed": "node scripts/generate-seed.mjs",
     "images:optimize": "node scripts/optimize-images.mjs",
     "images:rack": "node scripts/generate-rack-slices.mjs",
+    "images:rack-layers": "python3 scripts/split-rack-outfits.py",
     "images:palette": "node scripts/generate-product-palette.mjs"
   },
   "dependencies": {

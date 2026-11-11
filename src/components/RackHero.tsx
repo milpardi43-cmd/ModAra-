@@ -5,9 +5,18 @@ import { getCategories, getClothingProducts } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
 import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
+import { rackOutfitLayerInfo } from '../lib/rackOutfitLayerInfo';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
+};
+
+type RackOutfitLayer = {
+  id: 'top' | 'trousers' | 'shoes' | 'full';
+  src: string;
+  pivotX: number;
+  pivotY: number;
+  delay: number;
 };
 
 type RackItem = {
@@ -18,8 +27,8 @@ type RackItem = {
   name: string;
   /** Photoreal side profile used on the shared rack while idle. */
   image: string;
-  /** Transparent look cut-out: top, clip-hung trousers and shoes on separate hangers. */
-  outfitImage: string;
+  /** Pixel-accurate transparent top, trousers and shoe layers for the selected look. */
+  outfitLayers: RackOutfitLayer[];
   /** Average fabric colour — used only for the glow behind the rack. */
   hex: string;
   /** width / height of the side-profile rack image. */
@@ -89,12 +98,50 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             const garment = hangerFor(product.slug);
             if (!garment) return null;
             const profile = sideFor(product.slug) ?? garment;
+            const layerInfo = rackOutfitLayerInfo[product.slug];
+            const outfitLayers: RackOutfitLayer[] = layerInfo
+              ? [
+                  ...(layerInfo.hasTrousers && layerInfo.trousersPivotX !== null
+                    ? [
+                        {
+                          id: 'trousers' as const,
+                          src: `/images/rack/outfit-layers/${product.slug}-trousers.webp`,
+                          pivotX: layerInfo.trousersPivotX,
+                          pivotY: 0.045,
+                          delay: 0.045,
+                        },
+                      ]
+                    : []),
+                  {
+                    id: 'top',
+                    src: `/images/rack/outfit-layers/${product.slug}-top.webp`,
+                    pivotX: layerInfo.topPivotX,
+                    pivotY: 0.045,
+                    delay: 0,
+                  },
+                  {
+                    id: 'shoes',
+                    src: `/images/rack/outfit-layers/${product.slug}-shoes.webp`,
+                    pivotX: 0.5,
+                    pivotY: 0.82,
+                    delay: 0.09,
+                  },
+                ]
+              : [
+                  {
+                    id: 'full',
+                    src: `/images/rack/outfits-cleaned/${product.slug}.webp`,
+                    pivotX: 0.5,
+                    pivotY: 0.045,
+                    delay: 0,
+                  },
+                ];
             return {
               id: product.id,
               slug: product.slug,
               name: product.name,
               image: profile.image,
-              outfitImage: `/images/rack/outfits-cleaned/${product.slug}.webp`,
+              outfitLayers,
               hex: garment.hex,
               aspect: profile.aspect,
               outfitAspect: outfitAspects[product.slug] ?? 0.67,
@@ -441,6 +488,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               items.map((item, index) => {
                 const isActive = item.id === activeItem?.id;
                 const slotWidth = `calc(var(--piece-h) * ${item.aspect})`;
+                const outfitWidth = rackSize.height * item.outfitAspect;
 
                 return (
                   <li
@@ -489,65 +537,88 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         }`}
                       />
 
-                      {/* Idle pieces hang in profile; the active piece opens to its full look. */}
-                      <span
-                        className="rack-sway absolute inset-0 block"
-                        style={
-                          {
-                            '--rack-sway-delay': `${(index % 7) * 0.55}s`,
-                            '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
-                          } as CSSProperties
-                        }
-                      >
+                      {/* Every selected look is rebuilt from isolated, original-pixel layers. */}
+                      <span className="absolute inset-0 block">
+                        <motion.img
+                          src={asset(item.image)}
+                          alt=""
+                          aria-hidden="true"
+                          initial={false}
+                          animate={{ opacity: isActive ? 0 : 1 }}
+                          transition={{ duration: reduceMotion ? 0 : 0.42, ease: EASE }}
+                          loading={index < 2 ? 'eager' : 'lazy'}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
+                          decoding="async"
+                          draggable={false}
+                          style={
+                            {
+                              '--rack-sway-delay': `${(index % 7) * 0.55}s`,
+                              '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
+                            } as CSSProperties
+                          }
+                          className="rack-sway absolute inset-0 h-full w-full select-none object-contain object-top drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]"
+                        />
+
                         <span
-                          className={`absolute inset-0 block origin-top transition-transform duration-500 ease-out motion-reduce:transition-none ${
-                            isActive ? '-translate-y-4 scale-[1.1] rotate-[1deg]' : ''
-                          }`}
+                          data-active-outfit={isActive ? 'true' : undefined}
+                          aria-hidden="true"
+                          className="pointer-events-none absolute top-0"
+                          style={{
+                            left: '50%',
+                            width: outfitWidth,
+                            height: rackSize.height,
+                            marginLeft: -outfitWidth / 2,
+                          }}
                         >
-                          <motion.img
-                            src={asset(item.image)}
-                            alt=""
-                            aria-hidden="true"
-                            initial={false}
-                            animate={{ opacity: isActive ? 0 : 1 }}
-                            transition={{ duration: reduceMotion ? 0 : 0.42, ease: EASE }}
-                            loading={index < 2 ? 'eager' : 'lazy'}
-                            fetchPriority={index === 0 ? 'high' : 'auto'}
-                            decoding="async"
-                            draggable={false}
-                            className="h-full w-full select-none object-contain object-top drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]"
-                          />
-                          <motion.img
-                            src={asset(item.outfitImage)}
-                            alt=""
-                            aria-hidden="true"
-                            data-active-outfit={isActive ? 'true' : undefined}
-                            initial={false}
-                            animate={{
-                              opacity: isActive ? 1 : 0,
-                              scale: isActive ? 1 : 0.78,
-                              rotateY: isActive ? 0 : -12,
-                              y: isActive ? -10 : 8,
-                            }}
-                            transition={{ duration: reduceMotion ? 0 : 0.62, ease: EASE }}
-                            loading={index < 2 || isActive ? 'eager' : 'lazy'}
-                            fetchPriority={isActive ? 'high' : 'auto'}
-                            decoding="async"
-                            draggable={false}
-                            style={{
-                              left: '50%',
-                              width: rackSize.height * item.outfitAspect,
-                              height: '100%',
-                              marginLeft: -(rackSize.height * item.outfitAspect) / 2,
-                              transformOrigin: 'top center',
-                              transformPerspective: 1000,
-                            }}
-                            className={`pointer-events-none absolute top-0 max-w-none select-none object-contain object-top transition-[filter] duration-500 ${
-                              isActive
-                                ? 'brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
-                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
-                            }`}
-                          />
+                          {item.outfitLayers.map((layer) => {
+                            const isShoes = layer.id === 'shoes';
+                            const pivotX = `${layer.pivotX * 100}%`;
+                            const pivotY = `${layer.pivotY * 100}%`;
+                            return (
+                              <span
+                                key={layer.id}
+                                className={`${isShoes ? '' : 'rack-layer-sway'} absolute inset-0 block`}
+                                style={
+                                  {
+                                    '--rack-layer-delay': `${(index % 7) * 0.55 + layer.delay}s`,
+                                    '--rack-layer-duration': `${6.4 + (index % 5) * 0.85}s`,
+                                    transformOrigin: `${pivotX} ${pivotY}`,
+                                  } as CSSProperties
+                                }
+                              >
+                                <motion.img
+                                  src={asset(layer.src)}
+                                  alt=""
+                                  aria-hidden="true"
+                                  initial={false}
+                                  animate={{
+                                    opacity: isActive ? 1 : 0,
+                                    scale: isActive ? 1 : isShoes ? 0.88 : 0.94,
+                                    rotateY: isActive || isShoes ? 0 : -14,
+                                    y: isActive ? 0 : isShoes ? 12 : 6,
+                                  }}
+                                  transition={{
+                                    duration: reduceMotion ? 0 : 0.58,
+                                    delay: isActive && !reduceMotion ? layer.delay : 0,
+                                    ease: EASE,
+                                  }}
+                                  loading={index < 2 || isActive ? 'eager' : 'lazy'}
+                                  fetchPriority={isActive ? 'high' : 'auto'}
+                                  decoding="async"
+                                  draggable={false}
+                                  style={{
+                                    transformOrigin: `${pivotX} ${pivotY}`,
+                                    transformPerspective: 900,
+                                  }}
+                                  className={`absolute inset-0 h-full w-full max-w-none select-none object-contain object-top transition-[filter] duration-500 ${
+                                    isActive
+                                      ? 'brightness-[1.035] saturate-[1.04] drop-shadow-[0_26px_24px_rgba(56,42,22,0.32)]'
+                                      : 'drop-shadow-[0_10px_14px_rgba(56,42,22,0.16)]'
+                                  }`}
+                                />
+                              </span>
+                            );
+                          })}
                         </span>
                       </span>
                     </button>
