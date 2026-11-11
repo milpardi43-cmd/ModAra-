@@ -14,8 +14,6 @@ type RackHeroProps = {
 type RackOutfitLayer = {
   id: 'top' | 'trousers' | 'shoes' | 'full';
   src: string;
-  pivotX: number;
-  pivotY: number;
   delay: number;
 };
 
@@ -71,7 +69,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         if (cancelled) return;
         const categoryNames = new Map<string, string>();
         for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Hang each product in profile; its complete cut-out is shown when selected. */
+        /* Hang each product in profile; build a composed preview from its original layers. */
         const hanging = products
           .map((product) => {
             const garment = hangerFor(product.slug);
@@ -80,13 +78,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             const layerInfo = rackOutfitLayerInfo[product.slug];
             const outfitLayers: RackOutfitLayer[] = layerInfo
               ? [
-                  ...(layerInfo.hasTrousers && layerInfo.trousersPivotX !== null
+                  ...(layerInfo.hasTrousers
                     ? [
                         {
                           id: 'trousers' as const,
                           src: `/images/rack/outfit-layers/${product.slug}-trousers.webp`,
-                          pivotX: layerInfo.trousersPivotX,
-                          pivotY: 0.045,
                           delay: 0.045,
                         },
                       ]
@@ -94,15 +90,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   {
                     id: 'top',
                     src: `/images/rack/outfit-layers/${product.slug}-top.webp`,
-                    pivotX: layerInfo.topPivotX,
-                    pivotY: 0.045,
                     delay: 0,
                   },
                   {
                     id: 'shoes',
                     src: `/images/rack/outfit-layers/${product.slug}-shoes.webp`,
-                    pivotX: 0.5,
-                    pivotY: 0.82,
                     delay: 0.09,
                   },
                 ]
@@ -110,8 +102,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   {
                     id: 'full',
                     src: `/images/rack/outfits-cleaned/${product.slug}.webp`,
-                    pivotX: 0.5,
-                    pivotY: 0.045,
                     delay: 0,
                   },
                 ];
@@ -284,6 +274,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     suppressClick.current = drag.current.moved;
     drag.current.active = false;
   };
+  const activeHasTrousers = activeItem?.outfitLayers.some((layer) => layer.id === 'trousers') ?? false;
 
   return (
     <section
@@ -332,11 +323,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
-                <div className="relative mx-auto aspect-[8/11] w-full max-w-[280px]">
+                <div
+                  className={`rack-outfit-stage ${
+                    activeHasTrousers ? 'rack-outfit-stage--two-piece' : 'rack-outfit-stage--one-piece'
+                  }`}
+                >
                   <div
                     role="img"
-                    aria-label={`${activeItem.product.name}، نمای شفاف ست انتخاب‌شده`}
-                    className="absolute inset-0 drop-shadow-[0_18px_18px_rgba(56,42,22,0.18)]"
+                    aria-label={`${activeItem.product.name}، چیدمان کامل و مرتب ست`}
+                    className="absolute inset-0"
                   >
                     {activeItem.outfitLayers.map((layer) => (
                       <motion.img
@@ -355,7 +350,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         fetchPriority={activeIndex === 0 ? 'high' : 'auto'}
                         decoding="async"
                         draggable={false}
-                        className="pointer-events-none absolute inset-0 h-full w-full select-none object-contain"
+                        className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
                       />
                     ))}
                   </div>

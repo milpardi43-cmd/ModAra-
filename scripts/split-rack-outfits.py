@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Split each transparent look cut-out into exact, full-canvas garment layers.
+"""Split transparent outfit cut-outs into tightly cropped, lossless garment layers.
 
 The source look remains the source of truth. Watershed labels only decide which
 source pixels belong to the top, trousers, or shoes; RGB values and alpha edges
-are retained. No product pixels are synthesized or recolored.
+are retained, then transparent margins are cropped so the frontend can compose
+those pieces with consistent, editorial spacing. No product pixels are synthesized
+or recolored.
 
 Install the optional image-tool dependencies with:
   python3 -m pip install -r scripts/requirements-rack-layers.txt
@@ -116,9 +118,15 @@ def make_masks(rgba: np.ndarray, slug: str) -> tuple[dict[str, np.ndarray], int]
             (~trouser_core).astype(np.uint8), cv2.DIST_L2, 5
         )
         all_apparel = (alpha > 0) & ~shoes & ~floor_shadow
-        is_top = top_distance <= trouser_distance
-        top_mask = all_apparel & is_top
-        trouser_mask = all_apparel & ~is_top
+        # Keep watershed's confident interior labels. Only unresolved boundary
+        # and antialiased pixels are assigned by distance to a confident core.
+        top_region = segmented == 2
+        trousers_region = segmented == 3
+        unresolved = ~(top_region | trousers_region)
+        nearest_top = top_distance <= trouser_distance
+        top_mask = all_apparel & (top_region | (unresolved & nearest_top))
+        trouser_mask = all_apparel & (trousers_region | (unresolved & ~nearest_top))
+
     else:
         top_mask = (alpha > 0) & ~shoes & ~floor_shadow
         trouser_mask = np.zeros((height, width), dtype=bool)
@@ -134,34 +142,16 @@ def make_masks(rgba: np.ndarray, slug: str) -> tuple[dict[str, np.ndarray], int]
     return masks, int(np.count_nonzero(floor_shadow))
 
 
-def hanger_pivot_x(mask: np.ndarray, fallback: float) -> float:
-    """Estimate a hanger-hook pivot from the upper 12% of its own cut-out."""
-    height, width = mask.shape
-    upper = mask[: max(1, round(height * 0.12)), :]
-    ys, xs = np.nonzero(upper)
-    if len(xs) < 8:
-        return fallback
-    return round(float(np.median(xs)) / width, 4)
-
-
-def write_metadata(records: dict[str, dict[str, object]]) -> None:
+def write_metadata(records: dict[str, bool]) -> None:
     lines = [
         "/** Generated from the transparent outfit cut-outs by split-rack-outfits.py. */",
-        "export type RackOutfitLayerInfo = {",
-        "  hasTrousers: boolean;",
-        "  topPivotX: number;",
-        "  trousersPivotX: number | null;",
-        "};",
+        "export type RackOutfitLayerInfo = { hasTrousers: boolean };",
         "",
         "export const rackOutfitLayerInfo: Record<string, RackOutfitLayerInfo> = {",
     ]
-    for slug, record in sorted(records.items()):
-        trousers_pivot = (
-            "null" if record["trousersPivotX"] is None else str(record["trousersPivotX"])
-        )
+    for slug, has_trousers in sorted(records.items()):
         lines.append(
-            f"  '{slug}': {{ hasTrousers: {str(record['hasTrousers']).lower()}, "
-            f"topPivotX: {record['topPivotX']}, trousersPivotX: {trousers_pivot} }},"
+            f"  '{slug}': {{ hasTrousers: {str(has_trousers).lower()} }},"
         )
     lines.extend(["};", ""])
     METADATA_FILE.write_text("\n".join(lines), encoding="utf-8")
@@ -173,7 +163,7 @@ def main() -> None:
         raise RuntimeError(f"No source outfit cut-outs found in {SOURCE_DIR}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    metadata: dict[str, dict[str, object]] = {}
+    metadata: dict[str, bool] = {}
     total_shadow_pixels = 0
 
     for source in sources:
@@ -181,28 +171,23 @@ def main() -> None:
         rgba = np.array(Image.open(source).convert("RGBA"))
         masks, removed_shadow = make_masks(rgba, slug)
         total_shadow_pixels += removed_shadow
-
         for name, mask in masks.items():
             if name == "trousers" and not mask.any():
                 continue
             layer = rgba.copy()
             layer[:, :, 3] = np.where(mask, rgba[:, :, 3], 0).astype(np.uint8)
-            Image.fromarray(layer, mode="RGBA").save(
+            image = Image.fromarray(layer, mode="RGBA")
+            bounds = image.getchannel("A").getbbox()
+            if bounds is None:
+                raise RuntimeError(f"Layer {name} is empty for {slug}")
+            image.crop(bounds).save(
                 OUTPUT_DIR / f"{slug}-{name}.webp",
                 format="WEBP",
                 lossless=True,
                 method=6,
             )
 
-        metadata[slug] = {
-            "hasTrousers": bool(masks["trousers"].any()),
-            "topPivotX": hanger_pivot_x(masks["top"], 0.32),
-            "trousersPivotX": (
-                hanger_pivot_x(masks["trousers"], 0.76)
-                if masks["trousers"].any()
-                else None
-            ),
-        }
+        metadata[slug] = bool(masks["trousers"].any())
         print(
             f"{slug}: top={int(masks['top'].sum())}, "
             f"trousers={int(masks['trousers'].sum())}, "

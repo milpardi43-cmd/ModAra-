@@ -479,6 +479,61 @@
   will-change: transform;
 }
 
+/* Transparent editorial composition: hero garment, clip-hung trousers, shoes below. */
+.rack-outfit-stage {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 5;
+  margin-inline: auto;
+}
+
+.rack-outfit-piece {
+  position: absolute;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 14px rgba(56, 42, 22, 0.15));
+}
+
+.rack-outfit-piece--top {
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 80%;
+  height: 76%;
+}
+
+.rack-outfit-piece--trousers {
+  z-index: 1;
+  top: 2%;
+  left: 52%;
+  width: 47%;
+  height: 74%;
+}
+
+.rack-outfit-piece--shoes {
+  z-index: 3;
+  bottom: 0;
+  left: 20%;
+  width: 60%;
+  height: 22%;
+}
+
+.rack-outfit-stage--one-piece .rack-outfit-piece--top {
+  left: 10%;
+  width: 80%;
+  height: 78%;
+}
+
+.rack-outfit-stage--one-piece .rack-outfit-piece--shoes {
+  height: 20%;
+}
+
+.rack-outfit-piece--full {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rack-drop,
   .rack-sway {
