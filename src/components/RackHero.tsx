@@ -295,7 +295,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   return (
     <section
       aria-label="رگال لباس مُدارا"
-      className="relative isolate overflow-hidden bg-[#efeae1] pb-8 pt-16 sm:pb-10 sm:pt-20"
+      className="relative isolate overflow-hidden bg-[#efeae1] pb-6 pt-12 sm:pb-8 sm:pt-16"
     >
       {/* Studio light */}
       <div
@@ -327,7 +327,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
       <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
         {/* Product information follows the selected garment; intentionally no card frame. */}
-        <div className="mx-auto mt-4 w-full max-w-[1100px] px-2 sm:px-0">
+        <div className="mx-auto mt-2 w-full max-w-[1100px] px-2 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -425,7 +425,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
 
         {/* The rail, and the garments on it */}
-        <div className="relative mt-3 sm:mt-4">
+        <div className="relative mt-2 sm:mt-3">
           <div
             className="pointer-events-none absolute inset-x-0 top-[6px] z-20 h-[16px]"
             aria-hidden="true"
