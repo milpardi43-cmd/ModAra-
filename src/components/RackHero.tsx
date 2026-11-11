@@ -457,8 +457,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             {!loading &&
               items.map((item, index) => {
                 const isActive = item.id === activeItem?.id;
-                const displayedAspect = isActive ? item.outfitAspect : item.aspect;
-                const slotWidth = `calc(var(--piece-h) * ${displayedAspect})`;
+                const slotWidth = `calc(var(--piece-h) * ${item.aspect})`;
 
                 return (
                   <li
@@ -493,6 +492,16 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       {/* soft glow of the garment's own colour */}
                       <span
                         aria-hidden="true"
+                        style={
+                          isActive
+                            ? {
+                                left: '50%',
+                                right: 'auto',
+                                width: `calc(var(--piece-h) * ${item.outfitAspect})`,
+                                transform: 'translateX(-50%)',
+                              }
+                            : undefined
+                        }
                         className={`pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md transition-opacity duration-500 ${
                           isActive ? 'opacity-100' : 'opacity-0'
                         }`}
@@ -514,17 +523,34 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                           }`}
                         >
                           <img
-                            src={asset(isActive ? item.outfitImage : item.image)}
+                            src={asset(item.image)}
                             alt=""
                             aria-hidden="true"
                             loading={index < 2 ? 'eager' : 'lazy'}
                             fetchPriority={index === 0 ? 'high' : 'auto'}
                             decoding="async"
                             draggable={false}
-                            className={`h-full w-full select-none object-contain object-top transition-[filter] duration-500 motion-reduce:transition-none ${
+                            className={`h-full w-full select-none object-contain object-top transition-opacity duration-500 ease-out motion-reduce:transition-none ${
+                              isActive ? 'opacity-0' : 'opacity-100'
+                            } drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]`}
+                          />
+                          <img
+                            src={asset(item.outfitImage)}
+                            alt=""
+                            aria-hidden="true"
+                            loading={index < 2 || isActive ? 'eager' : 'lazy'}
+                            fetchPriority={isActive ? 'high' : 'auto'}
+                            decoding="async"
+                            draggable={false}
+                            style={{
+                              left: '50%',
+                              width: `calc(var(--piece-h) * ${item.outfitAspect})`,
+                              transform: 'translateX(-50%)',
+                            }}
+                            className={`absolute top-0 h-full max-w-none select-none object-contain object-top transition-[opacity,filter] duration-500 ease-out motion-reduce:transition-none ${
                               isActive
-                                ? 'brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
-                                : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
+                                ? 'opacity-100 brightness-[1.035] saturate-[1.04] drop-shadow-[0_34px_28px_rgba(56,42,22,0.38)]'
+                                : 'opacity-0 drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
                             }`}
                           />
                         </span>
