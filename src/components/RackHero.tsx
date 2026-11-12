@@ -239,7 +239,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   return (
     <section
       aria-label="استایل‌های مُدارا"
-      className="relative isolate overflow-hidden bg-[#f3efe8] pb-8 pt-8 sm:pb-10 sm:pt-12"
+      className="relative isolate overflow-hidden bg-[#f3efe8] pb-2 pt-4 sm:pb-2 sm:pt-6"
     >
       <div className="hero-background-slider" aria-hidden="true">
         {HERO_BACKGROUND_IMAGES.map((path, index) => (
@@ -251,9 +251,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         ))}
         <div className="hero-background-veil" />
       </div>
-      <div className="relative z-10 mx-auto w-full max-w-[1320px] px-4 sm:px-8">
-        {/* Editorial product display; product facts remain sourced from the catalogue. */}
-        <div className="mx-auto mt-1 w-full max-w-[1180px] px-1 sm:px-0">
+      <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8">
+        {/* Compact editorial product display; product facts remain sourced from the catalogue. */}
+        <div className="mx-auto w-full max-w-[1120px] px-1 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -262,7 +262,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
                 transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
-                className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-4 text-right sm:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] sm:items-center sm:gap-12"
+                className="mx-auto grid w-full max-w-[1040px] grid-cols-1 gap-3 text-right sm:grid-cols-[minmax(0,1.1fr)_minmax(260px,0.9fr)] sm:items-center sm:gap-8"
                 aria-live="polite"
               >
                 <div className="rack-outfit-stage order-1 sm:order-2">
@@ -355,7 +355,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
         {/* Compact editorial selector: the real garment profiles remain the navigation. */}
         <div
-          className="mx-auto mt-7 w-full max-w-[1120px] border-t border-[#ded8ce] pt-5 sm:mt-9 sm:pt-6"
+          className="mx-auto mt-4 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
@@ -367,9 +367,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         >
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
-              <p className="mb-1 text-[9px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
-              <h2 className="text-[15px] font-bold text-[#342d24]">انتخاب استایل</h2>
-              <p className="mt-1 text-[10px] text-[#8b8275]">یک آیتم را انتخاب کنید تا ست کامل آن نمایش داده شود</p>
+              <p className="mb-1 text-[10px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
+              <h2 className="text-base font-bold text-[#342d24] sm:text-lg">انتخاب استایل</h2>
+              <p className="mt-1 text-[11px] text-[#8b8275] sm:text-xs">یک آیتم را انتخاب کنید تا ست کامل آن نمایش داده شود</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] tabular-nums text-[#8b8275]">
@@ -381,7 +381,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 aria-pressed={isAutoPlaying}
                 aria-label={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
                 title={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
               >
                 {isAutoPlaying ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
               </button>
@@ -389,7 +389,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 type="button"
                 onClick={() => nudgeTrack(1)}
                 aria-label="استایل‌های قبلی"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -397,7 +397,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 type="button"
                 onClick={() => nudgeTrack(-1)}
                 aria-label="استایل‌های بعدی"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -419,11 +419,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               event.preventDefault();
               event.stopPropagation();
             }}
-            className="scrollbar-hide -mx-4 flex items-stretch gap-1 overflow-x-auto px-4 py-2 sm:mx-0 sm:justify-start sm:gap-2 sm:px-0"
+            className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
           >
             {loading &&
               Array.from({ length: 8 }).map((_, index) => (
-                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[112px] w-[72px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
+                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[116px] w-[78px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
               ))}
 
             {!loading &&
@@ -433,7 +433,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   <li
                     key={item.id}
                     data-piece={item.id}
-                    className={`rack-style-item h-[112px] w-[72px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
+                    className={`rack-style-item h-[116px] w-[78px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
                   >
                     <button
                       type="button"
@@ -450,9 +450,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         loading="lazy"
                         decoding="async"
                         draggable={false}
-                        className={`h-[78px] w-[54px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
+                        className={`h-[82px] w-[62px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
                       />
-                      <span className={`w-full truncate text-center text-[9px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                      <span className={`w-full truncate text-center text-[10px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
                       {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
                     </button>
                   </li>

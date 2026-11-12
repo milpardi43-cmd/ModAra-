@@ -397,14 +397,14 @@
   background-size: cover;
   background-repeat: no-repeat;
   opacity: 0;
-  filter: saturate(0.82);
+  filter: saturate(0.76) blur(1.5px);
   transform: scale(1.02);
   transition: opacity 1.4s ease, transform 9s ease;
 }
 
 .hero-background-slide--active {
-  opacity: 0.82;
-  transform: scale(1.065);
+  opacity: 0.74;
+  transform: scale(1.05);
 }
 
 .hero-background-veil {
@@ -412,8 +412,8 @@
   z-index: 1;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(243, 239, 232, 0.34) 0%, rgba(243, 239, 232, 0.5) 48%, rgba(243, 239, 232, 0.76) 100%),
-    linear-gradient(0deg, rgba(243, 239, 232, 0.52) 0%, rgba(243, 239, 232, 0.12) 30%, rgba(243, 239, 232, 0.12) 72%, rgba(243, 239, 232, 0.4) 100%);
+    linear-gradient(90deg, rgba(243, 239, 232, 0.48) 0%, rgba(243, 239, 232, 0.62) 48%, rgba(243, 239, 232, 0.84) 100%),
+    linear-gradient(0deg, rgba(243, 239, 232, 0.64) 0%, rgba(243, 239, 232, 0.24) 30%, rgba(243, 239, 232, 0.24) 72%, rgba(243, 239, 232, 0.58) 100%);
   pointer-events: none;
 }
 
@@ -430,8 +430,8 @@
 .rack-outfit-stage {
   position: relative;
   width: 100%;
-  max-width: 360px;
-  aspect-ratio: 2 / 3;
+  max-width: 320px;
+  aspect-ratio: 4 / 5;
   margin-inline: auto;
   isolation: isolate;
 }
@@ -444,8 +444,8 @@
   border-radius: 50%;
   background: radial-gradient(
     ellipse at 50% 45%,
-    rgba(255, 255, 255, 0.86) 0%,
-    rgba(244, 239, 230, 0.58) 42%,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(244, 239, 230, 0.72) 42%,
     rgba(243, 239, 232, 0) 76%
   );
   pointer-events: none;
