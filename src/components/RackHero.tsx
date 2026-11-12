@@ -43,11 +43,18 @@ const PIECE_GAP = 6;
 /** Give side-profile silhouettes enough height to read clearly. */
 const MIN_PIECE_HEIGHT = 240;
 const MAX_PIECE_HEIGHT = 300;
+// Netlify caches /images/* for 30 days; bump this when regenerated layers change shape.
+const RACK_OUTFIT_REVISION = 'cropped-layout-v2';
 const warmedOutfitSources = new Set<string>();
+
+function rackOutfitAsset(path: string): string {
+  const src = asset(path);
+  return `${src}${src.includes('?') ? '&' : '?'}v=${RACK_OUTFIT_REVISION}`;
+}
 
 function warmOutfitImages(item: RackItem) {
   item.outfitLayers.forEach((layer) => {
-    const src = asset(layer.src);
+    const src = rackOutfitAsset(layer.src);
     if (warmedOutfitSources.has(src)) return;
     warmedOutfitSources.add(src);
     const image = new Image();
@@ -63,6 +70,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [items, setItems] = useState<RackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [failedOutfitSlug, setFailedOutfitSlug] = useState<string | null>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
   const [canScrollMore, setCanScrollMore] = useState(false);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
@@ -349,19 +357,33 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     aria-label={`${activeItem.product.name}، چیدمان کامل و مرتب ست`}
                     className="absolute inset-0"
                   >
-                    {activeItem.outfitLayers.map((layer) => (
+                    {failedOutfitSlug === activeItem.slug ? (
                       <img
-                        key={`${activeItem.slug}-${layer.id}`}
-                        src={asset(layer.src)}
+                        src={rackOutfitAsset(`/images/rack/outfits-cleaned/${activeItem.slug}.webp`)}
                         alt=""
                         aria-hidden="true"
                         loading="eager"
                         fetchPriority="high"
                         decoding="async"
                         draggable={false}
-                        className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
+                        className="rack-outfit-piece rack-outfit-piece--full pointer-events-none select-none"
                       />
-                    ))}
+                    ) : (
+                      activeItem.outfitLayers.map((layer) => (
+                        <img
+                          key={`${activeItem.slug}-${layer.id}`}
+                          src={rackOutfitAsset(layer.src)}
+                          alt=""
+                          aria-hidden="true"
+                          loading="eager"
+                          fetchPriority="high"
+                          decoding="async"
+                          draggable={false}
+                          onError={() => setFailedOutfitSlug(activeItem.slug)}
+                          className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
                 <div className="min-w-0">
