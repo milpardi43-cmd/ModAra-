@@ -75,7 +75,7 @@ npm run preview      # → http://localhost:4173
 | `BASE_PATH = "/"` | ریشهٔ دامنه؛ بدون آن صفحه سفید می‌شود |
 | `[[redirects]] /* → /index.html (200)` | مسیرهای مستقیم/قدیمی به اپ می‌رسند، نه ۴۰۴ خام |
 | `[[headers]] /assets/*` | کش یک‌ساله و `immutable` برای فایل‌های هش‌دار Vite |
-| `[[headers]] /images/*`, `/videos/*` | کش ۳۰ روزه برای دارایی‌های نام‌ثابت |
+| `[[headers]] /images/*` | کش ۳۰ روزه برای دارایی‌های نام‌ثابت |
 | `[[headers]] /index.html` | بدون کش، تا نسخهٔ جدید فوراً دیده شود |
 | هدرهای امنیتی | `nosniff`، `Referrer-Policy`، `Permissions-Policy`، `X-Frame-Options` |
 
@@ -195,8 +195,6 @@ netlify env:list            # بررسی متغیرهای محیطی
 
 ## ۹) بهینه‌سازی‌های پیشنهادی (اختیاری)
 
-- **حذف دارایی‌های بی‌استفاده:** پوشهٔ `public/videos` حدود ۵ مگابایت است و در هیرؤ فعلی استفاده نمی‌شود؛
-  اگر ویدئو لازم نیست، حذفش زمان اولین بارگذاری را کم می‌کند.
 - **تصاویر:** هر تصویر جدید را با `npm run images:optimize` به WebP تبدیل کنید (نیازمند ImageMagick).
 - **Preload برای LCP:** تصویر اول هیرو (`/images/hero-atelier/look-minimal.jpg`) می‌تواند در `index.html`
   با `<link rel="preload" as="image">` بیاید تا اولین رنگ‌آمیزی سریع‌تر شود.

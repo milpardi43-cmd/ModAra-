@@ -335,8 +335,18 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   </div>
                 </div>
                 <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
-                  <div className="mb-2 flex flex-wrap items-center justify-start gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
+                  {/* Brand line first: the hero is Modara's window, then the product. */}
+                  <p className="mb-2.5 text-[11px] font-bold tracking-[0.22em] text-[#9a835f]">
+                    مُدارا <span className="text-[#c8b795]" aria-hidden="true">·</span> MODARA
+                  </p>
+
+                  <h1 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
+                    {activeItem.product.name}
+                  </h1>
+
+                  {/* One meta row: department, rating, and the exact product shot for accessories. */}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ded3ba] bg-[#fdfaf4]/70 px-3 py-1 text-[11px] font-bold text-[#7d6636]">
                       <span
                         className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
                         style={{ backgroundColor: activeItem.hex }}
@@ -344,55 +354,36 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       />
                       {activeItem.categoryName}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums text-[#7d6636]">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums text-[#6b6152]">
                       <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#c49639]" aria-hidden="true" />
                       {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
                     </span>
-                    <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
-                      {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
-                      {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
-                    </span>
-                  </div>
-
-                  {activeItem.accessoryPreview && (
-                    <div className="mb-3 inline-flex max-w-full items-center gap-3 rounded-xl border border-[#ded8ce] bg-white/55 p-2">
+                    {activeItem.accessoryPreview && (
                       <img
                         src={asset(activeItem.accessoryPreview)}
                         alt={activeItem.name}
+                        title={activeItem.name}
                         loading="eager"
                         decoding="async"
-                        className="h-16 w-16 shrink-0 rounded-lg bg-white object-contain"
+                        className="h-11 w-11 rounded-lg border border-[#e6dfd2] bg-white object-contain p-1"
                       />
-                      <span className="text-[11px] font-medium text-[#7a6c58]">عکس مستقل کالای انتخاب‌شده</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  <h1 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
-                    {activeItem.product.name}
-                  </h1>
                   {activeItem.product.description && (
-                    <p className="mt-2 max-w-[30rem] text-xs leading-[1.75] text-[#6b6152] sm:text-[13px]">
+                    <p className="mt-2.5 max-w-[30rem] text-[13px] leading-[1.8] text-[#6b6152]">
                       {activeItem.product.description}
                     </p>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
-                    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`} aria-hidden="true" />
-                      {activeItem.product.stock > 0
-                        ? `${new Intl.NumberFormat('fa-IR').format(activeItem.product.stock)} عدد موجود`
-                        : 'ناموجود'}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center justify-start gap-x-4 gap-y-2 border-t border-[#cdbb99]/60 pt-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-start gap-x-4 gap-y-2">
                     <span className="whitespace-nowrap text-base font-extrabold text-[#3f3527] sm:text-lg">
                       {formatPrice(activeItem.product.price)}
                     </span>
                     <button
                       type="button"
                       onClick={() => onNavigate('product', activeItem.slug)}
-                      className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-4 py-2.5 text-[11px] font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
+                      className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-4 py-2.5 text-xs font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
                     >
                       مشاهدهٔ محصول
                       <ArrowLeft
@@ -419,16 +410,16 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             }
           }}
         >
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <div>
-              <p className="mb-1 text-[11px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
-              <h2 className="text-lg font-bold text-[#342d24] sm:text-xl">انتخاب استایل</h2>
-              <p className="mt-1 text-xs text-[#8b8275] sm:text-[13px]">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید</p>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-baseline gap-2.5">
+              <h2 className="text-base font-bold text-[#342d24] sm:text-lg">انتخاب استایل</h2>
+              <span className="text-[11px] tabular-nums text-[#9a835f]">
+                {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} /{' '}
+                {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
+              </span>
+              <p className="sr-only">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید.</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] tabular-nums text-[#8b8275]">
-                {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} / {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
-              </span>
               <button
                 type="button"
                 onClick={() => setIsAutoPlaying((playing) => !playing)}
