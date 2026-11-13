@@ -462,31 +462,10 @@
     0 10px 18px -10px rgba(46, 34, 19, 0.5);
 }
 
-/* Roll-rack stand: vertical posts, feet and their contact shadows. */
-.rack-post {
-  border-radius: 4px;
-  background: linear-gradient(90deg, #6b5426, #d9b96a 30%, #f0dca4 50%, #b08c46 74%, #5d4820);
-  box-shadow: 2px 0 4px -2px rgba(46, 34, 19, 0.4);
-}
-
-.rack-foot {
-  background: linear-gradient(180deg, #d9b96a, #8a6c33 70%, #5d4820);
-  box-shadow: 0 3px 6px -3px rgba(46, 34, 19, 0.55);
-}
-
-.rack-floor-shadow {
-  background: radial-gradient(50% 50% at 50% 50%, rgba(46, 34, 19, 0.32), rgba(46, 34, 19, 0) 72%);
-  filter: blur(4px);
-}
-
-/* Soft shadow the whole rack casts on the wall behind it. */
-.rack-wall-shadow {
-  position: absolute;
-  inset: 12% 6% 4%;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(58% 52% at 50% 58%, rgba(58, 44, 23, 0.16), rgba(58, 44, 23, 0) 74%);
-  filter: blur(14px);
+/* End brackets that carry the tube. */
+.deck-bracket {
+  background: linear-gradient(180deg, #8a6c33, #5d4820);
+  box-shadow: 0 4px 10px -6px rgba(46, 34, 19, 0.6);
 }
 
 /* Hanging pieces sway like cloth; the front piece stands still. */

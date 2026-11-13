@@ -14,45 +14,6 @@ const faNum = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
 /** Hanging pieces nestle into each other like a real rail, so the window is tight. */
 const DECK_WINDOW = 3;
 
-/** Wooden boutique hanger with a metal hook that wraps over the rail. */
-function Hanger({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 72 34" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="modara-hanger-wood" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#dcbe92" />
-          <stop offset="0.45" stopColor="#b78d55" />
-          <stop offset="1" stopColor="#8a6432" />
-        </linearGradient>
-        <linearGradient id="modara-hanger-metal" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#8f8f98" />
-          <stop offset="0.5" stopColor="#eceef2" />
-          <stop offset="1" stopColor="#7c7c85" />
-        </linearGradient>
-      </defs>
-      {/* hook */}
-      <path
-        d="M36 12v-3c0-2.6 2.2-4.6 4.8-4.6s4.8 2.2 4.8 4.6"
-        fill="none"
-        stroke="url(#modara-hanger-metal)"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-      />
-      {/* wooden shoulders */}
-      <path
-        d="M36 11.5c-8.5 4.2-20.5 9.4-28.4 13.9-1.7 1-1 3.6 1 3.6h54.8c2 0 2.7-2.6 1-3.6C56.5 20.9 44.5 15.7 36 11.5Z"
-        fill="url(#modara-hanger-wood)"
-        stroke="#6d4d24"
-        strokeWidth="0.8"
-      />
-      {/* bottom bar */}
-      <path d="M12 28.6h48" stroke="#6d4d24" strokeWidth="1.3" strokeLinecap="round" opacity="0.5" />
-      {/* top highlight */}
-      <path d="M14 24.4c7-3.8 15.5-7.6 22-10.8" stroke="#f4dfba" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
-    </svg>
-  );
-}
-
 export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const reduceMotion = useReducedMotion();
   const [items, setItems] = useState<RackItem[]>([]);
@@ -361,24 +322,13 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
             aria-label="رگال لباس‌ها"
             onKeyDown={onDeckKeyDown}
             tabIndex={0}
-            className="relative mx-auto h-[268px] w-full max-w-[780px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[284px] [perspective:1400px]"
+            className="relative mx-auto h-[232px] w-full max-w-[780px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[242px] [perspective:1400px]"
           >
-            {/* soft wall shadow behind the whole rack */}
-            <span className="rack-wall-shadow" aria-hidden="true" />
-
-            {/* the stand: posts, feet and floor contact shadows */}
-            <div className="pointer-events-none absolute inset-x-[3%] top-[40px] bottom-[10px] z-0" aria-hidden="true">
-              <span className="rack-post absolute right-0 top-0 h-full w-[7px]" />
-              <span className="rack-post absolute left-0 top-0 h-full w-[7px]" />
-              <span className="rack-foot absolute -bottom-1 right-[-22px] h-[7px] w-[52px] rounded-full" />
-              <span className="rack-foot absolute -bottom-1 left-[-22px] h-[7px] w-[52px] rounded-full" />
-              <span className="rack-floor-shadow absolute -bottom-3 right-[-30px] h-3 w-[70px] rounded-full" />
-              <span className="rack-floor-shadow absolute -bottom-3 left-[-30px] h-3 w-[70px] rounded-full" />
-            </div>
-
-            {/* brass tube rail */}
-            <div className="pointer-events-none absolute inset-x-[3%] top-[38px] z-10" aria-hidden="true">
+            {/* One real brass tube with end brackets — the rack itself. */}
+            <div className="pointer-events-none absolute inset-x-[4%] top-[38px] z-30" aria-hidden="true">
               <div className="deck-rail h-[6px] w-full rounded-full" />
+              <span className="deck-bracket absolute -top-2 right-0 h-4 w-1.5 rounded-full" />
+              <span className="deck-bracket absolute -top-2 left-0 h-4 w-1.5 rounded-full" />
             </div>
 
             {loading &&
@@ -386,8 +336,8 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                 <div
                   key={`skeleton-${index}`}
                   aria-hidden="true"
-                  className="absolute left-1/2 top-1/2 h-[180px] w-[100px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-2xl bg-[#e9e5de]"
-                  style={{ transform: `translate(-50%, -50%) translateX(${(index - 2) * 66}px)` }}
+                  className="absolute left-1/2 top-1/2 h-[160px] w-[96px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-2xl bg-[#e9e5de]"
+                  style={{ transform: `translate(-50%, -50%) translateX(${(index - 2) * 88}px)` }}
                 />
               ))}
 
@@ -408,11 +358,11 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                     className="absolute left-1/2 top-1/2 w-[104px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:w-[116px]"
                     style={{ zIndex: isActive ? 24 : 20 - distance }}
                     animate={{
-                      x: `calc(-50% + ${offset * 68}px)`,
+                      x: `calc(-50% + ${offset * 88}px)`,
                       y: '-50%',
-                      z: isActive ? 60 : -distance * 70,
-                      rotateY: isActive ? 0 : offset > 0 ? -42 : 42,
-                      scale: isActive ? 1.06 : 1 - Math.min(distance, DECK_WINDOW) * 0.07,
+                      z: isActive ? 60 : -distance * 80,
+                      rotateY: isActive ? 0 : offset > 0 ? -38 : 38,
+                      scale: isActive ? 1.05 : 1 - Math.min(distance, DECK_WINDOW) * 0.07,
                       opacity: 1 - distance * 0.16,
                     }}
                     transition={
@@ -421,13 +371,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                         : { type: 'spring', stiffness: 130, damping: 20, mass: 0.9 }
                     }
                   >
-                    <span className={`relative block ${isActive ? '' : 'rack-swing'}`}>
-                      {/* hook contact shadow on the rail */}
-                      <span
-                        className="absolute left-1/2 top-[7px] h-1.5 w-5 -translate-x-1/2 rounded-full bg-[#3a2c17]/30 blur-[2px]"
-                        aria-hidden="true"
-                      />
-                      <Hanger className="relative mx-auto -mb-1.5 block h-9 w-[72px]" />
+                    <span className={`block ${isActive ? '' : 'rack-swing'}`}>
                       <img
                         src={asset(item.image)}
                         alt=""
@@ -435,11 +379,11 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                         loading="lazy"
                         decoding="async"
                         draggable={false}
-                        className="relative mx-auto -mt-2 block h-[122px] w-[92px] object-contain"
+                        className="relative mx-auto block h-[142px] w-[100px] object-contain object-top"
                         style={{
                           filter: isActive
-                            ? 'drop-shadow(0 14px 22px rgba(90,66,32,0.38))'
-                            : `blur(${(distance * 0.5).toFixed(1)}px) drop-shadow(${-6 - distance * 2}px 8px 10px rgba(40,30,18,${Math.max(0.3 - distance * 0.07, 0.08).toFixed(2)}))`,
+                            ? 'drop-shadow(0 12px 20px rgba(90, 66, 32, 0.35))'
+                            : 'drop-shadow(0 10px 14px rgba(40, 30, 18, 0.2))',
                         }}
                       />
                       <span
