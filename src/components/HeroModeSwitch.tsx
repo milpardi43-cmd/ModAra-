@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Clapperboard, Layers, ScrollText } from 'lucide-react';
+import { Check, ChevronDown, Clapperboard, Film, Layers, ScrollText } from 'lucide-react';
 
 import { HERO_MODES, type HeroMode } from '../lib/heroModes';
 
 const MODE_ICONS: Record<HeroMode, typeof Clapperboard> = {
+  cinema: Film,
   cinematic: Clapperboard,
   scroll: ScrollText,
   deck: Layers,

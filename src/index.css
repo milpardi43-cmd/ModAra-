@@ -315,6 +315,143 @@
   to { transform: translateX(130%); }
 }
 
+/* ——— Cinema runway show ——— */
+
+/* Ambient wash of the current look, drowned in dark, drifting like a slow dolly. */
+.cinema-bg {
+  opacity: 0;
+  filter: blur(34px) brightness(0.34) saturate(0.8);
+  transform: scale(1.12);
+  animation: cinemaBgIn 1400ms cubic-bezier(0.22, 1, 0.36, 1) both, cinemaDrift 18s ease-in-out 0.4s infinite alternate;
+}
+
+@keyframes cinemaBgIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cinemaDrift {
+  from { transform: scale(1.12) translate3d(-1.2%, 0.6%, 0); }
+  to { transform: scale(1.2) translate3d(1.4%, -0.8%, 0); }
+}
+
+/* Volumetric beam from the lighting rig. */
+.cinema-beam {
+  position: absolute;
+  inset: -6% 0 auto;
+  height: 92%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 238, 196, 0.34), rgba(255, 238, 196, 0.05) 62%, rgba(255, 238, 196, 0) 82%);
+  clip-path: polygon(44% 0, 56% 0, 86% 100%, 14% 100%);
+  filter: blur(10px);
+  animation: beamFlicker 5s ease-in-out infinite;
+}
+
+@keyframes beamFlicker {
+  0%, 100% { opacity: 0.82; }
+  42% { opacity: 1; }
+  58% { opacity: 0.9; }
+}
+
+/* The model walks out of the light and settles on the mark. */
+.cinema-model {
+  z-index: 2;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.65));
+  animation: walkIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes walkIn {
+  0% { opacity: 0; transform: translate(-50%, 7%) scale(0.955); filter: blur(8px) brightness(0.6) drop-shadow(0 30px 60px rgba(0, 0, 0, 0.65)); }
+  55% { opacity: 1; filter: blur(0) brightness(1.06) drop-shadow(0 30px 60px rgba(0, 0, 0, 0.65)); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); filter: blur(0) brightness(1) drop-shadow(0 30px 60px rgba(0, 0, 0, 0.65)); }
+}
+
+/* Warm pool where the beam meets the runway. */
+.cinema-pool {
+  position: absolute;
+  bottom: 4.5%;
+  left: 50%;
+  z-index: 1;
+  width: min(52%, 460px);
+  height: 9%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(255, 226, 168, 0.4), rgba(255, 226, 168, 0) 72%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Light-leak flash on each cut between scenes. */
+.cinema-leak {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(58% 46% at 72% 26%, rgba(255, 186, 104, 0.85), rgba(255, 120, 60, 0) 70%),
+    radial-gradient(40% 34% at 24% 62%, rgba(255, 214, 150, 0.5), rgba(255, 214, 150, 0) 72%);
+  opacity: 0;
+  animation: leakFlash 900ms ease-out both;
+}
+
+@keyframes leakFlash {
+  0% { opacity: 0; transform: translateX(-4%); }
+  14% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(3%); }
+}
+
+/* 35mm grain. */
+.cinema-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grainShift 0.9s steps(3) infinite;
+}
+
+@keyframes grainShift {
+  0% { background-position: 0 0; }
+  33% { background-position: -46px 28px; }
+  66% { background-position: 32px -40px; }
+  100% { background-position: 0 0; }
+}
+
+.cinema-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 42%, rgba(0, 0, 0, 0) 46%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* Title card line-mask reveal. */
+.title-line {
+  overflow: hidden;
+  padding-bottom: 0.12em;
+}
+
+.title-line > * {
+  animation: titleRise 900ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+@keyframes titleRise {
+  from { transform: translateY(112%); opacity: 0.4; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinema-bg { animation: cinemaBgIn 200ms linear both; }
+  .cinema-beam,
+  .cinema-grain,
+  .cinema-leak { animation: none !important; opacity: 0; }
+  .cinema-model { animation: none !important; }
+  .title-line > * { animation: none !important; }
+}
+
 .deck-card {
   width: 112px;
   height: 150px;

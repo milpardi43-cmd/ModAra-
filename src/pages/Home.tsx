@@ -11,7 +11,8 @@ import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
 import BrandSignature from '../components/BrandSignature';
 import HeroModeSwitch from '../components/HeroModeSwitch';
-import { isHeroMode, type HeroMode } from '../lib/heroModes';
+import { DEFAULT_HERO_MODE, isHeroMode, type HeroMode } from '../lib/heroModes';
+import CinemaHero from '../components/CinemaHero';
 import DeckHero from '../components/DeckHero';
 import RackHero from '../components/RackHero';
 import ScrollHero from '../components/ScrollHero';
@@ -83,9 +84,9 @@ export default function Home({ onNavigate }: HomeProps) {
   const [heroMode, setHeroMode] = useState<HeroMode>(() => {
     try {
       const stored = window.localStorage.getItem('modara-hero-mode');
-      return isHeroMode(stored) ? stored : 'cinematic';
+      return isHeroMode(stored) ? stored : DEFAULT_HERO_MODE;
     } catch {
-      return 'cinematic';
+      return DEFAULT_HERO_MODE;
     }
   });
 
@@ -235,8 +236,10 @@ export default function Home({ onNavigate }: HomeProps) {
         <ScrollHero onNavigate={onNavigate} />
       ) : heroMode === 'deck' ? (
         <DeckHero onNavigate={onNavigate} />
-      ) : (
+      ) : heroMode === 'cinematic' ? (
         <RackHero onNavigate={onNavigate} />
+      ) : (
+        <CinemaHero onNavigate={onNavigate} />
       )}
 
       {/* Features bar */}
