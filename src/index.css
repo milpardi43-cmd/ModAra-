@@ -452,6 +452,38 @@
   .title-line > * { animation: none !important; }
 }
 
+/* Brass rail of the 3D rack. */
+.deck-rail {
+  background: linear-gradient(90deg, #6b5426, #d9b96a 22%, #f0dca4 50%, #d9b96a 78%, #6b5426);
+  box-shadow:
+    0 1px 0 rgba(255, 246, 214, 0.7) inset,
+    0 6px 14px -8px rgba(46, 34, 19, 0.55);
+}
+
+.deck-bracket {
+  background: linear-gradient(180deg, #8a6c33, #5d4820);
+  box-shadow: 0 4px 10px -6px rgba(46, 34, 19, 0.6);
+}
+
+/* Hanging pieces sway like cloth; the front piece stands still. */
+.rack-swing {
+  transform-origin: 50% 6px;
+  animation: hangerSway 4.6s ease-in-out infinite;
+}
+
+.rack-swing:nth-child(odd) {
+  animation-delay: -2.3s;
+}
+
+@keyframes hangerSway {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50% { transform: rotate(1.4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rack-swing { animation: none !important; }
+}
+
 .deck-card {
   width: 112px;
   height: 150px;

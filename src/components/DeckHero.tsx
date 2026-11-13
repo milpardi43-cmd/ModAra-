@@ -11,8 +11,23 @@ type DeckHeroProps = {
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const faNum = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
-/** How many cards stay visible on each side of the front card. */
+/** How many hanging pieces stay visible on each side of the front hanger. */
 const DECK_WINDOW = 3;
+
+/** Brass hanger, drawn to hook over the rail. */
+function Hanger({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 32" className={className} aria-hidden="true" fill="none">
+      <path
+        d="M32 11v-3c0-2.4 2-4.4 4.4-4.4S40.8 5.6 40.8 8"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path d="M32 11 6 28.5h52L32 11Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -23,6 +38,13 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isDeckHovered, setIsDeckHovered] = useState(false);
   const deckRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [flight, setFlight] = useState<null | {
+    src: string;
+    key: number;
+    from: { top: number; left: number; width: number; height: number };
+    to: { top: number; left: number; width: number; height: number };
+  }>(null);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
@@ -35,10 +57,12 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
         if (cancelled) return;
         const rackItems = buildRackItems(products, categories);
         setItems(rackItems);
-        setActiveId((current) => current ?? rackItems.find((item) => item.categorySlug === 'clothing')?.id ?? rackItems[0]?.id ?? null);
+        setActiveId(
+          (current) => current ?? rackItems.find((item) => item.categorySlug === 'clothing')?.id ?? rackItems[0]?.id ?? null,
+        );
       })
       .catch(() => {
-        /* deck stays empty instead of breaking the page */
+        /* the rack simply stays empty instead of breaking the page */
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -61,7 +85,40 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     if (first) setActiveId(first.id);
   }, [activeId, visibleItems]);
 
-  const selectItem = useCallback((id: string) => setActiveId(id), []);
+  /** The chosen piece lifts off its hanger and flies onto the mannequin. */
+  const startFlight = useCallback(
+    (item: RackItem, source?: HTMLElement | null) => {
+      if (reduceMotion) return;
+      const stage = stageRef.current;
+      const fromEl =
+        source?.querySelector('img') ??
+        deckRef.current?.querySelector<HTMLElement>(`[data-piece="${item.id}"] img`);
+      if (!stage || !fromEl) return;
+      const from = fromEl.getBoundingClientRect();
+      const to = stage.getBoundingClientRect();
+      setFlight({
+        src: asset(item.image),
+        key: Date.now(),
+        from: { top: from.top, left: from.left, width: from.width, height: from.height },
+        to: {
+          top: to.top + to.height * 0.16,
+          left: to.left + to.width * 0.22,
+          width: to.width * 0.56,
+          height: to.height * 0.46,
+        },
+      });
+    },
+    [reduceMotion],
+  );
+
+  const selectItem = useCallback(
+    (id: string, source?: HTMLElement | null) => {
+      const selected = items.find((item) => item.id === id);
+      if (selected && selected.id !== activeId) startFlight(selected, source);
+      setActiveId(id);
+    },
+    [activeId, items, startFlight],
+  );
 
   useEffect(() => {
     if (!isAutoPlaying || isDeckHovered || visibleItems.length < 2) return;
@@ -93,7 +150,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
 
   return (
     <section
-      aria-label="دک سه‌بعدی استایل‌های مُدارا"
+      aria-label="رگال سه‌بعدی استایل‌های مُدارا"
       className="relative isolate overflow-hidden bg-[#f3efe8] pb-4 pt-20 sm:pb-5 lg:pt-6"
     >
       <div className="hero-aurora" aria-hidden="true" />
@@ -110,7 +167,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                 className="mx-auto grid w-full max-w-[960px] grid-cols-1 gap-x-10 gap-y-5 text-right lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center"
                 aria-live="polite"
               >
-                <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
+                <div ref={stageRef} className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
                   <span className="rack-spotlight" aria-hidden="true" />
                   <div role="img" aria-label={`${activeItem.product.name}، نمای کامل ست`} className="absolute inset-0 z-10">
                     <img
@@ -198,7 +255,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* The deck: coverflow cards; the front card flips to reveal the try-on. */}
+        {/* The rack: a brass rail with the collection hanging in 3D depth. */}
         <div
           className="relative z-10 mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsDeckHovered(true)}
@@ -210,11 +267,11 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
         >
           <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="flex items-baseline gap-2.5">
-              <h2 className="text-base font-bold text-[#342d24] sm:text-lg">دک سه‌بعدی</h2>
+              <h2 className="text-base font-bold text-[#342d24] sm:text-lg">رگال سه‌بعدی</h2>
               <span className="text-[11px] tabular-nums text-[#9a835f]">
                 {faNum(Math.max(activeIndex + 1, 1))} / {faNum(visibleItems.length)}
               </span>
-              <p className="sr-only">کارت روبه‌رو با چرخش، ست را روی تن مانکن نشان می‌دهد.</p>
+              <p className="sr-only">لباس انتخاب‌شده از رگال بلند می‌شود و روی تن مانکن می‌نشیند.</p>
             </div>
             <div className="flex flex-wrap items-center justify-start gap-2" role="group" aria-label="فیلتر دسته‌بندی محصولات">
               {RACK_FILTERS.map((filter) => {
@@ -262,7 +319,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
             </div>
           </div>
 
-          <div className="relative mb-2 h-px overflow-hidden rounded-full bg-[#e6ddc9]/80" aria-hidden="true">
+          <div className="relative mb-1 h-px overflow-hidden rounded-full bg-[#e6ddc9]/80" aria-hidden="true">
             {isAutoPlaying && !isDeckHovered && visibleItems.length > 1 && !reduceMotion && (
               <motion.span
                 key={`${activeId}-${selectedCategory}`}
@@ -277,18 +334,25 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
           <div
             ref={deckRef}
             role="group"
-            aria-label="دک کارت‌های استایل"
+            aria-label="رگال لباس‌ها"
             onKeyDown={onDeckKeyDown}
             tabIndex={0}
-            className="deck-viewport relative mx-auto h-[200px] w-full max-w-[720px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[220px] [perspective:1400px]"
+            className="relative mx-auto h-[236px] w-full max-w-[760px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[252px] [perspective:1400px]"
           >
+            {/* Brass rail with end brackets. */}
+            <div className="pointer-events-none absolute inset-x-[4%] top-[38px] z-30" aria-hidden="true">
+              <div className="deck-rail h-[5px] w-full rounded-full" />
+              <span className="deck-bracket absolute -top-2 right-0 h-4 w-1.5 rounded-full" />
+              <span className="deck-bracket absolute -top-2 left-0 h-4 w-1.5 rounded-full" />
+            </div>
+
             {loading &&
               Array.from({ length: 5 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
                   aria-hidden="true"
-                  className="absolute left-1/2 top-1/2 h-[150px] w-[112px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-2xl bg-[#e9e5de]"
-                  style={{ transform: `translate(-50%, -50%) translateX(${(index - 2) * 70}px)` }}
+                  className="absolute left-1/2 top-1/2 h-[170px] w-[104px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-2xl bg-[#e9e5de]"
+                  style={{ transform: `translate(-50%, -50%) translateX(${(index - 2) * 76}px)` }}
                 />
               ))}
 
@@ -302,13 +366,14 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                   <motion.button
                     key={item.id}
                     type="button"
-                    onClick={() => selectItem(item.id)}
+                    data-piece={item.id}
+                    onClick={(event) => selectItem(item.id, event.currentTarget)}
                     aria-pressed={isActive}
-                    aria-label={isActive ? `${item.name}، کارت روبه‌رو` : `${item.name}، آوردن به رو`}
-                    className="deck-card absolute left-1/2 top-1/2"
+                    aria-label={isActive ? `${item.name}، روی رگال روبه‌رو` : `${item.name}، آوردن به رو`}
+                    className="absolute left-1/2 top-1/2 w-[104px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:w-[116px]"
                     style={{ zIndex: 20 - distance }}
                     animate={{
-                      x: `calc(-50% + ${offset * 84}px)`,
+                      x: `calc(-50% + ${offset * 88}px)`,
                       y: '-50%',
                       z: -distance * 95,
                       rotateY: isActive ? 0 : offset > 0 ? -38 : 38,
@@ -317,28 +382,68 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                     }}
                     transition={{ duration: reduceMotion ? 0 : 0.55, ease: EASE }}
                   >
-                    <motion.span
-                      className="relative block h-full w-full [transform-style:preserve-3d]"
-                      animate={{ rotateY: isActive ? 180 : 0 }}
-                      transition={{ duration: reduceMotion ? 0 : 0.7, ease: EASE, delay: isActive ? 0.1 : 0 }}
-                    >
-                      <span className={`deck-face flex flex-col items-center justify-between bg-white/85 px-1 pb-1.5 pt-2 ${isActive ? 'ring-1 ring-[#e3d7c3]' : ''}`}>
-                        <img src={asset(item.image)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} className="h-[104px] w-[76px] object-contain" />
-                        <span className="w-full truncate text-center text-[10px] font-medium text-[#6f6659]">{item.name}</span>
+                    <span className={`block ${isActive ? '' : 'rack-swing'}`}>
+                      <Hanger className={`mx-auto -mb-1 block h-8 w-16 ${isActive ? 'text-[#9b7948]' : 'text-[#b3a08f]'}`} />
+                      <img
+                        src={asset(item.image)}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                        className={`mx-auto block h-[118px] w-[86px] object-contain transition-[filter] duration-500 ${
+                          isActive ? 'drop-shadow-[0_10px_18px_rgba(155,121,72,0.45)]' : ''
+                        }`}
+                      />
+                      <span
+                        className={`mx-auto mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${
+                          isActive
+                            ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
+                            : 'border-[#ded3ba] bg-[#fdfaf4]/85 text-[#7a6c58]'
+                        }`}
+                      >
+                        <span className="block max-w-[86px] truncate">{item.name}</span>
                       </span>
-                      <span className="deck-face deck-face--back bg-[#fdfaf4]">
-                        <img src={asset(item.modelPreview)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} className="h-full w-full object-contain object-bottom" />
-                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#241d14]/70 to-transparent px-1.5 pb-1.5 pt-4 text-center text-[10px] font-bold text-[#f7f1e4]">
-                          روی تن مانکن
-                        </span>
-                      </span>
-                    </motion.span>
+                    </span>
                   </motion.button>
                 );
               })}
           </div>
         </div>
       </div>
+
+      {/* The piece in flight: hanger -> mannequin, with ghost echoes. */}
+      {flight &&
+        [0, 1, 2].map((echo) => (
+          <motion.img
+            key={`${flight.key}-${echo}`}
+            src={flight.src}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className={`pointer-events-none fixed z-40 object-contain ${echo === 0 ? 'drop-shadow-[0_18px_30px_rgba(36,29,20,0.35)]' : ''}`}
+            initial={{
+              top: flight.from.top,
+              left: flight.from.left,
+              width: flight.from.width,
+              height: flight.from.height,
+              opacity: echo === 0 ? 0.95 : 0.3 - echo * 0.09,
+              rotate: -7,
+              filter: `blur(${echo * 1.5}px)`,
+            }}
+            animate={{
+              top: flight.to.top,
+              left: flight.to.left,
+              width: flight.to.width,
+              height: flight.to.height,
+              opacity: 0,
+              rotate: 9,
+              filter: `blur(${3 + echo * 1.5}px)`,
+            }}
+            transition={{ duration: 0.7, ease: EASE, delay: echo * 0.06 }}
+            onAnimationComplete={echo === 2 ? () => setFlight(null) : undefined}
+          />
+        ))}
     </section>
   );
 }
