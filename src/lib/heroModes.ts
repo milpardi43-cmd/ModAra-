@@ -4,7 +4,7 @@ export const HERO_MODES: { id: HeroMode; label: string }[] = [
   { id: 'cinema', label: 'شوِ سینمایی' },
   { id: 'cinematic', label: 'باند سینمایی' },
   { id: 'scroll', label: 'سینمای اسکرول' },
-  { id: 'deck', label: 'رگال سه‌بعدی' },
+  { id: 'deck', label: 'رگال نامرئی' },
 ];
 
 export const DEFAULT_HERO_MODE: HeroMode = 'cinema';

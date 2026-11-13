@@ -11,8 +11,6 @@ type DeckHeroProps = {
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const faNum = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
-/** Hanging pieces nestle into each other like a real rail, so the window is tight. */
-const DECK_WINDOW = 3;
 
 export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const reduceMotion = useReducedMotion();
@@ -23,6 +21,9 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isDeckHovered, setIsDeckHovered] = useState(false);
   const deckRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLUListElement>(null);
+  const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
+  const suppressClick = useRef(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const [flight, setFlight] = useState<null | {
     src: string;
@@ -116,6 +117,45 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     return () => window.clearInterval(timer);
   }, [activeId, isAutoPlaying, isDeckHovered, selectItem, visibleItems]);
 
+  /** Keep the chosen piece centered in the rail. */
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || !activeId) return;
+    const piece = track.querySelector<HTMLElement>(`[data-piece="${activeId}"]`);
+    if (!piece) return;
+    const pieceRect = piece.getBoundingClientRect();
+    const trackRect = track.getBoundingClientRect();
+    if (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left) {
+      piece.scrollIntoView({
+        inline: 'center',
+        block: 'nearest',
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
+    }
+  }, [activeId, reduceMotion]);
+
+  /* Direct horizontal browsing on pointer devices. */
+  const onPointerDown = (event: React.PointerEvent<HTMLUListElement>) => {
+    if (event.pointerType !== 'mouse') return;
+    const track = trackRef.current;
+    if (!track) return;
+    drag.current = { active: true, startX: event.clientX, startLeft: track.scrollLeft, moved: false };
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLUListElement>) => {
+    const track = trackRef.current;
+    if (!track || !drag.current.active) return;
+    const delta = event.clientX - drag.current.startX;
+    if (Math.abs(delta) > 4) drag.current.moved = true;
+    track.scrollLeft = drag.current.startLeft - delta;
+  };
+
+  const onPointerUp = () => {
+    if (!drag.current.active) return;
+    suppressClick.current = drag.current.moved;
+    drag.current.active = false;
+  };
+
   const moveActive = (step: 1 | -1) => {
     if (visibleItems.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
@@ -123,7 +163,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     if (next) selectItem(next.id);
   };
 
-  const onDeckKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const onDeckKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
       moveActive(1);
@@ -240,7 +280,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* The rack: a physical brass roll-rail with the collection hanging on it. */}
+        {/* Invisible rail: the collection hangs side by side on an unseen line. */}
         <div
           className="relative z-10 mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsDeckHovered(true)}
@@ -316,96 +356,75 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
             )}
           </div>
 
-          <div
-            ref={deckRef}
-            role="group"
-            aria-label="رگال لباس‌ها"
+          <ul
+            ref={trackRef}
+            aria-label="لباس‌های رگال"
             onKeyDown={onDeckKeyDown}
-            tabIndex={0}
-            className="relative mx-auto h-[232px] w-full max-w-[780px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[242px] [perspective:1400px]"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onPointerLeave={onPointerUp}
+            onClickCapture={(event) => {
+              if (!suppressClick.current) return;
+              suppressClick.current = false;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            className="scrollbar-hide -mx-2 flex items-start gap-2.5 overflow-x-auto px-2 pb-2 pt-4 sm:gap-3 sm:px-3"
           >
-            {/* One real brass tube with end brackets — the rack itself. */}
-            <div className="pointer-events-none absolute inset-x-[4%] top-[36px] z-30" aria-hidden="true">
-              <div className="relative overflow-hidden rounded-full">
-                <div
-                  className="deck-rail h-[9px] w-full"
-                  style={{ backgroundImage: `url(${asset('/images/rack/rail-tube.png')})` }}
-                />
-                {activeItem && <span key={activeItem.id} className="deck-glint" />}
-              </div>
-              <span className="deck-bracket absolute -top-2 right-0 h-4 w-1.5 rounded-full" />
-              <span className="deck-bracket absolute -top-2 left-0 h-4 w-1.5 rounded-full" />
-            </div>
-
             {loading &&
-              Array.from({ length: 5 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  aria-hidden="true"
-                  className="absolute left-1/2 top-1/2 h-[160px] w-[96px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-2xl bg-[#e9e5de]"
-                  style={{ transform: `translate(-50%, -50%) translateX(${(index - 2) * 88}px)` }}
-                />
+              Array.from({ length: 8 }).map((_, index) => (
+                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[176px] w-[104px] shrink-0 animate-pulse rounded-2xl bg-[#e9e5de]" />
               ))}
 
             {!loading &&
-              visibleItems.map((item, index) => {
-                const offset = index - (activeIndex < 0 ? 0 : activeIndex);
-                const distance = Math.abs(offset);
-                if (distance > DECK_WINDOW) return null;
-                const isActive = offset === 0;
+              visibleItems.map((item) => {
+                const isActive = item.id === activeItem?.id;
                 return (
-                  <motion.button
-                    key={item.id}
-                    type="button"
-                    data-piece={item.id}
-                    onClick={(event) => selectItem(item.id, event.currentTarget)}
-                    aria-pressed={isActive}
-                    aria-label={isActive ? `${item.name}، روی رگال روبه‌رو` : `${item.name}، آوردن به رو`}
-                    className="absolute left-1/2 top-1/2 w-[104px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:w-[116px]"
-                    style={{ zIndex: isActive ? 24 : 20 - distance }}
-                    animate={{
-                      x: `calc(-50% + ${offset * 88}px)`,
-                      y: '-50%',
-                      z: isActive ? 50 : -distance * 40,
-                      rotateY: isActive ? 0 : offset > 0 ? -16 : 16,
-                      scale: isActive ? 1.05 : 1 - Math.min(distance, DECK_WINDOW) * 0.04,
-                      opacity: 1 - distance * 0.14,
-                    }}
-                    transition={
-                      reduceMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 130, damping: 20, mass: 0.9 }
-                    }
-                  >
-                    <span className={`block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
-                      <img
-                        src={asset(item.image)}
-                        alt=""
+                  <li key={item.id} data-piece={item.id} className="shrink-0">
+                    <button
+                      type="button"
+                      aria-pressed={isActive}
+                      aria-label={isActive ? `${item.name}، انتخاب‌شده` : `${item.name}، نمایش استایل`}
+                      onFocus={() => selectItem(item.id)}
+                      onClick={(event) => selectItem(item.id, event.currentTarget)}
+                      className="group relative flex flex-col items-center outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] rounded-xl"
+                    >
+                      <span aria-hidden="true" className={`rack-glow ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                      <span className={`relative block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
+                        <img
+                          src={asset(item.image)}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
+                          draggable={false}
+                          className={`block h-[150px] w-[104px] object-contain object-top transition-all duration-500 ${
+                            isActive
+                              ? '-translate-y-1.5 drop-shadow-[0_16px_26px_rgba(90,66,32,0.4)]'
+                              : 'drop-shadow-[0_10px_16px_rgba(40,30,18,0.16)] group-hover:-translate-y-1 group-hover:drop-shadow-[0_14px_20px_rgba(40,30,18,0.26)]'
+                          }`}
+                        />
+                      </span>
+                      <span
                         aria-hidden="true"
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                        className="relative mx-auto block h-[142px] w-[100px] object-contain object-top"
-                        style={{
-                          filter: isActive
-                            ? 'drop-shadow(0 12px 20px rgba(90, 66, 32, 0.35))'
-                            : 'drop-shadow(0 10px 14px rgba(40, 30, 18, 0.2))',
-                        }}
+                        className={`rack-item-shadow ${isActive ? 'scale-x-110 opacity-70' : 'opacity-40'}`}
                       />
                       <span
-                        className={`mx-auto mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] ${
+                        className={`mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] transition-colors ${
                           isActive
                             ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
-                            : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58]'
+                            : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58] group-hover:bg-white'
                         }`}
                       >
-                        <span className="block max-w-[88px] truncate">{item.name}</span>
+                        <span className="block max-w-[92px] truncate">{item.name}</span>
                       </span>
-                    </span>
-                  </motion.button>
+                    </button>
+                  </li>
                 );
               })}
-          </div>
+          </ul>
         </div>
       </div>
 
