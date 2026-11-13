@@ -230,14 +230,17 @@
 }
 
 /* ------------------------------------------------------------------ *
- * Clean, centered try-on portrait without a frame or photo-card treatment.
+ * Clean, borderless try-on portrait inside a height-capped band.
  * ------------------------------------------------------------------ */
 .rack-outfit-stage {
   position: relative;
   width: 100%;
-  max-width: 380px;
-  aspect-ratio: 3 / 4;
+  max-width: 340px;
+  /* Bounded band height: ~285–330px on phones, 420px on desktop. */
+  height: min(420px, 76vw);
   margin-inline: auto;
+  /* The model stands on the band's baseline instead of floating centered. */
+  align-self: end;
 }
 
 .rack-outfit-composite {
@@ -246,6 +249,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: bottom center;
   filter: none;
 }
 

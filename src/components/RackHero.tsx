@@ -287,11 +287,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   return (
     <section
       aria-label="استایل‌های مُدارا"
-      className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-5 sm:pb-6 sm:pt-7"
+      className="relative isolate overflow-hidden bg-[#f3efe8] pb-4 pt-4 sm:pb-5 sm:pt-6"
     >
-      <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8">
-        {/* Centered, borderless try-on portrait; product facts stay sourced from the catalogue. */}
-        <div className="mx-auto w-full max-w-[1120px] px-1 sm:px-0">
+      <div className="relative z-10 mx-auto w-full max-w-[1024px] px-4 sm:px-8">
+        {/* Compact editorial band: text and portrait sit close together in two columns. */}
+        <div className="w-full px-1 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -334,7 +334,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     />
                   </div>
                 </div>
-                <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
+                <div className="w-full min-w-0 text-right lg:col-start-1 lg:row-start-1">
                   {/* Brand line first: the hero is Modara's window, then the product. */}
                   <p className="mb-2.5 text-[11px] font-bold tracking-[0.22em] text-[#9a835f]">
                     مُدارا <span className="text-[#c8b795]" aria-hidden="true">·</span> MODARA
@@ -371,7 +371,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   </div>
 
                   {activeItem.product.description && (
-                    <p className="mt-2.5 max-w-[30rem] text-[13px] leading-[1.8] text-[#6b6152]">
+                    <p className="mt-2.5 line-clamp-3 max-w-[30rem] text-[13px] leading-[1.8] text-[#6b6152]">
                       {activeItem.product.description}
                     </p>
                   )}
@@ -398,9 +398,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* Compact editorial selector: the real garment profiles remain the navigation. */}
+        {/* Compact editorial selector: one control row (title, filters, buttons) above the rail. */}
         <div
-          className="mx-auto mt-5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-4 sm:mt-6 sm:pt-5"
+          className="mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
@@ -410,7 +410,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             }
           }}
         >
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <div className="flex items-baseline gap-2.5">
               <h2 className="text-base font-bold text-[#342d24] sm:text-lg">انتخاب استایل</h2>
               <span className="text-[11px] tabular-nums text-[#9a835f]">
@@ -418,6 +418,22 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
               </span>
               <p className="sr-only">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید.</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-start gap-2" role="group" aria-label="فیلتر دسته‌بندی محصولات">
+              {RACK_FILTERS.map((filter) => {
+                const isSelected = selectedCategory === filter.id;
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedCategory(filter.id)}
+                    className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? 'border-[#927444] bg-[#241d14] text-[#f7f1e4]' : 'border-[#ddd6ca] bg-white/50 text-[#665b4b] hover:bg-white'}`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -449,23 +465,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             </div>
           </div>
 
-          <div className="mb-2 flex flex-wrap items-center justify-start gap-2" role="group" aria-label="فیلتر دسته‌بندی محصولات">
-            {RACK_FILTERS.map((filter) => {
-              const isSelected = selectedCategory === filter.id;
-              return (
-                <button
-                  key={filter.id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedCategory(filter.id)}
-                  className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? 'border-[#927444] bg-[#241d14] text-[#f7f1e4]' : 'border-[#ddd6ca] bg-white/50 text-[#665b4b] hover:bg-white'}`}
-                >
-                  {filter.label}
-                </button>
-              );
-            })}
-          </div>
-
           <ul
             ref={trackRef}
             aria-label={`انتخاب محصول از دستهٔ ${RACK_FILTERS.find((filter) => filter.id === selectedCategory)?.label ?? 'لباس'}`}
@@ -485,7 +484,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           >
             {loading &&
               Array.from({ length: 8 }).map((_, index) => (
-                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[130px] w-[90px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
+                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[104px] w-[76px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
               ))}
 
             {!loading &&
@@ -495,7 +494,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   <li
                     key={item.id}
                     data-piece={item.id}
-                    className={`rack-style-item h-[130px] w-[90px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
+                    className={`rack-style-item h-[104px] w-[76px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
                   >
                     <button
                       type="button"
@@ -512,9 +511,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         loading="lazy"
                         decoding="async"
                         draggable={false}
-                        className={`h-[94px] w-[72px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
+                        className={`h-[72px] w-[58px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
                       />
-                      <span className={`w-full truncate text-center text-[11px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                      <span className={`w-full truncate text-center text-[10px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
                       {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
                     </button>
                   </li>
