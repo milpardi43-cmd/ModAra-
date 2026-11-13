@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react';
 import { getAllProducts, getCategories } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
@@ -73,6 +73,16 @@ function modelGenderFor(product: Product, categorySlug: string): 'women' | 'men'
 }
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+/** Deterministic gold-dust field around the mannequin (no Math.random: stable SSR/hydration). */
+const RACK_MOTES = Array.from({ length: 9 }, (_, i) => ({
+  left: `${6 + i * 11}%`,
+  top: `${16 + ((i * 29) % 56)}%`,
+  size: 3 + (i % 3),
+  delay: `${(i * 0.9) % 7}s`,
+  duration: `${8 + (i % 4) * 2}s`,
+  dx: i % 2 === 0 ? 14 : -12,
+}));
 // Netlify caches /images/* for 30 days; bump when the hero's try-on artwork changes.
 const RACK_OUTFIT_REVISION = 'smiling-pair-accessories-v3';
 const warmedOutfitSources = new Set<string>();
@@ -216,6 +226,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches,
     [],
   );
+  /* Warm light pool chasing the pointer with a soft spring (desktop only). */
+  const orbX = useMotionValue(-600);
+  const orbY = useMotionValue(-600);
+  const orbSpringX = useSpring(orbX, { stiffness: 55, damping: 16, mass: 0.7 });
+  const orbSpringY = useSpring(orbY, { stiffness: 55, damping: 16, mass: 0.7 });
 
   const startFlight = useCallback(
     (item: RackItem, source?: HTMLElement | null) => {
@@ -330,7 +345,17 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     <section
       aria-label="استایل‌های مُدارا"
       className="relative isolate overflow-hidden bg-[#f3efe8] pb-4 pt-20 sm:pb-5 lg:pt-6"
+      onPointerMove={(event) => {
+        if (!finePointer || reduceMotion) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        orbX.set(event.clientX - rect.left);
+        orbY.set(event.clientY - rect.top);
+      }}
     >
+      <div className="hero-aurora" aria-hidden="true" />
+      {finePointer && !reduceMotion && (
+        <motion.span aria-hidden="true" className="hero-orb" style={{ x: orbSpringX, y: orbSpringY }} />
+      )}
       <div className="relative z-10 mx-auto w-full max-w-[1024px] px-4 sm:px-8">
         {/* Compact editorial band: text and portrait sit close together in two columns. */}
         <div className="w-full px-1 sm:px-0">
@@ -360,6 +385,24 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               >
                 <div ref={stageRef} className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
                   <span className="rack-spotlight" aria-hidden="true" />
+                  {RACK_MOTES.map((mote, index) => (
+                    <span
+                      key={index}
+                      className="rack-mote"
+                      aria-hidden="true"
+                      style={
+                        {
+                          left: mote.left,
+                          top: mote.top,
+                          width: mote.size,
+                          height: mote.size,
+                          '--delay': mote.delay,
+                          '--dur': mote.duration,
+                          '--dx': `${mote.dx}px`,
+                        } as CSSProperties
+                      }
+                    />
+                  ))}
                   <div
                     role="img"
                     aria-label={`${activeItem.product.name}، نمای کامل ست`}
@@ -389,6 +432,18 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       className="rack-outfit-composite pointer-events-none select-none"
                     />
                   </div>
+                  {/* Glossy runway floor: the mannequin mirrored, blurred and fading. */}
+                  <div className="rack-reflection" aria-hidden="true">
+                    <img
+                      src={rackOutfitAsset(activeItem.modelPreview)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      onError={(event) => {
+                        event.currentTarget.style.visibility = 'hidden';
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="w-full min-w-0 text-right lg:col-start-1 lg:row-start-1">
                   {/* Brand line first: the hero is Modara's window, then the product. */}
@@ -396,7 +451,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     مُدارا <span className="text-[#c8b795]" aria-hidden="true">·</span> MODARA
                   </p>
 
-                  <h1 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
+                  <h1
+                    key={activeItem.id}
+                    className="look-title text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]"
+                  >
                     {activeItem.product.name}
                   </h1>
 
@@ -456,7 +514,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
         {/* Compact editorial selector: one control row (title, filters, buttons) above the rail. */}
         <div
-          className="mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
+          className="relative z-10 mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
@@ -592,37 +650,38 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
       </div>
 
-      {/* The garment in flight: rack thumbnail silhouette -> mannequin. */}
-      {flight && (
-        <motion.img
-          key={flight.key}
-          src={flight.src}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="pointer-events-none fixed z-40 object-contain drop-shadow-[0_18px_30px_rgba(36,29,20,0.35)]"
-          initial={{
-            top: flight.from.top,
-            left: flight.from.left,
-            width: flight.from.width,
-            height: flight.from.height,
-            opacity: 0.95,
-            rotate: -7,
-            filter: 'blur(0px)',
-          }}
-          animate={{
-            top: flight.to.top,
-            left: flight.to.left,
-            width: flight.to.width,
-            height: flight.to.height,
-            opacity: 0,
-            rotate: 9,
-            filter: 'blur(3px)',
-          }}
-          transition={{ duration: 0.7, ease: EASE }}
-          onAnimationComplete={() => setFlight(null)}
-        />
-      )}
+      {/* The garment in flight: rack thumbnail silhouette -> mannequin, with ghost echoes. */}
+      {flight &&
+        [0, 1, 2].map((echo) => (
+          <motion.img
+            key={`${flight.key}-${echo}`}
+            src={flight.src}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className={`pointer-events-none fixed z-40 object-contain ${echo === 0 ? 'drop-shadow-[0_18px_30px_rgba(36,29,20,0.35)]' : ''}`}
+            initial={{
+              top: flight.from.top,
+              left: flight.from.left,
+              width: flight.from.width,
+              height: flight.from.height,
+              opacity: echo === 0 ? 0.95 : 0.3 - echo * 0.09,
+              rotate: -7,
+              filter: `blur(${echo * 1.5}px)`,
+            }}
+            animate={{
+              top: flight.to.top,
+              left: flight.to.left,
+              width: flight.to.width,
+              height: flight.to.height,
+              opacity: 0,
+              rotate: 9,
+              filter: `blur(${3 + echo * 1.5}px)`,
+            }}
+            transition={{ duration: 0.7, ease: EASE, delay: echo * 0.06 }}
+            onAnimationComplete={echo === 2 ? () => setFlight(null) : undefined}
+          />
+        ))}
     </section>
   );
 }
