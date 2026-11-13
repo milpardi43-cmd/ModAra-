@@ -452,6 +452,12 @@
   .title-line > * { animation: none !important; }
 }
 
+/* Vitrine window: soft fades at both ends so the conveyor never hard-clips. */
+.rack-window {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+}
+
 /* Invisible rail: a warm pool of light marks the chosen piece. */
 .rack-glow {
   position: absolute;

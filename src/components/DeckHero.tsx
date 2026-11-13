@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react';
 import { getAllProducts, getCategories } from '../lib/catalog';
@@ -20,10 +20,12 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const [selectedCategory, setSelectedCategory] = useState('clothing');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isDeckHovered, setIsDeckHovered] = useState(false);
-  const deckRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLUListElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
   const suppressClick = useRef(false);
+  const conveyorPaused = useRef(false);
+  const isDeckHoveredRef = useRef(false);
+  const isAutoPlayingRef = useRef(true);
   const stageRef = useRef<HTMLDivElement>(null);
   const [flight, setFlight] = useState<null | {
     src: string;
@@ -68,7 +70,13 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   useEffect(() => {
     if (!visibleItems.length || visibleItems.some((item) => item.id === activeId)) return;
     const first = visibleItems[0];
-    if (first) setActiveId(first.id);
+    if (first) {
+      setActiveId(first.id);
+      window.requestAnimationFrame(() => {
+        const track = trackRef.current;
+        if (track) track.scrollLeft = track.scrollWidth / 2;
+      });
+    }
   }, [activeId, visibleItems]);
 
   /** The chosen piece lifts off its hanger and flies onto the mannequin. */
@@ -76,9 +84,20 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     (item: RackItem, source?: HTMLElement | null) => {
       if (reduceMotion) return;
       const stage = stageRef.current;
-      const fromEl =
-        source?.querySelector('img') ??
-        deckRef.current?.querySelector<HTMLElement>(`[data-piece="${item.id}"] img`);
+      let fromEl: HTMLElement | null = source?.querySelector('img') ?? null;
+      if (!fromEl) {
+        const track = trackRef.current;
+        const trackRect = track?.getBoundingClientRect();
+        const candidates = Array.from(
+          track?.querySelectorAll<HTMLElement>(`[data-piece="${item.id}"] img`) ?? [],
+        );
+        fromEl =
+          candidates.find((el) => {
+            if (!trackRect) return false;
+            const r = el.getBoundingClientRect();
+            return r.left >= trackRect.left - 4 && r.right <= trackRect.right + 4;
+          }) ?? null;
+      }
       if (!stage || !fromEl) return;
       const from = fromEl.getBoundingClientRect();
       const to = stage.getBoundingClientRect();
@@ -107,6 +126,12 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   );
 
   useEffect(() => {
+    isDeckHoveredRef.current = isDeckHovered;
+    isAutoPlayingRef.current = isAutoPlaying;
+    conveyorPaused.current = isDeckHovered || !isAutoPlaying;
+  }, [isDeckHovered, isAutoPlaying]);
+
+  useEffect(() => {
     if (!isAutoPlaying || isDeckHovered || visibleItems.length < 2) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;
@@ -117,21 +142,36 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     return () => window.clearInterval(timer);
   }, [activeId, isAutoPlaying, isDeckHovered, selectItem, visibleItems]);
 
-  /** Keep the chosen piece centered in the rail. */
+  /** Seamless conveyor: the train of garments drifts left-to-right forever. */
   useEffect(() => {
     const track = trackRef.current;
-    if (!track || !activeId) return;
-    const piece = track.querySelector<HTMLElement>(`[data-piece="${activeId}"]`);
-    if (!piece) return;
-    const pieceRect = piece.getBoundingClientRect();
-    const trackRect = track.getBoundingClientRect();
-    if (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left) {
-      piece.scrollIntoView({
-        inline: 'center',
-        block: 'nearest',
-        behavior: reduceMotion ? 'auto' : 'smooth',
-      });
-    }
+    if (!track || reduceMotion || loading) return;
+    track.scrollLeft = track.scrollWidth / 2;
+    let raf = 0;
+    const tick = () => {
+      if (!conveyorPaused.current && !drag.current.active && document.visibilityState === 'visible') {
+        const half = track.scrollWidth / 2;
+        if (half > track.clientWidth) {
+          track.scrollLeft -= 0.4;
+          if (track.scrollLeft <= 0) track.scrollLeft += half;
+          else if (track.scrollLeft >= half * 1.5) track.scrollLeft -= half;
+        }
+      }
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [reduceMotion, loading, selectedCategory]);
+
+  /** Only explicit navigation (keys/buttons/category) recenters the window. */
+  const centerActive = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      const track = trackRef.current;
+      if (!track || !activeId) return;
+      const piece = track.querySelector<HTMLElement>(`[data-piece="${activeId}"]`);
+      if (!piece) return;
+      piece.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+    });
   }, [activeId, reduceMotion]);
 
   /* Direct horizontal browsing on pointer devices. */
@@ -140,6 +180,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     const track = trackRef.current;
     if (!track) return;
     drag.current = { active: true, startX: event.clientX, startLeft: track.scrollLeft, moved: false };
+    conveyorPaused.current = true;
   };
 
   const onPointerMove = (event: React.PointerEvent<HTMLUListElement>) => {
@@ -154,13 +195,17 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     if (!drag.current.active) return;
     suppressClick.current = drag.current.moved;
     drag.current.active = false;
+    conveyorPaused.current = isDeckHoveredRef.current || !isAutoPlayingRef.current;
   };
 
   const moveActive = (step: 1 | -1) => {
     if (visibleItems.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
     const next = visibleItems[(from + step + visibleItems.length) % visibleItems.length];
-    if (next) selectItem(next.id);
+    if (next) {
+      selectItem(next.id);
+      centerActive();
+    }
   };
 
   const onDeckKeyDown = (event: React.KeyboardEvent<HTMLUListElement>) => {
@@ -356,75 +401,83 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
             )}
           </div>
 
-          <ul
-            ref={trackRef}
-            aria-label="لباس‌های رگال"
-            onKeyDown={onDeckKeyDown}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            onPointerLeave={onPointerUp}
-            onClickCapture={(event) => {
-              if (!suppressClick.current) return;
-              suppressClick.current = false;
-              event.preventDefault();
-              event.stopPropagation();
-            }}
-            className="scrollbar-hide -mx-2 flex items-start gap-2.5 overflow-x-auto px-2 pb-2 pt-4 sm:gap-3 sm:px-3"
-          >
-            {loading &&
-              Array.from({ length: 8 }).map((_, index) => (
-                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[176px] w-[104px] shrink-0 animate-pulse rounded-2xl bg-[#e9e5de]" />
-              ))}
+          <div className="rack-window mx-auto w-full lg:ms-auto lg:me-0 lg:w-[340px]">
+            <ul
+              ref={trackRef}
+              dir="ltr"
+              aria-label="لباس‌های رگال"
+              onKeyDown={onDeckKeyDown}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onPointerLeave={onPointerUp}
+              onClickCapture={(event) => {
+                if (!suppressClick.current) return;
+                suppressClick.current = false;
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              className="scrollbar-hide flex items-start gap-1 overflow-x-auto pb-2 pt-4 sm:gap-1.5"
+            >
+              {loading &&
+                Array.from({ length: 4 }).map((_, index) => (
+                  <li key={`skeleton-${index}`} aria-hidden="true" className="h-[176px] w-[104px] shrink-0 animate-pulse rounded-2xl bg-[#e9e5de]" />
+                ))}
 
-            {!loading &&
-              visibleItems.map((item) => {
-                const isActive = item.id === activeItem?.id;
-                return (
-                  <li key={item.id} data-piece={item.id} className="shrink-0">
-                    <button
-                      type="button"
-                      aria-pressed={isActive}
-                      aria-label={isActive ? `${item.name}، انتخاب‌شده` : `${item.name}، نمایش استایل`}
-                      onFocus={() => selectItem(item.id)}
-                      onClick={(event) => selectItem(item.id, event.currentTarget)}
-                      className="group relative flex flex-col items-center outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] rounded-xl"
-                    >
-                      <span aria-hidden="true" className={`rack-glow ${isActive ? 'opacity-100' : 'opacity-0'}`} />
-                      <span className={`relative block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
-                        <img
-                          src={asset(item.image)}
-                          alt=""
-                          aria-hidden="true"
-                          loading="lazy"
-                          decoding="async"
-                          draggable={false}
-                          className={`block h-[150px] w-[104px] object-contain object-top transition-all duration-500 ${
-                            isActive
-                              ? '-translate-y-1.5 drop-shadow-[0_16px_26px_rgba(90,66,32,0.4)]'
-                              : 'drop-shadow-[0_10px_16px_rgba(40,30,18,0.16)] group-hover:-translate-y-1 group-hover:drop-shadow-[0_14px_20px_rgba(40,30,18,0.26)]'
-                          }`}
-                        />
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className={`rack-item-shadow ${isActive ? 'scale-x-110 opacity-70' : 'opacity-40'}`}
-                      />
-                      <span
-                        className={`mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] transition-colors ${
-                          isActive
-                            ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
-                            : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58] group-hover:bg-white'
-                        }`}
-                      >
-                        <span className="block max-w-[92px] truncate">{item.name}</span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
+              {!loading &&
+                [0, 1].map((copy) => (
+                  <Fragment key={copy}>
+                    {visibleItems.map((item) => {
+                      const isActive = item.id === activeItem?.id;
+                      return (
+                        <li key={`${copy}-${item.id}`} data-piece={item.id} className="shrink-0" aria-hidden={copy === 1}>
+                          <button
+                            type="button"
+                            tabIndex={copy === 1 ? -1 : undefined}
+                            aria-pressed={isActive}
+                            aria-label={isActive ? `${item.name}، انتخاب‌شده` : `${item.name}، نمایش استایل`}
+                            onFocus={copy === 0 ? () => selectItem(item.id) : undefined}
+                            onClick={(event) => selectItem(item.id, event.currentTarget)}
+                            className="group relative flex flex-col items-center outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] rounded-xl"
+                          >
+                            <span aria-hidden="true" className={`rack-glow ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                            <span className={`relative block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
+                              <img
+                                src={asset(item.image)}
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                                decoding="async"
+                                draggable={false}
+                                className={`block h-[150px] w-[104px] object-contain object-top transition-all duration-500 ${
+                                  isActive
+                                    ? '-translate-y-1.5 drop-shadow-[0_16px_26px_rgba(90,66,32,0.4)]'
+                                    : 'drop-shadow-[0_10px_16px_rgba(40,30,18,0.16)] group-hover:-translate-y-1 group-hover:drop-shadow-[0_14px_20px_rgba(40,30,18,0.26)]'
+                                }`}
+                              />
+                            </span>
+                            <span
+                              aria-hidden="true"
+                              className={`rack-item-shadow ${isActive ? 'scale-x-110 opacity-70' : 'opacity-40'}`}
+                            />
+                            <span
+                              className={`mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] transition-colors ${
+                                isActive
+                                  ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
+                                  : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58] group-hover:bg-white'
+                              }`}
+                            >
+                              <span className="block max-w-[92px] truncate">{item.name}</span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+            </ul>
+          </div>
         </div>
       </div>
 
