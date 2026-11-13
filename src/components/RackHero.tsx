@@ -287,7 +287,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   return (
     <section
       aria-label="استایل‌های مُدارا"
-      className="relative isolate overflow-hidden bg-[#f3efe8] pb-4 pt-4 sm:pb-5 sm:pt-6"
+      className="relative isolate overflow-hidden bg-[#f3efe8] pb-4 pt-20 sm:pb-5 lg:pt-6"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1024px] px-4 sm:px-8">
         {/* Compact editorial band: text and portrait sit close together in two columns. */}
