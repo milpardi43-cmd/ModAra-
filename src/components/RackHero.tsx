@@ -1,20 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { getCategories, getClothingProducts } from '../lib/catalog';
+import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react';
+import { getAllProducts, getCategories } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
 import { asset, formatPrice } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
-import { rackOutfitLayerInfo } from '../lib/rackOutfitLayerInfo';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
-};
-
-type RackOutfitLayer = {
-  id: 'top' | 'trousers' | 'shoes' | 'full';
-  src: string;
-  delay: number;
 };
 
 type RackItem = {
@@ -23,38 +16,80 @@ type RackItem = {
   slug: string;
   /** Accessible name. */
   name: string;
-  /** Photoreal side profile used on the shared rack while idle. */
+  /** Catalog product image used in the horizontal selector. */
   image: string;
-  /** Pixel-accurate transparent top, trousers and shoe layers for the selected look. */
-  outfitLayers: RackOutfitLayer[];
-  /** Average fabric colour — used only for the glow behind the rack. */
+  /** Full-body photo of the fixed gender model wearing this look. */
+  modelPreview: string;
+  /** Exact catalog product art used if the model preview cannot load. */
+  outfitPreview: string;
+  /** Final image fallback if both the model and main product preview fail. */
+  previewFallback: string;
+  /** Average fabric colour, used for the product swatch. */
   hex: string;
   /** width / height of the side-profile rack image. */
   aspect: number;
   /** Full catalogue record: what the product card reads out. */
   product: Product;
+  /** Category slug used by the rack filters. */
+  categorySlug: string;
+  /** The same fixed human model is reused for every matching product. */
+  modelGender: 'women' | 'men';
+  /** Exact catalog photo for an accessory selected separately from the model look. */
+  accessoryPreview?: string;
   /** Department label, e.g. «لباس». */
   categoryName: string;
 };
 
+type RackFilter = { id: string; label: string };
+
+const RACK_FILTERS: RackFilter[] = [
+  { id: 'clothing', label: 'لباس' },
+  { id: 'bag', label: 'کیف' },
+  { id: 'glasses', label: 'عینک' },
+  { id: 'watch', label: 'ساعت' },
+  { id: 'accessory', label: 'اکسسوری' },
+];
+
+const SUPPORTED_RACK_CATEGORIES = new Set(RACK_FILTERS.map((filter) => filter.id));
+
+function modelGenderFor(product: Product, categorySlug: string): 'women' | 'men' {
+  const searchable = `${product.slug} ${product.name} ${product.description ?? ''}`.toLowerCase();
+  if (/(women|woman|womens|female|زنانه|خانم|دختر)/i.test(searchable)) return 'women';
+  if (/(men|man|mens|male|مردانه|آقایان|مرد)/i.test(searchable)) return 'men';
+
+  if (categorySlug === 'bag') {
+    return /(handbag|crossbody|mini-shoulder|bucket|tote|straw|clutch|quilted|beach)/i.test(product.slug)
+      ? 'women'
+      : 'men';
+  }
+  if (categorySlug === 'glasses') {
+    return /(cat-eye|oversized|round-tortoise|vintage)/i.test(product.slug) ? 'women' : 'men';
+  }
+  if (categorySlug === 'watch') return 'men';
+  if (categorySlug === 'accessory') {
+    return /(pearl|jewelry|earring|necklace|womens)/i.test(product.slug) ? 'women' : 'men';
+  }
+  return 'women';
+}
+
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/** Air between two hangers. */
-const PIECE_GAP = 6;
-/** Give side-profile silhouettes enough height to read clearly. */
-const MIN_PIECE_HEIGHT = 240;
-const MAX_PIECE_HEIGHT = 300;
+// Netlify caches /images/* for 30 days; bump when the hero's try-on artwork changes.
+const RACK_OUTFIT_REVISION = 'smiling-pair-accessories-v3';
 const warmedOutfitSources = new Set<string>();
 
-function warmOutfitImages(item: RackItem) {
-  item.outfitLayers.forEach((layer) => {
-    const src = asset(layer.src);
-    if (warmedOutfitSources.has(src)) return;
-    warmedOutfitSources.add(src);
-    const image = new Image();
-    image.fetchPriority = 'high';
-    image.decoding = 'async';
-    image.src = src;
-  });
+function rackOutfitAsset(path: string): string {
+  const src = asset(path);
+  return `${src}${src.includes('?') ? '&' : '?'}v=${RACK_OUTFIT_REVISION}`;
+}
+
+function warmOutfitPreview(item: RackItem) {
+  const src = rackOutfitAsset(item.modelPreview);
+  if (warmedOutfitSources.has(src)) return;
+  warmedOutfitSources.add(src);
+  const image = new Image();
+  image.fetchPriority = 'high';
+  image.decoding = 'async';
+  image.src = src;
 }
 
 export default function RackHero({ onNavigate }: RackHeroProps) {
@@ -63,12 +98,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [items, setItems] = useState<RackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [hasScrolled, setHasScrolled] = useState(false);
-  const [canScrollMore, setCanScrollMore] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('clothing');
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isSelectorHovered, setIsSelectorHovered] = useState(false);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
-  const shellRef = useRef<HTMLDivElement>(null);
-  /** Piece height that makes the whole line fit the row exactly. */
-  const [rackSize, setRackSize] = useState({ height: 240, fits: true });
   const suppressClick = useRef(false);
 
   useEffect(() => {
@@ -77,65 +110,51 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getClothingProducts(), getCategories()])
+    Promise.all([getAllProducts(), getCategories()])
       .then(([products, categories]) => {
         if (cancelled) return;
-        const categoryNames = new Map<string, string>();
-        for (const category of categories) categoryNames.set(category.id, category.name);
-        /* Hang each product in profile; build a composed preview from its original layers. */
-        const hanging = products
+        const categoriesById = new Map(categories.map((category) => [category.id, category] as const));
+        const rackItems = products
           .map((product) => {
+            const category = categoriesById.get(product.category_id ?? '');
+            if (!category || !SUPPORTED_RACK_CATEGORIES.has(category.slug) || !product.image_url) return null;
+            const categorySlug = category.slug;
+
             const garment = hangerFor(product.slug);
-            if (!garment) return null;
+            if (categorySlug === 'clothing' && !garment) return null;
             const profile = sideFor(product.slug) ?? garment;
-            const layerInfo = rackOutfitLayerInfo[product.slug];
-            const outfitLayers: RackOutfitLayer[] = layerInfo
-              ? [
-                  ...(layerInfo.hasTrousers
-                    ? [
-                        {
-                          id: 'trousers' as const,
-                          src: `/images/rack/outfit-layers/${product.slug}-trousers.webp`,
-                          delay: 0.045,
-                        },
-                      ]
-                    : []),
-                  {
-                    id: 'top',
-                    src: `/images/rack/outfit-layers/${product.slug}-top.webp`,
-                    delay: 0,
-                  },
-                  {
-                    id: 'shoes',
-                    src: `/images/rack/outfit-layers/${product.slug}-shoes.webp`,
-                    delay: 0.09,
-                  },
-                ]
-              : [
-                  {
-                    id: 'full',
-                    src: `/images/rack/outfits-cleaned/${product.slug}.webp`,
-                    delay: 0,
-                  },
-                ];
-            return {
+            const modelGender = modelGenderFor(product, categorySlug);
+            const productRackImage = `/images/rack/${categorySlug}/${product.slug}.webp`;
+            const isClothing = categorySlug === 'clothing';
+            const rackItem: RackItem = {
               id: product.id,
               slug: product.slug,
               name: product.name,
-              image: profile.image,
-              outfitLayers,
-              hex: garment.hex,
-              aspect: profile.aspect,
+              image: profile?.image ?? productRackImage,
+              modelPreview: isClothing
+                ? `/images/hero/try-on/${product.slug}.webp`
+                : `/images/hero/model-pair/${modelGender}.webp`,
+              outfitPreview: isClothing
+                ? `/images/rack/outfits-cleaned/${product.slug}.webp`
+                : product.image_url,
+              previewFallback: garment?.image ?? product.image_url,
+              hex: profile?.hex ?? '#b9a783',
+              aspect: profile?.aspect ?? 0.75,
               product,
-              categoryName: categoryNames.get(product.category_id ?? '') ?? 'کالکشن',
-            } satisfies RackItem;
+              categorySlug,
+              modelGender,
+              accessoryPreview: isClothing ? undefined : product.image_url,
+              categoryName: category.name,
+            };
+            return rackItem;
           })
           .filter((item): item is RackItem => item !== null)
-          /* keep a natural rhythm, from narrower to wider side-profile silhouettes */
+          /* Keep the existing rail rhythm while adding catalog accessory categories. */
           .sort((a, b) => a.aspect - b.aspect);
-        if (hanging[0]) warmOutfitImages(hanging[0]);
-        setItems(hanging);
-        setActiveId((current) => current ?? hanging[0]?.id ?? null);
+        const firstClothing = rackItems.find((item) => item.categorySlug === 'clothing');
+        if (firstClothing) warmOutfitPreview(firstClothing);
+        setItems(rackItems);
+        setActiveId((current) => current ?? firstClothing?.id ?? rackItems[0]?.id ?? null);
       })
       .catch(() => {
         /* the rack simply stays empty instead of breaking the page */
@@ -148,57 +167,23 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     };
   }, []);
 
-  /**
-   * Fit the line to the row: the sum of every garment's aspect ratio decides
-   * the height, so 17 different silhouettes share the width perfectly and
-   * nothing is cropped or scrolled on a normal screen.
-   */
-  useEffect(() => {
-    const shell = shellRef.current;
-    if (!shell || !items.length) return;
-
-    const measure = () => {
-      const width = shell.clientWidth;
-      const gaps = PIECE_GAP * Math.max(0, items.length - 1);
-      const totalAspect = items.reduce((sum, item) => sum + item.aspect, 0);
-      if (!width || !totalAspect) return;
-      const ideal = (width - gaps) / totalAspect;
-      const height = Math.min(MAX_PIECE_HEIGHT, Math.max(MIN_PIECE_HEIGHT, ideal));
-      setRackSize({ height, fits: ideal >= MIN_PIECE_HEIGHT });
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(shell);
-    return () => observer.disconnect();
-  }, [items]);
-
-  const activeIndex = items.findIndex((item) => item.id === activeId);
-  const activeItem = activeIndex >= 0 ? items[activeIndex] : (items[0] ?? null);
-
-  const updateScrollHints = useCallback(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const max = track.scrollWidth - track.clientWidth;
-    // In RTL the scroll origin sits at the right edge, so progress is negative.
-    const offset = Math.abs(track.scrollLeft);
-    setHasScrolled(offset > 8);
-    setCanScrollMore(offset < max - 8);
-  }, []);
+  const visibleItems = useMemo(
+    () => items.filter((item) => item.categorySlug === selectedCategory),
+    [items, selectedCategory],
+  );
+  const activeIndex = visibleItems.findIndex((item) => item.id === activeId);
+  const activeItem = activeIndex >= 0 ? visibleItems[activeIndex] : (visibleItems[0] ?? null);
 
   useEffect(() => {
-    updateScrollHints();
-    const track = trackRef.current;
-    if (!track) return;
-    track.addEventListener('scroll', updateScrollHints, { passive: true });
-    window.addEventListener('resize', updateScrollHints);
-    return () => {
-      track.removeEventListener('scroll', updateScrollHints);
-      window.removeEventListener('resize', updateScrollHints);
-    };
-  }, [updateScrollHints, items.length]);
+    if (!visibleItems.length || visibleItems.some((item) => item.id === activeId)) return;
+    const first = visibleItems[0];
+    if (first) {
+      warmOutfitPreview(first);
+      setActiveId(first.id);
+    }
+  }, [activeId, visibleItems]);
 
-  /** Keep the active piece inside the visible part of the rail. */
+  /** Keep the selected look visible in the horizontal style selector. */
   const revealPiece = useCallback(
     (id: string) => {
       const track = trackRef.current;
@@ -207,10 +192,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       if (!piece) return;
       const pieceRect = piece.getBoundingClientRect();
       const trackRect = track.getBoundingClientRect();
-      if (
-        !rackSize.fits &&
-        (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left)
-      ) {
+      if (pieceRect.right > trackRect.right || pieceRect.left < trackRect.left) {
         piece.scrollIntoView({
           inline: 'center',
           block: 'nearest',
@@ -218,21 +200,32 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         });
       }
     },
-    [rackSize.fits, reduceMotion],
+    [reduceMotion],
   );
 
-  const selectRackItem = (id: string) => {
+  const selectRackItem = useCallback((id: string) => {
     const selected = items.find((item) => item.id === id);
-    if (selected) warmOutfitImages(selected);
+    if (selected) warmOutfitPreview(selected);
     setActiveId(id);
     window.requestAnimationFrame(() => revealPiece(id));
-  };
+  }, [items, revealPiece]);
+
+  useEffect(() => {
+    if (!isAutoPlaying || isSelectorHovered || visibleItems.length < 2) return;
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      const current = visibleItems.findIndex((item) => item.id === activeId);
+      const next = visibleItems[(current + 1 + visibleItems.length) % visibleItems.length];
+      if (next) selectRackItem(next.id);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [activeId, isAutoPlaying, isSelectorHovered, selectRackItem, visibleItems]);
 
   const moveActive = (step: 1 | -1) => {
-    if (items.length < 2) return;
+    if (visibleItems.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
-    const next = items[(from + step + items.length) % items.length];
-    selectRackItem(next.id);
+    const next = visibleItems[(from + step + visibleItems.length) % visibleItems.length];
+    if (next) selectRackItem(next.id);
   };
 
   /** In RTL the next piece sits to the left, so the arrows and keys invert. */
@@ -252,19 +245,19 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     } else if (event.key === 'ArrowRight') {
       event.preventDefault();
       moveActive(-1);
-    } else if (event.key === 'Home' && items[0]) {
+    } else if (event.key === 'Home' && visibleItems[0]) {
       event.preventDefault();
-      selectRackItem(items[0].id);
+      selectRackItem(visibleItems[0].id);
     } else if (event.key === 'End') {
       event.preventDefault();
-      const last = items[items.length - 1];
+      const last = visibleItems[visibleItems.length - 1];
       if (last) {
         selectRackItem(last.id);
       }
     }
   };
 
-  /* Dragging the rail: pieces lean like real hangers being pushed, then settle. */
+  /* Allow direct horizontal browsing on pointer devices. */
   const onPointerDown = (event: React.PointerEvent<HTMLUListElement>) => {
     if (event.pointerType !== 'mouse') return;
     const track = trackRef.current;
@@ -290,44 +283,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     suppressClick.current = drag.current.moved;
     drag.current.active = false;
   };
-  const activeHasTrousers = activeItem?.outfitLayers.some((layer) => layer.id === 'trousers') ?? false;
 
   return (
     <section
-      aria-label="رگال لباس مُدارا"
-      className="relative isolate overflow-hidden bg-[#efeae1] pb-6 pt-12 sm:pb-8 sm:pt-16"
+      aria-label="استایل‌های مُدارا"
+      className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-5 sm:pb-6 sm:pt-7"
     >
-      {/* Studio light */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            'radial-gradient(120% 92% at 50% -12%, #fdfaf5 0%, #f5f0e7 42%, #ece6db 74%, #e3dccd 100%)',
-        }}
-      />
-      <motion.div
-        aria-hidden="true"
-        animate={{ backgroundColor: activeItem ? `${activeItem.hex}42` : 'rgba(176,132,64,0.2)' }}
-        transition={{ duration: reduceMotion ? 0 : 0.9, ease: EASE }}
-        className="pointer-events-none absolute left-1/2 top-32 -z-10 h-[420px] w-[760px] -translate-x-1/2 rounded-full blur-[130px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-32 top-16 -z-10 h-[460px] w-[460px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.92),transparent_70%)] blur-2xl"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.05] mix-blend-multiply"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E\")",
-        }}
-      />
-
-      <div ref={shellRef} className="mx-auto w-full max-w-[1440px] px-4 sm:px-8">
-        {/* Product information follows the selected garment; intentionally no card frame. */}
-        <div className="mx-auto mt-2 w-full max-w-[1100px] px-2 sm:px-0">
+      <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8">
+        {/* Centered, borderless try-on portrait; product facts stay sourced from the catalogue. */}
+        <div className="mx-auto w-full max-w-[1120px] px-1 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -336,36 +300,42 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
                 transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
-                className="mx-auto grid w-full max-w-[1000px] grid-cols-1 gap-5 text-right sm:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)] sm:items-center sm:gap-8"
+                className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)_minmax(0,1fr)] lg:items-center"
                 aria-live="polite"
               >
-                <div
-                  className={`rack-outfit-stage ${
-                    activeHasTrousers ? 'rack-outfit-stage--two-piece' : 'rack-outfit-stage--one-piece'
-                  }`}
-                >
+                <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
                   <div
                     role="img"
-                    aria-label={`${activeItem.product.name}، چیدمان کامل و مرتب ست`}
-                    className="absolute inset-0"
+                    aria-label={`${activeItem.product.name}، نمای کامل ست`}
+                    className="absolute inset-0 z-10"
                   >
-                    {activeItem.outfitLayers.map((layer) => (
-                      <img
-                        key={`${activeItem.slug}-${layer.id}`}
-                        src={asset(layer.src)}
-                        alt=""
-                        aria-hidden="true"
-                        loading="eager"
-                        fetchPriority="high"
-                        decoding="async"
-                        draggable={false}
-                        className={`rack-outfit-piece rack-outfit-piece--${layer.id} pointer-events-none select-none`}
-                      />
-                    ))}
+                    <img
+                      key={activeItem.slug}
+                      src={rackOutfitAsset(activeItem.modelPreview)}
+                      alt=""
+                      aria-hidden="true"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      draggable={false}
+                      onError={(event) => {
+                        const image = event.currentTarget;
+                        if (!image.dataset.fallback) {
+                          image.dataset.fallback = 'outfit';
+                          image.src = rackOutfitAsset(activeItem.outfitPreview);
+                        } else if (image.dataset.fallback === 'outfit') {
+                          image.dataset.fallback = 'hanger';
+                          image.src = asset(activeItem.previewFallback);
+                        } else {
+                          image.style.visibility = 'hidden';
+                        }
+                      }}
+                      className="rack-outfit-composite pointer-events-none select-none"
+                    />
                   </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="mb-3 flex flex-wrap items-center gap-3">
+                <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
+                  <div className="mb-2 flex flex-wrap items-center justify-start gap-2.5">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
                       <span
                         className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
@@ -380,20 +350,33 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </span>
                     <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
                       {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
-                      {new Intl.NumberFormat('fa-IR').format(items.length)}
+                      {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
                     </span>
                   </div>
 
-                  <h1 className="text-balance text-[clamp(1.5rem,2.7vw,2.25rem)] font-extrabold leading-[1.3] text-[#241d14]">
+                  {activeItem.accessoryPreview && (
+                    <div className="mb-3 inline-flex max-w-full items-center gap-3 rounded-xl border border-[#ded8ce] bg-white/55 p-2">
+                      <img
+                        src={asset(activeItem.accessoryPreview)}
+                        alt={activeItem.name}
+                        loading="eager"
+                        decoding="async"
+                        className="h-16 w-16 shrink-0 rounded-lg bg-white object-contain"
+                      />
+                      <span className="text-[11px] font-medium text-[#7a6c58]">عکس مستقل کالای انتخاب‌شده</span>
+                    </div>
+                  )}
+
+                  <h1 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
                     {activeItem.product.name}
                   </h1>
                   {activeItem.product.description && (
-                    <p className="mt-3 max-w-[46rem] text-[13px] leading-[1.85] text-[#6b6152] sm:text-sm">
+                    <p className="mt-2 max-w-[30rem] text-xs leading-[1.75] text-[#6b6152] sm:text-[13px]">
                       {activeItem.product.description}
                     </p>
                   )}
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
                     <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`} aria-hidden="true" />
                       {activeItem.product.stock > 0
@@ -402,14 +385,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </span>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#cdbb99]/60 pt-4">
-                    <span className="whitespace-nowrap text-lg font-extrabold text-[#3f3527] sm:text-xl">
+                  <div className="mt-4 flex flex-wrap items-center justify-start gap-x-4 gap-y-2 border-t border-[#cdbb99]/60 pt-3">
+                    <span className="whitespace-nowrap text-base font-extrabold text-[#3f3527] sm:text-lg">
                       {formatPrice(activeItem.product.price)}
                     </span>
                     <button
                       type="button"
                       onClick={() => onNavigate('product', activeItem.slug)}
-                      className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#241d14] px-5 py-3 text-xs font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
+                      className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-4 py-2.5 text-[11px] font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
                     >
                       مشاهدهٔ محصول
                       <ArrowLeft
@@ -424,22 +407,77 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* The rail, and the garments on it */}
-        <div className="relative mt-2 sm:mt-3">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-[6px] z-20 h-[16px]"
-            aria-hidden="true"
-          >
-            <div className="absolute inset-x-0 top-[6px] h-[3px] rounded-full bg-[linear-gradient(90deg,#cdb68c_0%,#b1946a_16%,#e7d5b0_38%,#9d8050_60%,#dcc7a0_82%,#c3aa7c_100%)] shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_2px_4px_rgba(72,52,26,0.22)]" />
-            <div className="absolute inset-x-0 top-[9px] h-[6px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(84,62,32,0.18),transparent_72%)] blur-[2px]" />
-            <span className="absolute -top-[3px] left-[1.5%] h-[22px] w-[5px] rounded-full bg-[linear-gradient(180deg,#f6ecd6,#a98c5c)] shadow-[0_2px_6px_rgba(72,52,26,0.2)]" />
-            <span className="absolute -top-[3px] right-[1.5%] h-[22px] w-[5px] rounded-full bg-[linear-gradient(180deg,#f6ecd6,#a98c5c)] shadow-[0_2px_6px_rgba(72,52,26,0.2)]" />
-            <span className="rack-rail-glint absolute left-0 top-[3px] z-30 h-[8px] w-[14%] rounded-full" />
+        {/* Compact editorial selector: the real garment profiles remain the navigation. */}
+        <div
+          className="mx-auto mt-5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-4 sm:mt-6 sm:pt-5"
+          onMouseEnter={() => setIsSelectorHovered(true)}
+          onMouseLeave={() => setIsSelectorHovered(false)}
+          onFocusCapture={() => setIsSelectorHovered(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsSelectorHovered(false);
+            }
+          }}
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div>
+              <p className="mb-1 text-[11px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
+              <h2 className="text-lg font-bold text-[#342d24] sm:text-xl">انتخاب استایل</h2>
+              <p className="mt-1 text-xs text-[#8b8275] sm:text-[13px]">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] tabular-nums text-[#8b8275]">
+                {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} / {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAutoPlaying((playing) => !playing)}
+                aria-pressed={isAutoPlaying}
+                aria-label={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
+                title={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+              >
+                {isAutoPlaying ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => nudgeTrack(1)}
+                aria-label="استایل‌های قبلی"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+              >
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => nudgeTrack(-1)}
+                aria-label="استایل‌های بعدی"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mb-2 flex flex-wrap items-center justify-start gap-2" role="group" aria-label="فیلتر دسته‌بندی محصولات">
+            {RACK_FILTERS.map((filter) => {
+              const isSelected = selectedCategory === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedCategory(filter.id)}
+                  className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? 'border-[#927444] bg-[#241d14] text-[#f7f1e4]' : 'border-[#ddd6ca] bg-white/50 text-[#665b4b] hover:bg-white'}`}
+                >
+                  {filter.label}
+                </button>
+              );
+            })}
           </div>
 
           <ul
             ref={trackRef}
-            aria-label="لباس‌های مُدارا روی رگال"
+            aria-label={`انتخاب محصول از دستهٔ ${RACK_FILTERS.find((filter) => filter.id === selectedCategory)?.label ?? 'لباس'}`}
             onKeyDown={onRackKeyDown}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -447,191 +485,51 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             onPointerCancel={onPointerUp}
             onPointerLeave={onPointerUp}
             onClickCapture={(event) => {
-              /* a drag should not select a garment accidentally */
               if (!suppressClick.current) return;
               suppressClick.current = false;
               event.preventDefault();
               event.stopPropagation();
             }}
-            className={`scrollbar-hide -mx-4 flex select-none items-start px-4 pb-3 pt-0 sm:mx-0 sm:px-0 ${
-              rackSize.fits
-                ? 'justify-center overflow-x-visible'
-                : 'cursor-grab overflow-x-auto active:cursor-grabbing'
-            }`}
-            style={{ '--piece-h': `${rackSize.height}px` } as CSSProperties}
+            className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
           >
             {loading &&
-              Array.from({ length: 17 }).map((_, index) => (
-                <li
-                  key={`skeleton-${index}`}
-                  aria-hidden="true"
-                  className="shrink-0 animate-pulse rounded-[10px] bg-[#ded6c8]"
-                  style={{
-                    width: `calc(var(--piece-h) * 0.27)`,
-                    height: 'var(--piece-h)',
-                    marginInlineStart: index === 0 ? 0 : PIECE_GAP,
-                  }}
-                />
+              Array.from({ length: 8 }).map((_, index) => (
+                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[130px] w-[90px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
               ))}
 
             {!loading &&
-              items.map((item, index) => {
+              visibleItems.map((item) => {
                 const isActive = item.id === activeItem?.id;
-                const slotWidth = `calc(var(--piece-h) * ${item.aspect})`;
-
                 return (
                   <li
                     key={item.id}
                     data-piece={item.id}
-                    onPointerEnter={(event) => {
-                      if (event.pointerType !== 'touch') selectRackItem(item.id);
-                    }}
-                    className="rack-drop relative shrink-0"
-                    style={{
-                      width: slotWidth,
-                      height: 'var(--piece-h)',
-                      marginInlineStart: index === 0 ? 0 : PIECE_GAP,
-                      animationDelay: `${index * 65}ms`,
-                      zIndex: isActive ? 30 : 1,
-                    }}
+                    className={`rack-style-item h-[130px] w-[90px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
                   >
                     <button
                       type="button"
                       aria-pressed={isActive}
-                      aria-label={
-                        isActive
-                          ? `${item.name}، نمایش ست بالا`
-                          : `${item.name}، انتخاب برای نمایش ست بالا`
-                      }
+                      aria-label={isActive ? `${item.name}، محصول انتخاب‌شده` : `${item.name}، نمایش محصول`}
                       onFocus={() => selectRackItem(item.id)}
                       onClick={() => selectRackItem(item.id)}
-                      className="group/piece absolute inset-0 block cursor-pointer outline-none focus-visible:z-40 focus-visible:rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a3783a]"
+                      className={`group relative flex h-full w-full flex-col items-center justify-between rounded-xl px-1 pb-1 pt-1 outline-none transition-all focus-visible:ring-2 focus-visible:ring-[#a3783a] ${isActive ? 'bg-white/80 shadow-[0_4px_18px_-12px_rgba(54,43,27,0.45)] ring-1 ring-[#e3d7c3]' : 'hover:bg-white/55'}`}
                     >
-                      {/* soft glow of the garment's own colour */}
-                      <span
-                        aria-hidden="true"
-                        style={
-                          isActive
-                            ? {
-                                left: '50%',
-                                right: 'auto',
-                                width: rackSize.height * item.aspect,
-                                marginLeft: -(rackSize.height * item.aspect) / 2,
-                                transform: 'none',
-                              }
-                            : undefined
-                        }
-                        className={`pointer-events-none absolute -inset-x-6 -top-3 bottom-0 -z-10 rounded-[999px] bg-[radial-gradient(ellipse_at_50%_32%,rgba(255,250,238,0.98),rgba(255,240,212,0.4)_56%,transparent_74%)] blur-md transition-opacity duration-500 ${
-                          isActive ? 'opacity-100' : 'opacity-0'
-                        }`}
-                      />
-
-                      {/* The rail always stays a side-profile rack; selection updates the hero above. */}
-                      <motion.img
+                      <img
                         src={asset(item.image)}
                         alt=""
                         aria-hidden="true"
-                        initial={false}
-                        animate={{ opacity: 1 }}
-                        loading={index < 2 ? 'eager' : 'lazy'}
-                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        loading="lazy"
                         decoding="async"
                         draggable={false}
-                        style={
-                          {
-                            '--rack-sway-delay': `${(index % 7) * 0.55}s`,
-                            '--rack-sway-duration': `${6.4 + (index % 5) * 0.85}s`,
-                          } as CSSProperties
-                        }
-                        className={`rack-sway absolute inset-0 h-full w-full select-none object-contain object-top transition-[filter] duration-500 ${
-                          isActive
-                            ? 'brightness-[1.04] drop-shadow-[0_18px_20px_rgba(56,42,22,0.26)]'
-                            : 'drop-shadow-[0_16px_18px_rgba(56,42,22,0.2)]'
-                        }`}
+                        className={`h-[94px] w-[72px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
                       />
+                      <span className={`w-full truncate text-center text-[11px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                      {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
                     </button>
                   </li>
                 );
               })}
           </ul>
-
-          {/* edge fades keep the rail reading as a long rack */}
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 right-0 w-12 bg-[linear-gradient(270deg,#efeae1,rgba(239,234,225,0))] transition-opacity duration-300 ${
-              hasScrolled ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 left-0 w-12 bg-[linear-gradient(90deg,#efeae1,rgba(239,234,225,0))] transition-opacity duration-300 ${
-              canScrollMore && !rackSize.fits ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-
-          {/* the rail\'s meter: one quiet, symmetric line under the pieces */}
-          <div className="mx-auto mt-2.5 flex w-full max-w-3xl items-center gap-3 sm:mt-3">
-            <span
-              aria-hidden="true"
-              className="w-5 shrink-0 text-center text-[9.5px] font-bold tabular-nums text-[#a99c86]"
-            >
-              {new Intl.NumberFormat('fa-IR').format(1)}
-            </span>
-            <span
-              role="progressbar"
-              aria-label="جای قطعهٔ فعال روی رگال"
-              aria-valuemin={1}
-              aria-valuemax={Math.max(items.length, 1)}
-              aria-valuenow={Math.max(activeIndex, 0) + 1}
-              className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-[#dccfb6]"
-            >
-              <span
-                className="absolute inset-y-0 right-0 rounded-full bg-[linear-gradient(90deg,#c69a5b,#a3783a)] transition-[width] duration-500"
-                style={{
-                  width: `${
-                    items.length > 1
-                      ? Math.max(4, ((Math.max(activeIndex, 0) + 1) / items.length) * 100)
-                      : 100
-                  }%`,
-                }}
-              />
-            </span>
-            <span
-              aria-hidden="true"
-              className="w-5 shrink-0 text-center text-[9.5px] font-bold tabular-nums text-[#a99c86]"
-            >
-              {new Intl.NumberFormat('fa-IR').format(items.length)}
-            </span>
-          </div>
-
-          <p className="mx-auto mt-2 flex max-w-md items-center justify-center gap-2 text-center text-[11px] font-medium text-[#87785f]">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#b08440]" aria-hidden="true" />
-            <span className="hidden sm:inline">برای دیدن ست کامل، روی لباس بروید یا آن را انتخاب کنید</span>
-            <span className="sm:hidden">برای دیدن ست کامل، روی لباس بزنید</span>
-          </p>
-
-          {/* phones only: the line really does not fit, so it can be pushed */}
-          {!rackSize.fits && (
-            <div className="mt-3 flex items-center justify-center gap-3 sm:hidden">
-              <button
-                type="button"
-                onClick={() => nudgeTrack(1)}
-                aria-label="قطعه‌های قبلی"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d6c9ae] bg-[#fdfaf2]/85 text-[#6b5d45] active:scale-95"
-              >
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-              <span className="text-[9.5px] text-[#a99c86]">برای مرور، رگال را بکشید</span>
-              <button
-                type="button"
-                onClick={() => nudgeTrack(-1)}
-                aria-label="قطعه‌های بعدی"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d6c9ae] bg-[#fdfaf2]/85 text-[#6b5d45] active:scale-95"
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </section>
