@@ -325,8 +325,14 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
             className="relative mx-auto h-[232px] w-full max-w-[780px] outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] sm:h-[242px] [perspective:1400px]"
           >
             {/* One real brass tube with end brackets — the rack itself. */}
-            <div className="pointer-events-none absolute inset-x-[4%] top-[38px] z-30" aria-hidden="true">
-              <div className="deck-rail h-[6px] w-full rounded-full" />
+            <div className="pointer-events-none absolute inset-x-[4%] top-[36px] z-30" aria-hidden="true">
+              <div className="relative overflow-hidden rounded-full">
+                <div
+                  className="deck-rail h-[9px] w-full"
+                  style={{ backgroundImage: `url(${asset('/images/rack/rail-tube.png')})` }}
+                />
+                {activeItem && <span key={activeItem.id} className="deck-glint" />}
+              </div>
               <span className="deck-bracket absolute -top-2 right-0 h-4 w-1.5 rounded-full" />
               <span className="deck-bracket absolute -top-2 left-0 h-4 w-1.5 rounded-full" />
             </div>
@@ -360,10 +366,10 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                     animate={{
                       x: `calc(-50% + ${offset * 88}px)`,
                       y: '-50%',
-                      z: isActive ? 60 : -distance * 80,
-                      rotateY: isActive ? 0 : offset > 0 ? -38 : 38,
-                      scale: isActive ? 1.05 : 1 - Math.min(distance, DECK_WINDOW) * 0.07,
-                      opacity: 1 - distance * 0.16,
+                      z: isActive ? 50 : -distance * 40,
+                      rotateY: isActive ? 0 : offset > 0 ? -16 : 16,
+                      scale: isActive ? 1.05 : 1 - Math.min(distance, DECK_WINDOW) * 0.04,
+                      opacity: 1 - distance * 0.14,
                     }}
                     transition={
                       reduceMotion
@@ -371,7 +377,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
                         : { type: 'spring', stiffness: 130, damping: 20, mass: 0.9 }
                     }
                   >
-                    <span className={`block ${isActive ? '' : 'rack-swing'}`}>
+                    <span className={`block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
                       <img
                         src={asset(item.image)}
                         alt=""

@@ -452,20 +452,52 @@
   .title-line > * { animation: none !important; }
 }
 
-/* Brass tube rail: vertical metal shading with a specular highlight line. */
+/* Real photographed brass tube, tiled along the rail. */
 .deck-rail {
-  background:
-    linear-gradient(180deg, rgba(255, 250, 226, 0.95) 0%, rgba(255, 250, 226, 0) 34%),
-    linear-gradient(180deg, #e9cf8f 0%, #c8a355 38%, #8a6c33 62%, #5d4820 88%, #7a5f2b 100%);
+  background-repeat: repeat-x;
+  background-position: center;
+  background-size: auto 100%;
   box-shadow:
     0 2px 3px -1px rgba(46, 34, 19, 0.45),
     0 10px 18px -10px rgba(46, 34, 19, 0.5);
+}
+
+/* Specular glint travelling the tube each time the front piece changes. */
+.deck-glint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 76px;
+  background: linear-gradient(100deg, transparent, rgba(255, 252, 240, 0.95), transparent);
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  animation: railGlint 850ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes railGlint {
+  0% { left: -8%; opacity: 0; }
+  18% { opacity: 0.9; }
+  100% { left: 104%; opacity: 0; }
 }
 
 /* End brackets that carry the tube. */
 .deck-bracket {
   background: linear-gradient(180deg, #8a6c33, #5d4820);
   box-shadow: 0 4px 10px -6px rgba(46, 34, 19, 0.6);
+}
+
+/* The piece that just arrived settles like a hanger pushed along the tube. */
+.rack-settle {
+  transform-origin: 50% 4px;
+  animation: settleSwing 950ms cubic-bezier(0.34, 1.3, 0.44, 1) both;
+}
+
+@keyframes settleSwing {
+  0% { transform: rotate(4.2deg); }
+  30% { transform: rotate(-2.6deg); }
+  58% { transform: rotate(1.4deg); }
+  80% { transform: rotate(-0.6deg); }
+  100% { transform: rotate(0deg); }
 }
 
 /* Hanging pieces sway like cloth; the front piece stands still. */
@@ -484,7 +516,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rack-swing { animation: none !important; }
+  .rack-swing,
+  .rack-settle,
+  .deck-glint { animation: none !important; }
+  .deck-glint { opacity: 0; }
 }
 
 .deck-card {
