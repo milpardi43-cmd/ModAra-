@@ -452,17 +452,41 @@
   .title-line > * { animation: none !important; }
 }
 
-/* Brass rail of the 3D rack. */
+/* Brass tube rail: vertical metal shading with a specular highlight line. */
 .deck-rail {
-  background: linear-gradient(90deg, #6b5426, #d9b96a 22%, #f0dca4 50%, #d9b96a 78%, #6b5426);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 226, 0.95) 0%, rgba(255, 250, 226, 0) 34%),
+    linear-gradient(180deg, #e9cf8f 0%, #c8a355 38%, #8a6c33 62%, #5d4820 88%, #7a5f2b 100%);
   box-shadow:
-    0 1px 0 rgba(255, 246, 214, 0.7) inset,
-    0 6px 14px -8px rgba(46, 34, 19, 0.55);
+    0 2px 3px -1px rgba(46, 34, 19, 0.45),
+    0 10px 18px -10px rgba(46, 34, 19, 0.5);
 }
 
-.deck-bracket {
-  background: linear-gradient(180deg, #8a6c33, #5d4820);
-  box-shadow: 0 4px 10px -6px rgba(46, 34, 19, 0.6);
+/* Roll-rack stand: vertical posts, feet and their contact shadows. */
+.rack-post {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #6b5426, #d9b96a 30%, #f0dca4 50%, #b08c46 74%, #5d4820);
+  box-shadow: 2px 0 4px -2px rgba(46, 34, 19, 0.4);
+}
+
+.rack-foot {
+  background: linear-gradient(180deg, #d9b96a, #8a6c33 70%, #5d4820);
+  box-shadow: 0 3px 6px -3px rgba(46, 34, 19, 0.55);
+}
+
+.rack-floor-shadow {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(46, 34, 19, 0.32), rgba(46, 34, 19, 0) 72%);
+  filter: blur(4px);
+}
+
+/* Soft shadow the whole rack casts on the wall behind it. */
+.rack-wall-shadow {
+  position: absolute;
+  inset: 12% 6% 4%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(58% 52% at 50% 58%, rgba(58, 44, 23, 0.16), rgba(58, 44, 23, 0) 74%);
+  filter: blur(14px);
 }
 
 /* Hanging pieces sway like cloth; the front piece stands still. */
