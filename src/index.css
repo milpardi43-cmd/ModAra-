@@ -381,88 +381,15 @@
   }
 }
 
-/* Full-width classic fashion-photo slideshow behind the untouched hero content. */
-.hero-background-slider {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.hero-background-slide {
-  position: absolute;
-  inset: -3%;
-  background-position: center 52%;
-  background-size: cover;
-  background-repeat: no-repeat;
-  opacity: 0;
-  filter: saturate(0.76) blur(1.5px);
-  transform: scale(1.02);
-  transition: opacity 1.4s ease, transform 9s ease;
-}
-
-.hero-background-slide--active {
-  opacity: 0.74;
-  transform: scale(1.05);
-}
-
-.hero-background-veil {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgba(243, 239, 232, 0.48) 0%, rgba(243, 239, 232, 0.62) 48%, rgba(243, 239, 232, 0.84) 100%),
-    linear-gradient(0deg, rgba(243, 239, 232, 0.64) 0%, rgba(243, 239, 232, 0.24) 30%, rgba(243, 239, 232, 0.24) 72%, rgba(243, 239, 232, 0.58) 100%);
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-background-slide {
-    transition: none;
-    transform: none;
-  }
-}
-
 /* ------------------------------------------------------------------ *
- * Editorial product stage: portrait artwork is shown large and uncluttered.
+ * Clean, centered try-on portrait without a frame or photo-card treatment.
  * ------------------------------------------------------------------ */
 .rack-outfit-stage {
   position: relative;
   width: 100%;
-  max-width: 320px;
-  aspect-ratio: 4 / 5;
+  max-width: 380px;
+  aspect-ratio: 3 / 4;
   margin-inline: auto;
-  isolation: isolate;
-}
-
-.rack-outfit-stage::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 2% -12%;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at 50% 45%,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(244, 239, 230, 0.72) 42%,
-    rgba(243, 239, 232, 0) 76%
-  );
-  pointer-events: none;
-}
-
-.rack-outfit-stage::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 18%;
-  right: 18%;
-  bottom: 3%;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(75, 62, 44, 0.11);
-  filter: blur(11px);
-  pointer-events: none;
 }
 
 .rack-outfit-composite {
@@ -471,7 +398,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 9px 12px rgba(56, 42, 22, 0.12));
+  filter: none;
 }
 
 /* A slow, visible breeze in the style selector; the active choice stays still. */
