@@ -20,10 +20,14 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
   const [selectedCategory, setSelectedCategory] = useState('clothing');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isDeckHovered, setIsDeckHovered] = useState(false);
+  /** How many times the train is cloned so the rail fills any screen width. */
+  const [copies, setCopies] = useState(2);
   const trackRef = useRef<HTMLUListElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
   const suppressClick = useRef(false);
   const conveyorPaused = useRef(false);
+  const unitRef = useRef(0);
+  const navPauseUntil = useRef(0);
   const isDeckHoveredRef = useRef(false);
   const isAutoPlayingRef = useRef(true);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -74,7 +78,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
       setActiveId(first.id);
       window.requestAnimationFrame(() => {
         const track = trackRef.current;
-        if (track) track.scrollLeft = track.scrollWidth / 2;
+        if (track) track.scrollLeft = unitRef.current || track.scrollWidth / 2;
       });
     }
   }, [activeId, visibleItems]);
@@ -142,20 +146,64 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
     return () => window.clearInterval(timer);
   }, [activeId, isAutoPlaying, isDeckHovered, selectItem, visibleItems]);
 
+  /** Width of one full pass of the train, so the loop is seamless at any screen size. */
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || loading) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const count = visibleItems.length;
+      if (count < 2) return;
+      const pieces = track.querySelectorAll<HTMLElement>('li[data-piece]');
+      if (pieces.length < count + 1) return;
+      const unit = pieces[count].getBoundingClientRect().left - pieces[0].getBoundingClientRect().left;
+      if (unit <= 0) return;
+      unitRef.current = unit;
+      const needed = Math.max(2, Math.ceil(track.clientWidth / unit) + 1);
+      setCopies((current) => (current === needed ? current : needed));
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(measure);
+    };
+    schedule();
+    const observer = new ResizeObserver(schedule);
+    observer.observe(track);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [loading, visibleItems.length]);
+
   /** Seamless conveyor: the train of garments drifts left-to-right forever. */
   useEffect(() => {
     const track = trackRef.current;
     if (!track || reduceMotion || loading) return;
-    track.scrollLeft = track.scrollWidth / 2;
+    track.scrollLeft = unitRef.current || track.scrollWidth / 2;
     let raf = 0;
+    /* Our own accumulator: the drift never stalls on browsers that round scrollLeft. */
+    let offset = track.scrollLeft;
+    let lastSet = offset;
     const tick = () => {
-      if (!conveyorPaused.current && !drag.current.active && document.visibilityState === 'visible') {
-        const half = track.scrollWidth / 2;
-        if (half > track.clientWidth) {
-          track.scrollLeft -= 0.4;
-          if (track.scrollLeft <= 0) track.scrollLeft += half;
-          else if (track.scrollLeft >= half * 1.5) track.scrollLeft -= half;
-        }
+      const unit = unitRef.current;
+      const canRoll = unit > 0 && track.scrollWidth >= track.clientWidth + unit - 1;
+      const busy =
+        conveyorPaused.current ||
+        drag.current.active ||
+        document.visibilityState !== 'visible' ||
+        performance.now() < navPauseUntil.current;
+      if (!canRoll || busy) {
+        offset = track.scrollLeft;
+        lastSet = offset;
+      } else {
+        /* Someone swiped or dragged the rail: adopt their position instead of fighting it. */
+        if (Math.abs(track.scrollLeft - lastSet) > 0.75) offset = track.scrollLeft;
+        offset -= 0.4;
+        const max = track.scrollWidth - track.clientWidth;
+        if (offset <= 0) offset += unit;
+        else if (offset > max) offset -= unit;
+        track.scrollLeft = offset;
+        lastSet = track.scrollLeft;
       }
       raf = window.requestAnimationFrame(tick);
     };
@@ -165,12 +213,25 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
 
   /** Only explicit navigation (keys/buttons/category) recenters the window. */
   const centerActive = useCallback(() => {
+    navPauseUntil.current = performance.now() + 760;
     window.requestAnimationFrame(() => {
       const track = trackRef.current;
       if (!track || !activeId) return;
-      const piece = track.querySelector<HTMLElement>(`[data-piece="${activeId}"]`);
-      if (!piece) return;
-      piece.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+      const pieces = Array.from(track.querySelectorAll<HTMLElement>(`[data-piece="${activeId}"]`));
+      if (!pieces.length) return;
+      const rect = track.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      let nearest = pieces[0];
+      let nearestDistance = Infinity;
+      for (const piece of pieces) {
+        const box = piece.getBoundingClientRect();
+        const distance = Math.abs(box.left + box.width / 2 - center);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = piece;
+        }
+      }
+      nearest.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
     });
   }, [activeId, reduceMotion]);
 
@@ -325,7 +386,7 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* Invisible rail: the collection hangs side by side on an unseen line. */}
+        {/* Rail controls: title, live counter, category filters and transport. */}
         <div
           className="relative z-10 mx-auto mt-4 w-full max-w-[960px] border-t border-[#ded8ce]/80 pt-3.5 sm:mt-5 sm:pt-4"
           onMouseEnter={() => setIsDeckHovered(true)}
@@ -400,84 +461,95 @@ export default function DeckHero({ onNavigate }: DeckHeroProps) {
               />
             )}
           </div>
+        </div>
+      </div>
 
-          <div className="rack-window mx-auto w-full lg:ms-auto lg:me-0 lg:w-[340px]">
-            <ul
-              ref={trackRef}
-              dir="ltr"
-              aria-label="لباس‌های رگال"
-              onKeyDown={onDeckKeyDown}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              onPointerLeave={onPointerUp}
-              onClickCapture={(event) => {
-                if (!suppressClick.current) return;
-                suppressClick.current = false;
-                event.preventDefault();
-                event.stopPropagation();
-              }}
-              className="scrollbar-hide flex items-start gap-1 overflow-x-auto pb-2 pt-4 sm:gap-1.5"
-            >
-              {loading &&
-                Array.from({ length: 4 }).map((_, index) => (
-                  <li key={`skeleton-${index}`} aria-hidden="true" className="h-[176px] w-[104px] shrink-0 animate-pulse rounded-2xl bg-[#e9e5de]" />
-                ))}
+      {/* Full-bleed rail: the collection hangs across the whole width of the screen. */}
+      <div
+        className="relative z-10 mt-2 w-full sm:mt-3"
+        onMouseEnter={() => setIsDeckHovered(true)}
+        onMouseLeave={() => setIsDeckHovered(false)}
+        onFocusCapture={() => setIsDeckHovered(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDeckHovered(false);
+        }}
+      >
+        <div className="rack-window w-full">
+          <ul
+            ref={trackRef}
+            dir="ltr"
+            aria-label="لباس‌های رگال"
+            onKeyDown={onDeckKeyDown}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+            onPointerLeave={onPointerUp}
+            onClickCapture={(event) => {
+              if (!suppressClick.current) return;
+              suppressClick.current = false;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            className="scrollbar-hide flex items-start gap-1 overflow-x-auto pb-2 pt-4 sm:gap-1.5"
+          >
+            {loading &&
+              Array.from({ length: 12 }).map((_, index) => (
+                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[176px] w-[104px] shrink-0 animate-pulse rounded-2xl bg-[#e9e5de]" />
+              ))}
 
-              {!loading &&
-                [0, 1].map((copy) => (
-                  <Fragment key={copy}>
-                    {visibleItems.map((item) => {
-                      const isActive = item.id === activeItem?.id;
-                      return (
-                        <li key={`${copy}-${item.id}`} data-piece={item.id} className="shrink-0" aria-hidden={copy === 1}>
-                          <button
-                            type="button"
-                            tabIndex={copy === 1 ? -1 : undefined}
-                            aria-pressed={isActive}
-                            aria-label={isActive ? `${item.name}، انتخاب‌شده` : `${item.name}، نمایش استایل`}
-                            onFocus={copy === 0 ? () => selectItem(item.id) : undefined}
-                            onClick={(event) => selectItem(item.id, event.currentTarget)}
-                            className="group relative flex flex-col items-center outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] rounded-xl"
-                          >
-                            <span aria-hidden="true" className={`rack-glow ${isActive ? 'opacity-100' : 'opacity-0'}`} />
-                            <span className={`relative block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
-                              <img
-                                src={asset(item.image)}
-                                alt=""
-                                aria-hidden="true"
-                                loading="lazy"
-                                decoding="async"
-                                draggable={false}
-                                className={`block h-[150px] w-[104px] object-contain object-top transition-all duration-500 ${
-                                  isActive
-                                    ? '-translate-y-1.5 drop-shadow-[0_16px_26px_rgba(90,66,32,0.4)]'
-                                    : 'drop-shadow-[0_10px_16px_rgba(40,30,18,0.16)] group-hover:-translate-y-1 group-hover:drop-shadow-[0_14px_20px_rgba(40,30,18,0.26)]'
-                                }`}
-                              />
-                            </span>
-                            <span
+            {!loading &&
+              Array.from({ length: copies }, (_, copy) => (
+                <Fragment key={copy}>
+                  {visibleItems.map((item) => {
+                    const isActive = item.id === activeItem?.id;
+                    return (
+                      <li key={`${copy}-${item.id}`} data-piece={item.id} className="shrink-0" aria-hidden={copy > 0}>
+                        <button
+                          type="button"
+                          tabIndex={copy > 0 ? -1 : undefined}
+                          aria-pressed={isActive}
+                          aria-label={isActive ? `${item.name}، انتخاب‌شده` : `${item.name}، نمایش استایل`}
+                          onFocus={copy === 0 ? () => selectItem(item.id) : undefined}
+                          onClick={(event) => selectItem(item.id, event.currentTarget)}
+                          className="group relative flex flex-col items-center outline-none focus-visible:ring-2 focus-visible:ring-[#a3783a] rounded-xl"
+                        >
+                          <span aria-hidden="true" className={`rack-glow ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                          <span className={`relative block ${isActive ? 'rack-settle' : 'rack-swing'}`}>
+                            <img
+                              src={asset(item.image)}
+                              alt=""
                               aria-hidden="true"
-                              className={`rack-item-shadow ${isActive ? 'scale-x-110 opacity-70' : 'opacity-40'}`}
-                            />
-                            <span
-                              className={`mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] transition-colors ${
+                              loading="lazy"
+                              decoding="async"
+                              draggable={false}
+                              className={`block h-[150px] w-[104px] object-contain object-top transition-all duration-500 ${
                                 isActive
-                                  ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
-                                  : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58] group-hover:bg-white'
+                                  ? '-translate-y-1.5 drop-shadow-[0_16px_26px_rgba(90,66,32,0.4)]'
+                                  : 'drop-shadow-[0_10px_16px_rgba(40,30,18,0.16)] group-hover:-translate-y-1 group-hover:drop-shadow-[0_14px_20px_rgba(40,30,18,0.26)]'
                               }`}
-                            >
-                              <span className="block max-w-[92px] truncate">{item.name}</span>
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-            </ul>
-          </div>
+                            />
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={`rack-item-shadow ${isActive ? 'scale-x-110 opacity-70' : 'opacity-40'}`}
+                          />
+                          <span
+                            className={`mt-1 block w-fit max-w-full -rotate-2 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold shadow-[0_3px_8px_-4px_rgba(46,34,19,0.4)] transition-colors ${
+                              isActive
+                                ? 'border-[#9b7948] bg-[#241d14] text-[#f7f1e4]'
+                                : 'border-[#ded3ba] bg-[#fdfaf4]/90 text-[#7a6c58] group-hover:bg-white'
+                            }`}
+                          >
+                            <span className="block max-w-[92px] truncate">{item.name}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </Fragment>
+              ))}
+          </ul>
         </div>
       </div>
 
