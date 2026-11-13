@@ -315,6 +315,32 @@
   to { transform: translateX(130%); }
 }
 
+.deck-card {
+  width: 112px;
+  height: 150px;
+  border-radius: 1rem;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .deck-card { width: 122px; height: 162px; }
+}
+
+.deck-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid #e6ddc9;
+  box-shadow: 0 14px 34px -22px rgba(46, 34, 19, 0.5);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.deck-face--back {
+  transform: rotateY(180deg);
+}
+
 /* Slow warm aurora drifting behind the whole hero band. */
 .hero-aurora {
   position: absolute;

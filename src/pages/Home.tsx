@@ -11,7 +11,8 @@ import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
 import BrandSignature from '../components/BrandSignature';
 import HeroModeSwitch from '../components/HeroModeSwitch';
-import type { HeroMode } from '../lib/heroModes';
+import { isHeroMode, type HeroMode } from '../lib/heroModes';
+import DeckHero from '../components/DeckHero';
 import RackHero from '../components/RackHero';
 import ScrollHero from '../components/ScrollHero';
 import PromoSections from '../components/home/PromoSections';
@@ -81,7 +82,8 @@ export default function Home({ onNavigate }: HomeProps) {
   const categoryRequestRef = useRef(0);
   const [heroMode, setHeroMode] = useState<HeroMode>(() => {
     try {
-      return window.localStorage.getItem('modara-hero-mode') === 'scroll' ? 'scroll' : 'cinematic';
+      const stored = window.localStorage.getItem('modara-hero-mode');
+      return isHeroMode(stored) ? stored : 'cinematic';
     } catch {
       return 'cinematic';
     }
@@ -229,7 +231,13 @@ export default function Home({ onNavigate }: HomeProps) {
     <div>
       {/* Hero experience: switchable models, remembered per visitor. */}
       <HeroModeSwitch mode={heroMode} onChange={changeHeroMode} />
-      {heroMode === 'scroll' ? <ScrollHero onNavigate={onNavigate} /> : <RackHero onNavigate={onNavigate} />}
+      {heroMode === 'scroll' ? (
+        <ScrollHero onNavigate={onNavigate} />
+      ) : heroMode === 'deck' ? (
+        <DeckHero onNavigate={onNavigate} />
+      ) : (
+        <RackHero onNavigate={onNavigate} />
+      )}
 
       {/* Features bar */}
       <section className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6 lg:px-8">
