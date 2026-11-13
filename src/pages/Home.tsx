@@ -10,7 +10,10 @@ import {
 import { imageSrcSet, optimizedAsset } from '../lib/format';
 import ProductCard from '../components/ProductCard';
 import BrandSignature from '../components/BrandSignature';
+import HeroModeSwitch from '../components/HeroModeSwitch';
+import type { HeroMode } from '../lib/heroModes';
 import RackHero from '../components/RackHero';
+import ScrollHero from '../components/ScrollHero';
 import PromoSections from '../components/home/PromoSections';
 import StyleEditorial from '../components/home/StyleEditorial';
 import DeferredMount from '../components/DeferredMount';
@@ -76,6 +79,23 @@ export default function Home({ onNavigate }: HomeProps) {
   const [categoryLoading, setCategoryLoading] = useState(true);
   const categorySectionRef = useRef<HTMLDivElement>(null);
   const categoryRequestRef = useRef(0);
+  const [heroMode, setHeroMode] = useState<HeroMode>(() => {
+    try {
+      return window.localStorage.getItem('modara-hero-mode') === 'scroll' ? 'scroll' : 'cinematic';
+    } catch {
+      return 'cinematic';
+    }
+  });
+
+  const changeHeroMode = useCallback((mode: HeroMode) => {
+    setHeroMode(mode);
+    try {
+      window.localStorage.setItem('modara-hero-mode', mode);
+    } catch {
+      /* private browsing: keep the choice in memory only */
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
   const featuredSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -207,8 +227,9 @@ export default function Home({ onNavigate }: HomeProps) {
 
   return (
     <div>
-      {/* Rack hero: the whole catalogue, edge-on, with a full stage on hover */}
-      <RackHero onNavigate={onNavigate} />
+      {/* Hero experience: switchable models, remembered per visitor. */}
+      <HeroModeSwitch mode={heroMode} onChange={changeHeroMode} />
+      {heroMode === 'scroll' ? <ScrollHero onNavigate={onNavigate} /> : <RackHero onNavigate={onNavigate} />}
 
       {/* Features bar */}
       <section className="relative z-20 mx-auto mt-10 max-w-7xl px-4 sm:mt-14 sm:px-6 lg:px-8">
