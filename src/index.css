@@ -241,6 +241,25 @@
   margin-inline: auto;
   /* The model stands on the band's baseline instead of floating centered. */
   align-self: end;
+  /* Smooth settle for the pointer-driven cinematic tilt. */
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Warm breathing spotlight pool behind the mannequin. */
+.rack-spotlight {
+  position: absolute;
+  inset: -14% -20% -2%;
+  z-index: 0;
+  background: radial-gradient(58% 46% at 50% 64%, rgba(255, 236, 190, 0.55), rgba(255, 236, 190, 0) 72%);
+  filter: blur(6px);
+  animation: spotlightBreathe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes spotlightBreathe {
+  0%, 100% { opacity: 0.72; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 .rack-outfit-composite {
@@ -251,6 +270,32 @@
   object-fit: contain;
   object-position: bottom center;
   filter: none;
+  /* Each new look settles like a cut in film: slight push-in, then still. */
+  animation: lookReveal 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lookReveal {
+  from { transform: scale(1.05) translateY(8px); opacity: 0.35; filter: saturate(0.9) brightness(1.04); }
+  60% { opacity: 1; }
+  to { transform: scale(1) translateY(0); opacity: 1; filter: none; }
+}
+
+/* One soft light sweep across the stage per look — the projector feel. */
+.rack-outfit-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 42%, rgba(255, 248, 226, 0.5) 50%, transparent 58%);
+  mix-blend-mode: soft-light;
+  transform: translateX(-130%);
+  animation: lookSheen 1300ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lookSheen {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(130%); }
 }
 
 /* A barely-there breeze in the style selector; the active choice stays still. */
@@ -280,6 +325,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rack-style-item { animation: none !important; }
+  .rack-spotlight { animation: none !important; }
+  .rack-outfit-composite { animation: none !important; }
+  .rack-outfit-stage::after { animation: none !important; opacity: 0; }
 }
 
 /* Site-wide editorial text treatment: a soft ink reveal and a traced gold rule. */

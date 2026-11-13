@@ -203,12 +203,54 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     [reduceMotion],
   );
 
-  const selectRackItem = useCallback((id: string) => {
+  /** The cinematic beat: the chosen garment lifts off the rack rail and
+   *  flies onto the mannequin while the new look settles in beneath it. */
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [flight, setFlight] = useState<null | {
+    src: string;
+    key: number;
+    from: { top: number; left: number; width: number; height: number };
+    to: { top: number; left: number; width: number; height: number };
+  }>(null);
+  const finePointer = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches,
+    [],
+  );
+
+  const startFlight = useCallback(
+    (item: RackItem, source?: HTMLElement | null) => {
+      if (reduceMotion) return;
+      const stage = stageRef.current;
+      const fromEl =
+        source?.querySelector('img') ??
+        trackRef.current?.querySelector<HTMLElement>(`[data-piece="${item.id}"] img`);
+      if (!stage || !fromEl) return;
+      const from = fromEl.getBoundingClientRect();
+      const to = stage.getBoundingClientRect();
+      setFlight({
+        src: asset(item.image),
+        key: Date.now(),
+        from: { top: from.top, left: from.left, width: from.width, height: from.height },
+        to: {
+          top: to.top + to.height * 0.16,
+          left: to.left + to.width * 0.22,
+          width: to.width * 0.56,
+          height: to.height * 0.46,
+        },
+      });
+    },
+    [reduceMotion],
+  );
+
+  const selectRackItem = useCallback((id: string, source?: HTMLElement | null) => {
     const selected = items.find((item) => item.id === id);
-    if (selected) warmOutfitPreview(selected);
+    if (selected) {
+      warmOutfitPreview(selected);
+      startFlight(selected, source);
+    }
     setActiveId(id);
     window.requestAnimationFrame(() => revealPiece(id));
-  }, [items, revealPiece]);
+  }, [items, revealPiece, startFlight]);
 
   useEffect(() => {
     if (!isAutoPlaying || isSelectorHovered || visibleItems.length < 2) return;
@@ -302,8 +344,22 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
                 className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)_minmax(0,1fr)] lg:items-center"
                 aria-live="polite"
+                onPointerMove={(event) => {
+                  if (!finePointer || reduceMotion) return;
+                  const stage = stageRef.current;
+                  if (!stage) return;
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = (event.clientX - rect.left) / rect.width - 0.5;
+                  const y = (event.clientY - rect.top) / rect.height - 0.5;
+                  stage.style.transform = `perspective(900px) rotateY(${(x * 3).toFixed(2)}deg) rotateX(${(-y * 2.5).toFixed(2)}deg)`;
+                }}
+                onPointerLeave={() => {
+                  const stage = stageRef.current;
+                  if (stage) stage.style.transform = '';
+                }}
               >
-                <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
+                <div ref={stageRef} className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
+                  <span className="rack-spotlight" aria-hidden="true" />
                   <div
                     role="img"
                     aria-label={`${activeItem.product.name}، نمای کامل ست`}
@@ -465,6 +521,19 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             </div>
           </div>
 
+          {/* Autoplay countdown hairline: grows right-to-left with the 6s cycle. */}
+          <div className="relative mb-2 h-px overflow-hidden rounded-full bg-[#e6ddc9]/80" aria-hidden="true">
+            {isAutoPlaying && !isSelectorHovered && visibleItems.length > 1 && !reduceMotion && (
+              <motion.span
+                key={`${activeId}-${selectedCategory}`}
+                className="absolute inset-y-0 right-0 bg-gradient-to-l from-[#9b7948] to-[#d3ab63]"
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 6, ease: 'linear' }}
+              />
+            )}
+          </div>
+
           <ul
             ref={trackRef}
             aria-label={`انتخاب محصول از دستهٔ ${RACK_FILTERS.find((filter) => filter.id === selectedCategory)?.label ?? 'لباس'}`}
@@ -500,8 +569,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={isActive ? `${item.name}، محصول انتخاب‌شده` : `${item.name}، نمایش محصول`}
-                      onFocus={() => selectRackItem(item.id)}
-                      onClick={() => selectRackItem(item.id)}
+                      onFocus={(event) => selectRackItem(item.id, event.currentTarget)}
+                      onClick={(event) => selectRackItem(item.id, event.currentTarget)}
                       className={`group relative flex h-full w-full flex-col items-center justify-between rounded-xl px-1 pb-1 pt-1 outline-none transition-all focus-visible:ring-2 focus-visible:ring-[#a3783a] ${isActive ? 'bg-white/80 shadow-[0_4px_18px_-12px_rgba(54,43,27,0.45)] ring-1 ring-[#e3d7c3]' : 'hover:bg-white/55'}`}
                     >
                       <img
@@ -522,6 +591,38 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           </ul>
         </div>
       </div>
+
+      {/* The garment in flight: rack thumbnail silhouette -> mannequin. */}
+      {flight && (
+        <motion.img
+          key={flight.key}
+          src={flight.src}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="pointer-events-none fixed z-40 object-contain drop-shadow-[0_18px_30px_rgba(36,29,20,0.35)]"
+          initial={{
+            top: flight.from.top,
+            left: flight.from.left,
+            width: flight.from.width,
+            height: flight.from.height,
+            opacity: 0.95,
+            rotate: -7,
+            filter: 'blur(0px)',
+          }}
+          animate={{
+            top: flight.to.top,
+            left: flight.to.left,
+            width: flight.to.width,
+            height: flight.to.height,
+            opacity: 0,
+            rotate: 9,
+            filter: 'blur(3px)',
+          }}
+          transition={{ duration: 0.7, ease: EASE }}
+          onAnimationComplete={() => setFlight(null)}
+        />
+      )}
     </section>
   );
 }
