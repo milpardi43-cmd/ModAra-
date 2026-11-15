@@ -494,11 +494,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
         </div>
 
         {/* Compact editorial selector: the real garment profiles remain the navigation.
-            The gap above it is capped by the artwork itself — the model's feet end ~15px
-            above the bottom of .rack-outfit-stage — so this block hugs that slack instead
-            of re-spaces it. Keep the total above the rule under ~24px. */}
+            The artwork decides this gap, not us: after floor-anchoring the composite the
+            shoes end 15-22px above the bottom of .rack-outfit-stage for every one of the
+            17 looks, and the canvas below them is empty. So at lg the block is lifted 4px
+            into that empty band (never onto the art) to keep a single 11-18px reading
+            distance to the rule; below lg it stays on a positive margin, where the stage is
+            narrower and the slack shrinks with it. z-20 keeps the hairline above the image
+            layer instead of letting the figure paint over it. */}
         <div
-          className="relative mx-auto mt-2.5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3"
+          className="relative z-20 mx-auto mt-1 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3 lg:-mt-1"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
