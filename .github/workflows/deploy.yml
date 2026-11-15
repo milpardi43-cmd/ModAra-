@@ -23,15 +23,39 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
+      # Pages serves a project site at https://<owner>.github.io/<repo>/, while a
+      # custom domain (recorded in CNAME) serves it from the root of its host.
+      # Both the asset prefix Vite bakes into the bundle and the absolute URLs in
+      # the social/meta tags have to agree with that, or the deploy is a blank page.
+      - name: Resolve the deployed base path
+        id: site
+        run: |
+          if [ -f public/CNAME ]; then
+            host="$(tr -d '[:space:]' < public/CNAME)"
+            printf 'base=/\norigin=https://%s\n' "$host" >> "$GITHUB_OUTPUT"
+          elif [ -f CNAME ]; then
+            host="$(tr -d '[:space:]' < CNAME)"
+            printf 'base=/\norigin=https://%s\n' "$host" >> "$GITHUB_OUTPUT"
+          else
+            name='${{ github.event.repository.name }}'
+            owner='${{ github.repository_owner }}'
+            printf 'base=/%s/\norigin=https://%s.github.io/%s\n' "$name" "$owner" "$name" >> "$GITHUB_OUTPUT"
+          fi
       - name: Install dependencies
         run: npm ci
       - name: Build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: BASE_PATH=/Modara/ npm run build
+          BASE_PATH: ${{ steps.site.outputs.base }}
+          SITE_URL: ${{ steps.site.outputs.origin }}
+        run: npm run build
+      - name: Check the deployed asset base
+        env:
+          BASE_PATH: ${{ steps.site.outputs.base }}
+        run: node scripts/check-base-path.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -40,6 +64,12 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      - name: Note the live URL in the run summary
+        run: |
+          {
+            echo ''
+            echo 'Published at **${{ steps.site.outputs.origin }}/** (asset base `${{ steps.site.outputs.base }}`).'
+          } >> "$GITHUB_STEP_SUMMARY"
   deploy:
     needs: build
     runs-on: ubuntu-latest

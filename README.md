@@ -1,8 +1,10 @@
 # مُدارا | ModAra
 
-[![CI](https://github.com/milanorezaee2/Modara/actions/workflows/ci.yml/badge.svg)](https://github.com/milanorezaee2/Modara/actions/workflows/ci.yml)
+[![CI](https://github.com/milpardi43-cmd/ModAra-/actions/workflows/ci.yml/badge.svg)](https://github.com/milpardi43-cmd/ModAra-/actions/workflows/ci.yml)
 
 فروشگاه آنلاین مد و فشن (React + TypeScript + Vite + Tailwind).
+
+نسخهٔ آنلاین: <https://milpardi43-cmd.github.io/ModAra-/>
 
 ## اجرای سریع (بدون هیچ تنظیماتی)
 
@@ -68,13 +70,22 @@ npm run images:palette   # می‌سازد src/lib/productPalette.ts (رنگ و 
 
 ## انتشار روی GitHub Pages
 
-ورک‌فلوی `.github/workflows/deploy.yml` با هر پوش روی `main` پروژه را build و منتشر می‌کند.
-چون Pages این ریپو را زیر مسیر `/Modara/` سرو می‌کند، `vite.config.ts` هنگام build مقدار
-`base` را روی `/Modara/` می‌گذارد و همهٔ تصاویر با تابع `asset()` (در `src/lib/format.ts`)
-نسبت به همان مسیر ساخته می‌شوند. برای انتشار روی دامنهٔ اختصاصی یا ریشهٔ سایت:
+ورک‌فلوی `.github/workflows/deploy.yml` با هر merge روی `main` (و همچنین اجرای دستی) پروژه را
+build و منتشر می‌کند. Pages یک ریپو را زیر مسیر `/<نام-ریپو>/` سرو می‌کند، پس ورک‌فلو همان
+مسیر را به‌صورت خودکار از `github.event.repository.name` می‌خواند و به‌عنوان `BASE_PATH` به build
+می‌دهد (اگر فایلی به نام `CNAME` داشته باشید، سایت از ریشهٔ دامنه سرو می‌شود و base برابر `/`
+می‌گیرد). همهٔ تصاویر هم با تابع `asset()` (در `src/lib/format.ts`) نسبت به همان base ساخته
+می‌شوند، و `SITE_URL` برای تگ‌های canonical و Open Graph فرستاده می‌شود.
+
+بلافاصله بعد از build، اسکریپت `scripts/check-base-path.mjs` خروجی `dist/index.html` را بررسی
+می‌کند تا هیچ آدرسی بدون پیشوندِ مسیر انتشار (یا با پیشوند اشتباه) منتشر نشود؛ این همان
+چیزی است که از صفحهٔ سفید روی Pages جلوگیری می‌کند.
+
+برای ساخت دستی نسخهٔ Pages یا نسخهٔ ریشه:
 
 ```bash
-BASE_PATH=/ npm run build
+BASE_PATH=/ModAra-/ npm run build && BASE_PATH=/ModAra-/ node scripts/check-base-path.mjs
+BASE_PATH=/ npm run build           # دامنهٔ اختصاصی / Netlify
 ```
 
 ## انتشار روی Netlify
