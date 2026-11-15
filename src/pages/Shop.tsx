@@ -5,7 +5,7 @@ import { PRODUCT_CARD_COLUMNS, getCategories } from '../lib/catalog';
 import ProductCard from '../components/ProductCard';
 import BrandSignature from '../components/BrandSignature';
 import Breadcrumbs from '../components/Breadcrumbs';
-import { formatPrice } from '../lib/format';
+import { asset, formatPrice } from '../lib/format';
 
 type ShopProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -128,7 +128,7 @@ export default function Shop({ onNavigate, initialCategory }: ShopProps) {
     <div className="min-h-screen bg-dark-50 pt-20" dir="rtl">
       <section className="group relative isolate overflow-hidden bg-[#211a15]" aria-label="معرفی فروشگاه مُدارا">
         <img
-          src="/images/hero-atelier/look-noir.jpg"
+          src={asset('/images/hero-atelier/look-noir.jpg')}
           alt="استایل مشکی از مجموعهٔ مُدارا"
           width={1360}
           height={768}

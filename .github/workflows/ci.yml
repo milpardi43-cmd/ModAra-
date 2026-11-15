@@ -44,6 +44,13 @@ jobs:
       - name: Build
         run: npm run build:netlify
 
+      # A literal src="/images/…" never gets the Pages base prefix, so it passes at
+      # "/" and silently 404s on the deployed site. Catch it on the PR, not on Pages.
+      - name: Check asset base
+        env:
+          BASE_PATH: /
+        run: node scripts/check-base-path.mjs
+
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
