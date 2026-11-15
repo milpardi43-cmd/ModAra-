@@ -334,8 +334,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       aria-roledescription="carousel"
       className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-[4.75rem] sm:pb-6 sm:pt-20 lg:pt-7"
     >
-      {/* One stable h1 for the home page. The product name below it rotates with the
-          rack, which makes a poor headline for assistive tech and for crawlers. */}
+      {/* One stable h1 for the home page. The product name inside each slide is an h2:
+          it rotates with the rack, and a headline that changes every six seconds is a
+          poor landmark for assistive tech and a poor one for crawlers. */}
       <h1 className="sr-only">استایل‌های مُدارا</h1>
       <p role="status" className="sr-only">
         {announcement}
@@ -452,9 +453,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </div>
                   )}
 
-                  <h1 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
+                  <h2 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
                     {activeItem.product.name}
-                  </h1>
+                  </h2>
                   {activeItem.product.description && (
                     <p className="mt-2 max-w-[30rem] text-xs leading-[1.75] text-[#6b6152] sm:text-[13px]">
                       {activeItem.product.description}
