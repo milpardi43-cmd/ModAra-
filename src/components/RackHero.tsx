@@ -592,61 +592,87 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             })}
           </div>
 
-          <ul
-            ref={trackRef}
-            aria-label={`انتخاب محصول از دستهٔ ${RACK_FILTERS.find((filter) => filter.id === selectedCategory)?.label ?? 'لباس'}`}
-            onKeyDown={onRackKeyDown}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            onPointerLeave={onPointerUp}
-            onClickCapture={(event) => {
-              if (!suppressClick.current) return;
-              suppressClick.current = false;
-              event.preventDefault();
-              event.stopPropagation();
-            }}
-            className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto overscroll-x-contain px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
-          >
-            {loading &&
-              Array.from({ length: 8 }).map((_, index) => (
-                <li key={`skeleton-${index}`} aria-hidden="true" className="h-[130px] w-[90px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]" />
-              ))}
+          {/* The rail is a sibling of the scroll area, never inside it: a bar is
+              bolted to the wall and the garments travel along it. The host exists so
+              .rack-rail has an edge to measure from that does not scroll or reflow. */}
+          <div className="relative">
+            <div className="rack-rail" aria-hidden="true">
+              <span className="rack-rail__mount rack-rail__mount--start" />
+              <span className="rack-rail__mount rack-rail__mount--end" />
+            </div>
 
-            {!loading &&
-              visibleItems.map((item) => {
-                const isActive = item.id === activeItem?.id;
-                return (
+            <ul
+              ref={trackRef}
+              aria-label={`انتخاب محصول از دستهٔ ${RACK_FILTERS.find((filter) => filter.id === selectedCategory)?.label ?? 'لباس'}`}
+              onKeyDown={onRackKeyDown}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              onPointerLeave={onPointerUp}
+              onClickCapture={(event) => {
+                if (!suppressClick.current) return;
+                suppressClick.current = false;
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto overscroll-x-contain px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
+            >
+              {loading &&
+                Array.from({ length: 8 }).map((_, index) => (
                   <li
-                    key={item.id}
-                    data-piece={item.id}
-                    className={`rack-style-item h-[130px] w-[90px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={isActive}
-                      aria-label={isActive ? `${item.name}، محصول انتخاب‌شده` : `${item.name}، نمایش محصول`}
-                      onFocus={() => selectRackItem(item.id, 'user')}
-                      onClick={() => selectRackItem(item.id, 'user')}
-                      className={`group relative flex h-full w-full flex-col items-center justify-between rounded-xl px-1 pb-1 pt-1 outline-none transition-all focus-visible:ring-2 focus-visible:ring-[#a3783a] ${isActive ? 'bg-white/80 shadow-[0_4px_18px_-12px_rgba(54,43,27,0.45)] ring-1 ring-[#e3d7c3]' : 'hover:bg-white/55'}`}
+                    key={`skeleton-${index}`}
+                    aria-hidden="true"
+                    className="relative h-[130px] w-[90px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]"
+                  />
+                ))}
+  
+              {!loading &&
+                visibleItems.map((item) => {
+                  const isActive = item.id === activeItem?.id;
+                  return (
+                    <li
+                      key={item.id}
+                      data-piece={item.id}
+                      className={`rack-style-item h-[130px] w-[90px] shrink-0 ${isActive ? 'rack-style-item--active' : ''}`}
                     >
-                      <img
-                        src={asset(item.image)}
-                        alt=""
-                        aria-hidden="true"
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                        className={`h-[94px] w-[72px] object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
-                      />
-                      <span className={`w-full truncate text-center text-[11px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
-                      {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
+                      <button
+                        type="button"
+                        aria-pressed={isActive}
+                        aria-label={isActive ? `${item.name}، محصول انتخاب‌شده` : `${item.name}، نمایش محصول`}
+                        onFocus={() => selectRackItem(item.id, 'user')}
+                        onClick={() => selectRackItem(item.id, 'user')}
+                        className="group relative flex h-full w-full flex-col items-center justify-between rounded-xl px-1 pb-1 pt-1 outline-none transition-all focus-visible:ring-2 focus-visible:ring-[#a3783a]"
+                      >
+                        {/* The paper starts 20px down — under the hook and the bar — so the rail
+                            passes behind the hangers instead of being washed out by the card. The
+                            negative z-index keeps it behind the artwork but inside the card box,
+                            which .rack-style-item already isolates with its own z-index. */}
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-x-0 top-5 bottom-0 z-[-1] rounded-xl transition-colors ${
+                            isActive
+                              ? 'bg-white/80 shadow-[0_4px_18px_-12px_rgba(54,43,27,0.45)] ring-1 ring-[#e3d7c3]'
+                              : 'bg-transparent group-hover:bg-white/55'
+                          }`}
+                        />
+                        <img
+                          src={asset(item.image)}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
+                          draggable={false}
+                          className={`h-[94px] w-[72px] origin-top object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
+                        />
+                        <span className={`w-full truncate text-center text-[11px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                        {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
