@@ -287,10 +287,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   return (
     <section
       aria-label="استایل‌های مُدارا"
-      className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-5 sm:pb-6 sm:pt-7"
+      className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-[4.75rem] sm:pb-6 sm:pt-20 lg:pt-7"
     >
       <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8">
-        {/* Centered, borderless try-on portrait; product facts stay sourced from the catalogue. */}
+        {/* Borderless try-on portrait on a deliberately off-centre axis. The stage's column is
+            fed by a wider start track than end track (1.38fr vs 0.62fr in RTL, so the model moves
+            ~106px left at lg and ~136px at the 1120px cap) — enough to keep the face clear of the
+            fixed, page-centred wordmark in Header.tsx. Below lg there is no horizontal room to
+            borrow, so the section clears the header with top padding instead. Product facts stay
+            sourced from the catalogue. */}
         <div className="mx-auto w-full max-w-[1120px] px-1 sm:px-0">
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
@@ -300,7 +305,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
                 transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
-                className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)_minmax(0,1fr)] lg:items-center"
+                className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1.38fr)_minmax(0,380px)_minmax(0,0.62fr)] lg:items-center"
                 aria-live="polite"
               >
                 <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
