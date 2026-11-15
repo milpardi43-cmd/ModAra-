@@ -398,6 +398,17 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* The try-on sheets carry 15-22px of empty canvas under the shoes. Left at the
+     default centred placement, the nine width-limited (mostly women's) looks also
+     inherit the vertical letterbox on top of it, so their feet land ~40px above the
+     floor while the height-limited men's art lands ~15px — the same rule line reads
+     twice as far from the shoes from one style to the next. Anchoring to the floor
+     makes that distance 15-22px for all 17 sheets, scales with the stage on small
+     screens, and costs nothing: the figure's own head clearance is untouched and the
+     placeholder and the live composite share this class, so the first paint cannot
+     shift. The band below the feet is empty (measured max alpha 4/255), which is
+     what lets the style selector below sit tight under the shoes. */
+  object-position: 50% 100%;
   filter: none;
 }
 
