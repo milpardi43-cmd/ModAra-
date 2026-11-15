@@ -412,9 +412,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           </AnimatePresence>
         </div>
 
-        {/* Compact editorial selector: the real garment profiles remain the navigation. */}
+        {/* Compact editorial selector: the real garment profiles remain the navigation.
+            The gap above it is capped by the artwork itself — the model's feet end ~15px
+            above the bottom of .rack-outfit-stage — so this block hugs that slack instead
+            of re-spaces it. Keep the total above the rule under ~24px. */}
         <div
-          className="mx-auto mt-5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-4 sm:mt-6 sm:pt-5"
+          className="mx-auto mt-2.5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
