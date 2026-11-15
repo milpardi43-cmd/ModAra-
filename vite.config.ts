@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { rackFirstLookUrl } from './src/lib/rackFirstLook';
 import { fileURLToPath } from 'node:url';
 
 const supabaseStub = fileURLToPath(new URL('./src/lib/supabaseJsStub.ts', import.meta.url));
@@ -45,6 +46,11 @@ export default defineConfig(({ command, mode }) => {
    * someone else's domain; local builds fall back to the dev server.
    */
   const buildBase = command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/';
+  /** Preloaded with the same base the bundle uses, so the hero's LCP image starts
+   *  downloading with the document instead of after the catalogue round-trip. */
+  // The query string matters: a preload for a URL the page then requests without
+  // (or with a different one) downloads the 74-108 kB artwork twice.
+  const firstLookPreload = `<link rel="preload" as="image" fetchpriority="high" href="${buildBase}${rackFirstLookUrl.replace(/^\//, '')}" />`;
   const siteUrl = (
     env.SITE_URL ||
     process.env.SITE_URL ||
@@ -60,7 +66,10 @@ export default defineConfig(({ command, mode }) => {
   const siteMeta = {
     name: 'modara-site-meta',
     transformIndexHtml(html: string) {
-      return html.replaceAll('__SITE_URL__', siteUrl);
+      const withMeta = html.replaceAll('__SITE_URL__', siteUrl);
+      return withMeta.includes('</title>')
+        ? withMeta.replace('</title>', `</title>\n    ${firstLookPreload}`)
+        : `${firstLookPreload}${withMeta}`;
     },
   };
 
@@ -68,7 +77,7 @@ export default defineConfig(({ command, mode }) => {
     // The dev server always runs at "/", while the production build defaults to
     // "/Modara/" because GitHub Pages serves this repository under that sub path.
     // Build with BASE_PATH=/ when deploying to a custom domain or root host.
-    base: command === 'build' ? process.env.BASE_PATH ?? '/Modara/' : '/',
+    base: buildBase,
     plugins: [backendBoundary, siteMeta, react()],
     optimizeDeps: {
       // Pre-bundling Lucide is essential in dev: otherwise the browser walks

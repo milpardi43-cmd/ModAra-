@@ -5,6 +5,7 @@ import { getAllProducts, getCategories } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
 import { asset, formatPrice } from '../lib/format';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
+import { RACK_OUTFIT_REVISION, rackFirstLookImage } from '../lib/rackFirstLook';
 
 type RackHeroProps = {
   onNavigate: (view: string, param?: string) => void;
@@ -73,10 +74,15 @@ function modelGenderFor(product: Product, categorySlug: string): 'women' | 'men'
 }
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
-// Netlify caches /images/* for 30 days; bump when the hero's try-on artwork changes.
-const RACK_OUTFIT_REVISION = 'smiling-pair-accessories-v3';
+/** How long a look holds the stage before the rack advances. */
+const RACK_ADVANCE_MS = 6000;
+const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
 const warmedOutfitSources = new Set<string>();
 
+/**
+ * The one place a try-on URL is built. index.html preloads the opening look through
+ * the same RACK_OUTFIT_REVISION, so the warm request and the preloaded one match.
+ */
 function rackOutfitAsset(path: string): string {
   const src = asset(path);
   return `${src}${src.includes('?') ? '&' : '?'}v=${RACK_OUTFIT_REVISION}`;
@@ -101,11 +107,27 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [selectedCategory, setSelectedCategory] = useState('clothing');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isSelectorHovered, setIsSelectorHovered] = useState(false);
+  const [isInView, setIsInView] = useState(true);
+  const [announcement, setAnnouncement] = useState('');
+  const sectionRef = useRef<HTMLElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
   const suppressClick = useRef(false);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('modara:hero-theme', { detail: 'light' }));
+  }, []);
+
+  /* Nobody is watching the stage once it scrolls away, and an off-screen tick
+     still pays for a 74-113 kB artwork. Pause the carousel on the way out. */
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry ? entry.isIntersecting : true),
+      { rootMargin: '120px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -203,29 +225,50 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     [reduceMotion],
   );
 
-  const selectRackItem = useCallback((id: string) => {
-    const selected = items.find((item) => item.id === id);
-    if (selected) warmOutfitPreview(selected);
-    setActiveId(id);
-    window.requestAnimationFrame(() => revealPiece(id));
-  }, [items, revealPiece]);
+  /**
+   * `origin: 'user'` is what gets announced. A live region that also fires on the
+   * interval would read the entire product card aloud twice a minute.
+   */
+  const selectRackItem = useCallback(
+    (id: string, origin: 'user' | 'auto' = 'auto') => {
+      const selected = items.find((item) => item.id === id);
+      if (selected) warmOutfitPreview(selected);
+      /* Both the 6s tick and the arrows land here, so fetch the neighbours now:
+         by the time they are wanted they are already in the cache. */
+      const at = visibleItems.findIndex((item) => item.id === id);
+      if (selected && at >= 0 && visibleItems.length > 2) {
+        for (const offset of [1, -1]) {
+          const neighbour = visibleItems[(at + offset + visibleItems.length) % visibleItems.length];
+          if (neighbour) warmOutfitPreview(neighbour);
+        }
+      }
+      if (origin === 'user' && selected) {
+        setAnnouncement(`${selected.name} — ${formatPrice(selected.product.price)}`);
+      }
+      setActiveId(id);
+      window.requestAnimationFrame(() => revealPiece(id));
+    },
+    [items, revealPiece, visibleItems],
+  );
+
+  const autoplayRunning = isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered;
 
   useEffect(() => {
-    if (!isAutoPlaying || isSelectorHovered || visibleItems.length < 2) return;
+    if (!autoplayRunning || visibleItems.length < 2) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       const current = visibleItems.findIndex((item) => item.id === activeId);
       const next = visibleItems[(current + 1 + visibleItems.length) % visibleItems.length];
       if (next) selectRackItem(next.id);
-    }, 6000);
+    }, RACK_ADVANCE_MS);
     return () => window.clearInterval(timer);
-  }, [activeId, isAutoPlaying, isSelectorHovered, selectRackItem, visibleItems]);
+  }, [activeId, autoplayRunning, selectRackItem, visibleItems]);
 
   const moveActive = (step: 1 | -1) => {
     if (visibleItems.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
     const next = visibleItems[(from + step + visibleItems.length) % visibleItems.length];
-    if (next) selectRackItem(next.id);
+    if (next) selectRackItem(next.id, 'user');
   };
 
   /** In RTL the next piece sits to the left, so the arrows and keys invert. */
@@ -286,9 +329,17 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
 
   return (
     <section
+      ref={sectionRef}
       aria-label="استایل‌های مُدارا"
+      aria-roledescription="carousel"
       className="relative isolate overflow-hidden bg-[#f3efe8] pb-5 pt-[4.75rem] sm:pb-6 sm:pt-20 lg:pt-7"
     >
+      {/* One stable h1 for the home page. The product name below it rotates with the
+          rack, which makes a poor headline for assistive tech and for crawlers. */}
+      <h1 className="sr-only">استایل‌های مُدارا</h1>
+      <p role="status" className="sr-only">
+        {announcement}
+      </p>
       <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 sm:px-8">
         {/* Borderless try-on portrait on a deliberately off-centre axis. The stage's column is
             fed by a wider start track than end track (1.38fr vs 0.62fr in RTL, so the model moves
@@ -297,6 +348,33 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             borrow, so the section clears the header with top padding instead. Product facts stay
             sourced from the catalogue. */}
         <div className="mx-auto w-full max-w-[1120px] px-1 sm:px-0">
+          {!activeItem && (
+            /* The opening look is decided by build-time data (src/lib/rackFirstLook.ts),
+               so the stage and its photo exist on the very first paint: the 380×507 box
+               never shifts the strip below it, and the download does not wait on the
+               catalogue request. Real data replaces this frame-for-frame. */
+            <div
+              className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.38fr)_minmax(0,380px)_minmax(0,0.62fr)] lg:items-center"
+              aria-hidden="true"
+            >
+              <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
+                <img
+                  src={rackOutfitAsset(rackFirstLookImage)}
+                  alt=""
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="rack-outfit-composite select-none"
+                />
+              </div>
+              <div className="w-full max-w-[440px] lg:col-start-1 lg:row-start-1">
+                <div className="mb-2.5 h-5 w-28 animate-pulse rounded-full bg-[#e6e0d6]" />
+                <div className="mb-2 h-6 w-3/4 animate-pulse rounded-lg bg-[#e6e0d6]" />
+                <div className="mb-2 h-3.5 w-full animate-pulse rounded-lg bg-[#e6e0d6]" />
+                <div className="h-3.5 w-2/3 animate-pulse rounded-lg bg-[#e6e0d6]" />
+              </div>
+            </div>
+          )}
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
@@ -306,7 +384,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
                 transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
                 className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1.38fr)_minmax(0,380px)_minmax(0,0.62fr)] lg:items-center"
-                aria-live="polite"
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`استایل ${faNumber((activeIndex >= 0 ? activeIndex : 0) + 1)} از ${faNumber(visibleItems.length)}`}
               >
                 <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
                   <div
@@ -417,7 +497,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             above the bottom of .rack-outfit-stage — so this block hugs that slack instead
             of re-spaces it. Keep the total above the rule under ~24px. */}
         <div
-          className="mx-auto mt-2.5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3"
+          className="relative mx-auto mt-2.5 w-full max-w-[1040px] border-t border-[#ded8ce]/80 pt-3"
           onMouseEnter={() => setIsSelectorHovered(true)}
           onMouseLeave={() => setIsSelectorHovered(false)}
           onFocusCapture={() => setIsSelectorHovered(true)}
@@ -427,6 +507,24 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             }
           }}
         >
+          {/* What the interval looks like: the rule fills over RACK_ADVANCE_MS and
+              freezes with hover, pause, reduced motion or scroll-away, so it can
+              never disagree with the stage. Costs no layout — it sits on the hairline. */}
+          {activeItem && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 -top-px block h-px overflow-hidden"
+            >
+              <span
+                key={activeItem.id}
+                className="hero-progress-fill block h-full w-full bg-gradient-to-l from-[#c9a15a] to-[#8a5a1d]"
+                style={{
+                  animationDuration: `${RACK_ADVANCE_MS}ms`,
+                  animationPlayState: autoplayRunning ? 'running' : 'paused',
+                }}
+              />
+            </span>
+          )}
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <p className="mb-1 text-[11px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
@@ -442,7 +540,13 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 onClick={() => setIsAutoPlaying((playing) => !playing)}
                 aria-pressed={isAutoPlaying}
                 aria-label={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
-                title={isAutoPlaying ? 'توقف نمایش خودکار' : 'شروع نمایش خودکار'}
+                title={
+                  reduceMotion
+                    ? 'نمایش خودکار به‌دلیل تنظیم کاهش حرکت سیستم متوقف است'
+                    : isAutoPlaying
+                      ? 'توقف نمایش خودکار'
+                      : 'شروع نمایش خودکار'
+                }
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
               >
                 {isAutoPlaying ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
@@ -498,7 +602,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               event.preventDefault();
               event.stopPropagation();
             }}
-            className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
+            className="scrollbar-hide -mx-4 flex items-stretch gap-2 overflow-x-auto overscroll-x-contain px-4 pb-1 pt-2 sm:mx-0 sm:justify-start sm:gap-2.5 sm:px-0"
           >
             {loading &&
               Array.from({ length: 8 }).map((_, index) => (
@@ -518,8 +622,8 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       type="button"
                       aria-pressed={isActive}
                       aria-label={isActive ? `${item.name}، محصول انتخاب‌شده` : `${item.name}، نمایش محصول`}
-                      onFocus={() => selectRackItem(item.id)}
-                      onClick={() => selectRackItem(item.id)}
+                      onFocus={() => selectRackItem(item.id, 'user')}
+                      onClick={() => selectRackItem(item.id, 'user')}
                       className={`group relative flex h-full w-full flex-col items-center justify-between rounded-xl px-1 pb-1 pt-1 outline-none transition-all focus-visible:ring-2 focus-visible:ring-[#a3783a] ${isActive ? 'bg-white/80 shadow-[0_4px_18px_-12px_rgba(54,43,27,0.45)] ring-1 ring-[#e3d7c3]' : 'hover:bg-white/55'}`}
                     >
                       <img
