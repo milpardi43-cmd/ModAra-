@@ -156,13 +156,20 @@ function AppContent() {
   useEffect(() => {
     const handleHashChange = () => setView(viewFromHash(window.location.hash) ?? { name: 'home' });
     const handleOpenCart = () => openCart();
+    /* The home hero keeps its "add to bag" action one click away from the drawer, but
+       it must not have to know that sign-in is a prerequisite: when nobody is signed in
+       it asks for the auth sheet the same way ProductDetail does, through an event, so
+       the rack does not need a new prop threaded through Home. */
+    const handleOpenAuth = () => openAuth();
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('modara:open-cart', handleOpenCart);
+    window.addEventListener('modara:open-auth', handleOpenAuth);
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('modara:open-cart', handleOpenCart);
+      window.removeEventListener('modara:open-auth', handleOpenAuth);
     };
-  }, [openCart]);
+  }, [openAuth, openCart]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });

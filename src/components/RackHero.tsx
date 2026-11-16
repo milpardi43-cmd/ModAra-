@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, Pause, Play, ShoppingBag, Star } from 'lucide-react';
 import { getAllProducts, getCategories } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
-import { asset, formatPrice } from '../lib/format';
+import { asset, formatPrice, imageSrcSet, optimizedAsset } from '../lib/format';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import { rackOutfitLayerInfo } from '../lib/rackOutfitLayerInfo';
+import { fabricToneName, glowTint } from '../lib/fabricTone';
+import { productPalette } from '../lib/productPalette';
 import { hangerFor, sideFor } from '../lib/hangerGarments';
 import { RACK_OUTFIT_REVISION, rackFirstLookImage } from '../lib/rackFirstLook';
 
@@ -19,24 +24,35 @@ type RackItem = {
   name: string;
   /** Catalog product image used in the horizontal selector. */
   image: string;
-  /** Full-body photo of the fixed gender model wearing this look. */
-  modelPreview: string;
+  /**
+   * Final URL the stage paints, and only this one. Clothes paint the try-on
+   * composite (cache-keyed by RACK_OUTFIT_REVISION so the preload in index.html
+   * matches); every other category paints its own catalogue photo through the
+   * generated WebP derivatives, because hero/model-pair was two files shared by
+   * 15 products — the same bare body for every watch, bag and pair of glasses.
+   */
+  stageSrc: string;
+  /** Density candidates for the catalogue photo; absent for the try-on art. */
+  stageSrcSet?: string;
   /** Exact catalog product art used if the model preview cannot load. */
   outfitPreview: string;
   /** Final image fallback if both the model and main product preview fail. */
   previewFallback: string;
-  /** Average fabric colour, used for the product swatch. */
+  /** Average fabric colour, used for the product swatch and the glow behind the rail. */
   hex: string;
+  /**
+   * The measured average colour of the cut-out, or null when no art was
+   * analysed. `hex` carries a studio fallback because a glow can be generic;
+   * a colour *name* in the copy cannot be, so the look sheet only speaks when
+   * this holds a real measurement.
+   */
+  fabricHex: string | null;
   /** width / height of the side-profile rack image. */
   aspect: number;
   /** Full catalogue record: what the product card reads out. */
   product: Product;
   /** Category slug used by the rack filters. */
   categorySlug: string;
-  /** The same fixed human model is reused for every matching product. */
-  modelGender: 'women' | 'men';
-  /** Exact catalog photo for an accessory selected separately from the model look. */
-  accessoryPreview?: string;
   /** Department label, e.g. «لباس». */
   categoryName: string;
 };
@@ -52,26 +68,6 @@ const RACK_FILTERS: RackFilter[] = [
 ];
 
 const SUPPORTED_RACK_CATEGORIES = new Set(RACK_FILTERS.map((filter) => filter.id));
-
-function modelGenderFor(product: Product, categorySlug: string): 'women' | 'men' {
-  const searchable = `${product.slug} ${product.name} ${product.description ?? ''}`.toLowerCase();
-  if (/(women|woman|womens|female|زنانه|خانم|دختر)/i.test(searchable)) return 'women';
-  if (/(men|man|mens|male|مردانه|آقایان|مرد)/i.test(searchable)) return 'men';
-
-  if (categorySlug === 'bag') {
-    return /(handbag|crossbody|mini-shoulder|bucket|tote|straw|clutch|quilted|beach)/i.test(product.slug)
-      ? 'women'
-      : 'men';
-  }
-  if (categorySlug === 'glasses') {
-    return /(cat-eye|oversized|round-tortoise|vintage)/i.test(product.slug) ? 'women' : 'men';
-  }
-  if (categorySlug === 'watch') return 'men';
-  if (categorySlug === 'accessory') {
-    return /(pearl|jewelry|earring|necklace|womens)/i.test(product.slug) ? 'women' : 'men';
-  }
-  return 'women';
-}
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 /** How long a look holds the stage before the rack advances. */
@@ -89,7 +85,7 @@ function rackOutfitAsset(path: string): string {
 }
 
 function warmOutfitPreview(item: RackItem) {
-  const src = rackOutfitAsset(item.modelPreview);
+  const src = item.stageSrc;
   if (warmedOutfitSources.has(src)) return;
   warmedOutfitSources.add(src);
   const image = new Image();
@@ -109,6 +105,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [isSelectorHovered, setIsSelectorHovered] = useState(false);
   const [isInView, setIsInView] = useState(true);
   const [announcement, setAnnouncement] = useState('');
+  /* The bag lives in a context, but the confirmation has to belong to one look:
+     the rack is still turning underneath, so the state is keyed by item id and an
+     unrelated slide can never inherit someone else's "added" tick. */
+  const [addedId, setAddedId] = useState<string | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const addedTimer = useRef<number | null>(null);
+  const { addToCart } = useCart();
+  const { user } = useAuth();
   const sectionRef = useRef<HTMLElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: false });
   const suppressClick = useRef(false);
@@ -145,7 +149,6 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             const garment = hangerFor(product.slug);
             if (categorySlug === 'clothing' && !garment) return null;
             const profile = sideFor(product.slug) ?? garment;
-            const modelGender = modelGenderFor(product, categorySlug);
             const productRackImage = `/images/rack/${categorySlug}/${product.slug}.webp`;
             const isClothing = categorySlug === 'clothing';
             const rackItem: RackItem = {
@@ -153,19 +156,24 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               slug: product.slug,
               name: product.name,
               image: profile?.image ?? productRackImage,
-              modelPreview: isClothing
-                ? `/images/hero/try-on/${product.slug}.webp`
-                : `/images/hero/model-pair/${modelGender}.webp`,
+              stageSrc: isClothing
+                ? rackOutfitAsset(`/images/hero/try-on/${product.slug}.webp`)
+                : optimizedAsset(product.image_url, 720),
+              stageSrcSet: isClothing ? undefined : imageSrcSet(product.image_url, [480, 720]),
               outfitPreview: isClothing
                 ? `/images/rack/outfits-cleaned/${product.slug}.webp`
                 : product.image_url,
               previewFallback: garment?.image ?? product.image_url,
-              hex: profile?.hex ?? '#b9a783',
+              // Clothing paints the colour of the cut-out itself (the transparent
+              // art, so the studio background cannot dilute it); everything else
+              // falls back to the measured average of its own catalogue photo —
+              // scripts/generate-product-palette.mjs covers all 94 of them, which is
+              // a fact about this product rather than the studio default.
+              hex: profile?.hex ?? productPalette[product.image_url]?.hex ?? '#b9a783',
+              fabricHex: profile?.hex ?? null,
               aspect: profile?.aspect ?? 0.75,
               product,
               categorySlug,
-              modelGender,
-              accessoryPreview: isClothing ? undefined : product.image_url,
               categoryName: category.name,
             };
             return rackItem;
@@ -249,6 +257,45 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       window.requestAnimationFrame(() => revealPiece(id));
     },
     [items, revealPiece, visibleItems],
+  );
+
+  useEffect(
+    () => () => {
+      if (addedTimer.current !== null) window.clearTimeout(addedTimer.current);
+    },
+    [],
+  );
+
+  /**
+   * The one click a fashion hero owes a shopper: pick a look, put it in the bag.
+   * Sign-in is a precondition of the cart context, and RackHero has no prop for
+   * the auth sheet, so it asks through the same window event App listens to for
+   * `modara:open-cart` — no new prop threading through Home, and the drawer and
+   * the modal keep one owner.
+   */
+  const addToBag = useCallback(
+    async (item: RackItem) => {
+      if (!user) {
+        setAnnouncement('برای افزودن به سبد وارد شوید');
+        window.dispatchEvent(new CustomEvent('modara:open-auth'));
+        return;
+      }
+      if (item.product.stock <= 0 || addingId) return;
+      setAddingId(item.id);
+      try {
+        await addToCart(item.product.id);
+        window.dispatchEvent(new CustomEvent('modara:open-cart'));
+        setAddedId(item.id);
+        setAnnouncement(`${item.name} به سبد اضافه شد`);
+        if (addedTimer.current !== null) window.clearTimeout(addedTimer.current);
+        addedTimer.current = window.setTimeout(() => setAddedId(null), 2000);
+      } catch {
+        setAnnouncement('افزودن به سبد انجام نشد؛ دوباره امتحان کنید');
+      } finally {
+        setAddingId(null);
+      }
+    },
+    [addingId, addToCart, user],
   );
 
   const autoplayRunning = isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered;
@@ -389,15 +436,23 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 aria-roledescription="slide"
                 aria-label={`استایل ${faNumber((activeIndex >= 0 ? activeIndex : 0) + 1)} از ${faNumber(visibleItems.length)}`}
               >
-                <div className="rack-outfit-stage lg:col-start-2 lg:row-start-1">
+                <div
+                  className={`rack-outfit-stage lg:col-start-2 lg:row-start-1 ${
+                    activeItem.categorySlug === 'clothing' ? '' : 'rack-outfit-photo'
+                  }`}
+                  style={{ ['--fabric-glow' as string]: glowTint(activeItem.hex) ?? activeItem.hex }}
+                >
+                  <span className="rack-fabric-glow" aria-hidden="true" />
                   <div
                     role="img"
                     aria-label={`${activeItem.product.name}، نمای کامل ست`}
-                    className="absolute inset-0 z-10"
+                    className="rack-outfit-plate absolute inset-0 z-10"
                   >
                     <img
                       key={activeItem.slug}
-                      src={rackOutfitAsset(activeItem.modelPreview)}
+                      src={activeItem.stageSrc}
+                      srcSet={activeItem.stageSrcSet}
+                      sizes="(min-width: 1024px) 380px, 88vw"
                       alt=""
                       aria-hidden="true"
                       loading="eager"
@@ -406,6 +461,10 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       draggable={false}
                       onError={(event) => {
                         const image = event.currentTarget;
+                        // Assigning .src does not clear .srcset — the browser would
+                        // keep picking a candidate off the set and never reach the
+                        // fallback URL. Drop the set on the first error.
+                        image.srcset = '';
                         if (!image.dataset.fallback) {
                           image.dataset.fallback = 'outfit';
                           image.src = rackOutfitAsset(activeItem.outfitPreview);
@@ -422,7 +481,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 </div>
                 <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
                   <div className="mb-2 flex flex-wrap items-center justify-start gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-[10px] font-bold text-[#7d6636]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-xs font-bold text-[#7d6636]">
                       <span
                         className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
                         style={{ backgroundColor: activeItem.hex }}
@@ -431,26 +490,22 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       {activeItem.categoryName}
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs font-bold tabular-nums text-[#7d6636]">
-                      <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#c49639]" aria-hidden="true" />
+                      <Star className="h-3.5 w-3.5 fill-[#e6b95e] text-[#9d7520]" aria-hidden="true" />
                       {new Intl.NumberFormat('fa-IR').format(Number(activeItem.product.rating.toFixed(1)))}
                     </span>
-                    <span className="text-[10px] font-semibold tabular-nums text-[#9a8f7c]">
+                    <span className="text-xs font-semibold tabular-nums text-[#6f6659]">
                       {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
                       {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
                     </span>
                   </div>
 
-                  {activeItem.accessoryPreview && (
-                    <div className="mb-3 inline-flex max-w-full items-center gap-3 rounded-xl border border-[#ded8ce] bg-white/55 p-2">
-                      <img
-                        src={asset(activeItem.accessoryPreview)}
-                        alt={activeItem.name}
-                        loading="eager"
-                        decoding="async"
-                        className="h-16 w-16 shrink-0 rounded-lg bg-white object-contain"
-                      />
-                      <span className="text-[11px] font-medium text-[#7a6c58]">عکس مستقل کالای انتخاب‌شده</span>
-                    </div>
+                  {activeItem.categorySlug !== 'clothing' && (
+                    /* The photo used to be a 64px thumbnail next to a bare body, and
+                       the caption read like a commit message. Now the catalogue image
+                       is the stage itself, so this line only says what you are seeing. */
+                    <p className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#ded8ce] bg-white/55 px-3 py-1 text-xs font-medium text-[#6b6152]">
+                      تصویر خودِ کالا از کاتالوگ مُدارا
+                    </p>
                   )}
 
                   <h2 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
@@ -471,23 +526,111 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center justify-start gap-x-4 gap-y-2 border-t border-[#cdbb99]/60 pt-3">
-                    <span className="whitespace-nowrap text-base font-extrabold text-[#3f3527] sm:text-lg">
+                  <div className="mt-4 border-t border-[#cdbb99]/60 pt-3">
+                    <span className="block whitespace-nowrap text-base font-extrabold text-[#3f3527] sm:text-lg">
                       {formatPrice(activeItem.product.price)}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate('product', activeItem.slug)}
-                      className="group inline-flex items-center justify-center gap-1.5 rounded-full bg-[#241d14] px-4 py-2.5 text-[11px] font-semibold text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0"
-                    >
-                      مشاهدهٔ محصول
-                      <ArrowLeft
-                        className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1"
-                        aria-hidden="true"
-                      />
-                    </button>
+                    {/* Two actions, one row, equal width: `min-w` on each keeps the
+                        "added" label from resizing the button, so the rack cannot
+                        jitter as the slide swaps or the state flips. Adding to the
+                        bag is the primary verb of a fashion hero, so it takes the
+                        filled pill and "مشاهدهٔ محصول" becomes the outline. */}
+                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => addToBag(activeItem)}
+                        disabled={addingId === activeItem.id || activeItem.product.stock <= 0}
+                        className={`inline-flex min-h-[2.75rem] min-w-[7.5rem] items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-xs font-semibold transition-all duration-300 ${
+                          activeItem.product.stock <= 0
+                            ? 'cursor-not-allowed bg-[#e7dfd2] text-[#6b6152]'
+                            : addedId === activeItem.id
+                              ? 'bg-[#45603a] text-[#f7f1e4]'
+                              : 'bg-[#241d14] text-[#f7f1e4] shadow-[0_8px_20px_-10px_rgba(36,29,20,0.8)] hover:-translate-y-0.5 hover:bg-[#3a2f20] active:translate-y-0'
+                        }`}
+                      >
+                        {activeItem.product.stock <= 0 ? (
+                          'این کالا فعلاً موجود نیست'
+                        ) : addedId === activeItem.id ? (
+                          <>
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                            به سبد اضافه شد
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+                            {addingId === activeItem.id ? 'در حال افزودن…' : 'افزودن به سبد'}
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('product', activeItem.slug)}
+                        className="group inline-flex min-h-[2.75rem] min-w-[7.5rem] items-center justify-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-4 py-2.5 text-xs font-semibold text-[#3f3527] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white active:translate-y-0"
+                      >
+                        مشاهدهٔ محصول
+                        <ArrowLeft
+                          className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* The sheet for the look on stage. This end track (172px at lg,
+                    222px at the 1120 cap) held nothing at all before, so it now
+                    carries the parts the shot is built from — every line read out of
+                    data the build already measures: the tone name is derived from the
+                    average pixel colour of the cut-out (src/lib/fabricTone.ts) and the
+                    trouser row comes from scripts/split-rack-outfits.py classifying
+                    the transparent layers of this exact composite. Nothing here is
+                    copy the catalogue cannot support. */}
+                <aside
+                  className="hidden w-full min-w-0 max-w-[220px] justify-self-end lg:col-start-3 lg:row-start-1 lg:block"
+                  aria-label="اجزای این نگاه"
+                >
+                  <p className="text-xs font-bold tracking-[0.16em] text-[#7d6636]">این نگاه</p>
+                  <dl className="mt-2 border-t border-[#ded8ce]/70 pt-1.5 text-xs leading-[1.6]">
+                    <div className="flex items-baseline justify-between gap-3 border-b border-[#ded8ce]/45 py-1.5">
+                      <dt className="shrink-0 text-[#6f6659]">{activeItem.categorySlug === 'clothing' ? 'بالاتنه' : 'کالا'}</dt>
+                      <dd className="min-w-0 truncate text-left font-semibold text-[#4a4234]">
+                        {activeItem.product.name}
+                      </dd>
+                    </div>
+                    {activeItem.fabricHex && (
+                      <div className="flex items-center justify-between gap-3 border-b border-[#ded8ce]/45 py-1.5">
+                        <dt className="shrink-0 text-[#6f6659]">رنگ پارچه</dt>
+                        <dd className="flex min-w-0 items-center gap-1.5 text-left font-semibold text-[#4a4234]">
+                          {fabricToneName(activeItem.fabricHex) ?? 'تک‌رنگ'}
+                          <span
+                            className="h-3 w-3 shrink-0 rounded-[4px] ring-1 ring-black/10"
+                            style={{ backgroundColor: activeItem.fabricHex }}
+                            aria-hidden="true"
+                          />
+                        </dd>
+                      </div>
+                    )}
+                    {activeItem.categorySlug === 'clothing' && (
+                      <div className="flex items-baseline justify-between gap-3 border-b border-[#ded8ce]/45 py-1.5">
+                        <dt className="shrink-0 text-[#6f6659]">شلوار</dt>
+                        <dd className="text-left font-semibold text-[#4a4234]">
+                          {rackOutfitLayerInfo[activeItem.slug]?.hasTrousers ? 'هم‌رنگ، در همین نما' : 'ندارد؛ نگاه یک‌تکه'}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('shop', activeItem.categorySlug)}
+                    className="group mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#4a4234] underline decoration-[#cdbb99] decoration-1 underline-offset-4 transition-colors hover:text-[#7d6636] hover:decoration-[#7d6636]"
+                  >
+                    دیدن همهٔ {activeItem.categoryName}‌ها
+                    <ArrowLeft
+                      className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </aside>
               </motion.div>
             )}
           </AnimatePresence>
@@ -532,12 +675,12 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           )}
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
-              <p className="mb-1 text-[11px] font-bold tracking-[0.14em] text-[#9a835f]">MODARA · LOOKBOOK</p>
+              <p className="mb-1 text-xs font-bold tracking-[0.14em] text-[#7d6636]">MODARA · LOOKBOOK</p>
               <h2 className="text-lg font-bold text-[#342d24] sm:text-xl">انتخاب استایل</h2>
-              <p className="mt-1 text-xs text-[#8b8275] sm:text-[13px]">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید</p>
+              <p className="mt-1 text-xs text-[#6b6152] sm:text-[13px]">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] tabular-nums text-[#8b8275]">
+              <span className="text-xs tabular-nums text-[#6f6659]">
                 {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} / {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
               </span>
               <button
@@ -584,7 +727,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedCategory(filter.id)}
-                  className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors ${isSelected ? 'border-[#927444] bg-[#241d14] text-[#f7f1e4]' : 'border-[#ddd6ca] bg-white/50 text-[#665b4b] hover:bg-white'}`}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${isSelected ? 'border-[#927444] bg-[#241d14] text-[#f7f1e4]' : 'border-[#ddd6ca] bg-white/50 text-[#665b4b] hover:bg-white'}`}
                 >
                   {filter.label}
                 </button>
@@ -665,7 +808,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                           draggable={false}
                           className={`h-[94px] w-[72px] origin-top object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
                         />
-                        <span className={`w-full truncate text-center text-[11px] text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
+                        <span className={`w-full truncate text-center text-xs text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
                         {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
                       </button>
                     </li>
