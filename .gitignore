@@ -5,3 +5,11 @@ dist
 
 # Local Python environment used for offline image tooling
 .venv/
+
+# Python bytecode from the art tooling
+__pycache__/
+
+# Raw generations are inputs to the pipeline, not deliverables. The cast reference is
+# the exception: every look is conditioned on it, so it belongs to the source.
+public/images/hero/try-on-v2/_shoot/*.png
+!public/images/hero/try-on-v2/_shoot/cast-reference.png

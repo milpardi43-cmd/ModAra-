@@ -36,3 +36,41 @@ export const rackFirstLookImage = `/images/hero/try-on/${rackFirstLookSlug}.webp
 
 /** That photo with its cache stamp — still app-relative, no base yet. */
 export const rackFirstLookUrl = `${rackFirstLookImage}?v=${RACK_OUTFIT_REVISION}`;
+
+/**
+ * The wardrobe the stage is actually painting.
+ *
+ * The hero shows one full-body try-on per look, and every look is now shot as a matched
+ * male/female pair — so the artwork has to answer a question the catalogue never had to:
+ * which of the two people is wearing THIS piece.
+ *
+ * The catalogue already answers it, in the product's own name: every piece is named
+ * «... مردانه» or «... زنانه». Reading that is better than a hand-kept list of slugs,
+ * because it is the same field the card and the product page show — a new piece cannot
+ * be added to the rack with the wrong mannequin. The slug is the fallback for names that
+ * ever stop carrying the word, and the male panel is the last resort.
+ */
+const WOMEN_PATTERN = /زنانه/;
+const MEN_PATTERN = /مردانه/;
+
+/** Which person in a look's pair is wearing the piece. */
+export function tryOnPanelFor(name: string, slug: string): 'male' | 'female' {
+  if (WOMEN_PATTERN.test(name)) return 'female';
+  if (MEN_PATTERN.test(name)) return 'male';
+  if (slug.endsWith('-women')) return 'female';
+  return 'male';
+}
+
+const PANEL_SUFFIX = { male: '-male', female: '-female' } as const;
+
+/**
+ * The try-on photo for a look, still app-relative and still unstamped.
+ *
+ * Both panels live in the same folder and differ only by that suffix, so this is the one
+ * place that decides which person the stage shows. Callers add the cache stamp with
+ * rackOutfitAsset — the URL shape must not drift from index.html's preload, which is
+ * built from rackFirstLookUrl.
+ */
+export function tryOnImageFor(name: string, slug: string): string {
+  return `/images/hero/try-on/${slug}${PANEL_SUFFIX[tryOnPanelFor(name, slug)]}.webp`;
+}

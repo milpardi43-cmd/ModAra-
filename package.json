@@ -15,7 +15,9 @@
     "images:optimize": "node scripts/optimize-images.mjs",
     "images:rack": "node scripts/generate-rack-slices.mjs",
     "images:rack-layers": "python3 scripts/split-rack-outfits.py",
-    "images:palette": "node scripts/generate-product-palette.mjs"
+    "images:palette": "node scripts/generate-product-palette.mjs",
+    "images:try-on": "node scripts/shoot-try-on.mjs",
+    "images:try-on:check": "node scripts/check-try-on-art.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^8.17.10",
