@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type PanInfo, type Variants } from 'framer-motion';
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Pause, Play, ShoppingBag, Star } from 'lucide-react';
 import { getAllProducts, getCategories } from '../lib/catalog';
 import type { Product } from '../lib/supabase';
@@ -70,8 +70,14 @@ const RACK_FILTERS: RackFilter[] = [
 const SUPPORTED_RACK_CATEGORIES = new Set(RACK_FILTERS.map((filter) => filter.id));
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+/** The other half of a cut: things leave faster than they arrive, and they
+ *  accelerate out. Equal in/equal out is what makes a UI fade read as software. */
+const CUT_EASE: [number, number, number, number] = [0.4, 0, 1, 1];
 /** How long a look holds the stage before the rack advances. */
 const RACK_ADVANCE_MS = 6000;
+/** A flick past the edge of the stage is a request to change the look. */
+const CUT_FLICK_PX = 38;
+const CUT_FLICK_VEL = 480;
 const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
 const warmedOutfitSources = new Set<string>();
 
@@ -110,6 +116,21 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
      unrelated slide can never inherit someone else's "added" tick. */
   const [addedId, setAddedId] = useState<string | null>(null);
   const [addingId, setAddingId] = useState<string | null>(null);
+  /* The cut itself: which side the next look enters from, and how fast the
+     choreography plays. `user` (tap, key, flick) is deliberately quicker than
+     `auto` — an input deserves an answer, an ambient turn can breathe. */
+  const [cutDir, setCutDir] = useState<1 | -1>(1);
+  const [cutPace, setCutPace] = useState<'user' | 'auto'>('auto');
+  const [isStageHovered, setIsStageHovered] = useState(false);
+  /* The id of the look whose artwork has actually decoded. The cut light is only
+   * rendered for it, so the sweep can never cross empty paper on a cold cache —
+   * a band over nothing is exactly the artefact that gives a swap away. */
+  const [artReadyId, setArtReadyId] = useState<string | null>(null);
+  /* The opening look is painted by the skeleton and then by the real slide; a light
+   * sweep across that first frame would be decoration with nothing to announce. The
+   * band appears from the second look onwards. */
+  const [hasCut, setHasCut] = useState(false);
+  const plateRef = useRef<HTMLImageElement | null>(null);
   const addedTimer = useRef<number | null>(null);
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -126,10 +147,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   useEffect(() => {
     const node = sectionRef.current;
     if (!node || typeof IntersectionObserver === 'undefined') return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry ? entry.isIntersecting : true),
-      { rootMargin: '120px' },
-    );
+    const observer = new IntersectionObserver(([entry]) => setIsInView(entry ? entry.isIntersecting : true), {
+      rootMargin: '120px',
+    });
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
@@ -160,9 +180,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 ? rackOutfitAsset(`/images/hero/try-on/${product.slug}.webp`)
                 : optimizedAsset(product.image_url, 720),
               stageSrcSet: isClothing ? undefined : imageSrcSet(product.image_url, [480, 720]),
-              outfitPreview: isClothing
-                ? `/images/rack/outfits-cleaned/${product.slug}.webp`
-                : product.image_url,
+              outfitPreview: isClothing ? `/images/rack/outfits-cleaned/${product.slug}.webp` : product.image_url,
               previewFallback: garment?.image ?? product.image_url,
               // Clothing paints the colour of the cut-out itself (the transparent
               // art, so the studio background cannot dilute it); everything else
@@ -209,6 +227,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     const first = visibleItems[0];
     if (first) {
       warmOutfitPreview(first);
+      /* A category change is a cut too — the stage swaps artwork, so it gets the
+         same sweep rather than a bare paint. */
+      setHasCut(true);
       setActiveId(first.id);
     }
   }, [activeId, visibleItems]);
@@ -253,10 +274,26 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       if (origin === 'user' && selected) {
         setAnnouncement(`${selected.name} — ${formatPrice(selected.product.price)}`);
       }
+      if (selected && at >= 0) {
+        const from = visibleItems.findIndex((item) => item.id === activeId);
+        if (from >= 0 && at !== from) {
+          /* Shortest way round the ring: the rack wraps, so 16 -> 0 is a step
+             forward, not fifteen back. In RTL a forward step is a step left. */
+          const n = visibleItems.length;
+          let delta = at - from;
+          if (n > 1) {
+            if (delta > n / 2) delta -= n;
+            if (delta < -n / 2) delta += n;
+          }
+          setCutDir(delta >= 0 ? 1 : -1);
+        }
+        setCutPace(origin);
+      }
+      setHasCut(true);
       setActiveId(id);
       window.requestAnimationFrame(() => revealPiece(id));
     },
-    [items, revealPiece, visibleItems],
+    [activeId, items, revealPiece, visibleItems],
   );
 
   useEffect(
@@ -265,6 +302,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     },
     [],
   );
+
+  /* A warm image can finish decoding before React attaches onLoad, and then the
+     sweep would never be allowed to play for the most common case of all — the
+     look the neighbours preloaded. Ask the element itself as well. */
+  const activeItemId = activeItem?.id ?? null;
+  useEffect(() => {
+    const image = plateRef.current;
+    if (image && image.complete && image.naturalWidth > 0) setArtReadyId(activeItemId);
+  }, [activeItemId]);
 
   /**
    * The one click a fashion hero owes a shopper: pick a look, put it in the bag.
@@ -298,7 +344,106 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     [addingId, addToCart, user],
   );
 
-  const autoplayRunning = isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered;
+  /* Everything below moves transform and opacity only: no filters, no layout,
+     nothing that repaints a 380x507 image per frame. The art leads, the type
+     follows, and only the ENTERING look carries a direction — an exit that also
+     slid sideways would have to remember which way it was travelling, and the
+     value AnimatePresence snapshots is the previous one, so a step back would
+     send the old look off the wrong side. Lifting it straight out of frame is both
+     correct and what a garment does when it leaves a rail.
+
+     The choreography, in seconds. `user` (tap, key, flick) answers in ~0.34s; an
+   * ambient turn may take ~0.46s. The artwork always leads, the type follows one
+   * row at a time and the side sheet lands last — the old swap had a single 0.16s
+   * beat across the whole slide, which is why it read as a page reload.
+   *
+   * The exit is one value shared by both paces on purpose: an exiting look must
+   * not be able to change speed because a new one was requested mid-flight.
+   * Every entry below is a complete `from`/`to`/`out` set, so a child never has to
+   * borrow timing from a parent that may already belong to the next look.
+   */
+  const cutTracks = useMemo(() => {
+    /* Short on purpose: `mode="wait"` mounts the next look only after this has
+       finished, so every millisecond here is a millisecond of paper. */
+    const OUT = 0.13;
+    const still = { lead: 0, step: 0, enter: 0, drift: 0, lift: 0, artLift: 0 };
+    const paces = reduceMotion
+      ? { user: still, auto: still }
+      : {
+          /* The last slot (`price`, 4) settles at 0.41s on a tap and 0.54s on an
+             ambient turn — nothing in the column is unreachable for longer than a
+             blink, which is the limit for controls that are painted but invisible. */
+          user: { lead: 0.02, step: 0.022, enter: 0.3, drift: 18, lift: 6, artLift: 10 },
+          auto: { lead: 0.04, step: 0.03, enter: 0.38, drift: 24, lift: 8, artLift: 13 },
+        };
+    const build = (pace: 'user' | 'auto') => {
+      const t = paces[pace];
+      /* Reduced motion keeps one thing only: a 0.16s opacity exchange, so the stage
+         never blinks. No travel, no settle, no sweep — those are the parts a
+         vestibular-sensitive reader actually feels. */
+      const away = reduceMotion ? 0 : 1;
+      const beat = (slot: number): Variants => ({
+        from: { opacity: 0, y: t.lift },
+        to: { opacity: 1, y: 0, transition: { duration: t.enter, ease: EASE, delay: t.lead + slot * t.step } },
+        out: { opacity: 0, y: -3 * away, transition: { duration: OUT * 0.8, ease: CUT_EASE } },
+      });
+      return {
+        /* The wrapper owns nothing but the exit clock: a backstop that guarantees the
+           pair never overlaps, whatever the children do. */
+        root: {
+          from: {},
+          to: {},
+          out: { opacity: 1, transition: { duration: OUT, ease: CUT_EASE } },
+        } as Variants,
+        /* The look itself: a short sideways carry and a ~1% settle on a spring, so
+           the garment arrives and lands instead of cross-fading. */
+        cut: {
+          from: { opacity: 1, x: t.drift * (cutDir > 0 ? -1 : 1) },
+          to: { opacity: 1, x: 0, transition: { duration: t.enter + 0.06, ease: EASE } },
+          out: { opacity: 0, y: -10 * away, transition: { duration: OUT, ease: CUT_EASE } },
+        } as Variants,
+        art: {
+          /* Not from zero: the stage must never read as empty between two looks. */
+          from: { opacity: reduceMotion ? 0 : 0.2, y: t.artLift, scale: 1 - 0.012 * away },
+          to: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: reduceMotion
+              ? { duration: 0 }
+              : { type: 'spring', stiffness: 300, damping: 32, mass: 0.9, delay: t.lead },
+          },
+          out: { opacity: 0, y: -8 * away, scale: 1 + 0.004 * away, transition: { duration: OUT, ease: CUT_EASE } },
+        } as Variants,
+        /* Fixed slots, not DOM order: an accessory carries one more line than a look
+           and the schedule must not shift for the reader on a category change. */
+        copy: beat(0),
+        caption: beat(0.7),
+        title: beat(1),
+        body: beat(2),
+        meta: beat(3),
+        price: beat(4),
+        aside: beat(6),
+      };
+    };
+    return { user: build('user'), auto: build('auto') };
+  }, [cutDir, reduceMotion]);
+  const cutTrack = cutTracks[cutPace];
+
+  /**
+   * A flick on the stage asks for the next look — the same gesture the rail already
+   * answers to, so nobody has to learn two. The direction is RTL: the next garment
+   * hangs to the LEFT of this one, so it is brought in by pulling the stage to the
+   * right (positive offset), exactly like the stage's own enter direction.
+   */
+  const onStageDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const passed = Math.abs(info.offset.x) >= CUT_FLICK_PX || Math.abs(info.velocity.x) >= CUT_FLICK_VEL;
+    if (!passed) return;
+    moveActive(info.offset.x > 0 || info.velocity.x > 0 ? 1 : -1);
+  };
+
+  const autoplayRunning =
+    isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered && !isStageHovered;
 
   useEffect(() => {
     if (!autoplayRunning || visibleItems.length < 2) return;
@@ -311,7 +456,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     return () => window.clearInterval(timer);
   }, [activeId, autoplayRunning, selectRackItem, visibleItems]);
 
-  const moveActive = (step: 1 | -1) => {
+  const moveActive = (step: 1 | -1): void => {
     if (visibleItems.length < 2) return;
     const from = activeIndex < 0 ? 0 : activeIndex;
     const next = visibleItems[(from + step + visibleItems.length) % visibleItems.length];
@@ -426,61 +571,106 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           <AnimatePresence mode="wait" initial={false}>
             {activeItem && (
               <motion.div
+                /* The key is what makes the cut: a fresh subtree for every look, so
+                   the CSS on the stage (glow bloom, floor spread, light sweep) can
+                   restart with it while React's DOM work stays exactly as large. */
                 key={activeItem.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -3 }}
-                transition={{ duration: reduceMotion ? 0 : 0.16, ease: EASE }}
                 className="mx-auto grid w-full max-w-[1120px] grid-cols-1 gap-3 text-right lg:grid-cols-[minmax(0,1.38fr)_minmax(0,380px)_minmax(0,0.62fr)] lg:items-center"
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`استایل ${faNumber((activeIndex >= 0 ? activeIndex : 0) + 1)} از ${faNumber(visibleItems.length)}`}
+                variants={cutTrack.root}
+                initial="from"
+                animate="to"
+                exit="out"
               >
-                <div
-                  className={`rack-outfit-stage lg:col-start-2 lg:row-start-1 ${
-                    activeItem.categorySlug === 'clothing' ? '' : 'rack-outfit-photo'
-                  }`}
-                  style={{ ['--fabric-glow' as string]: glowTint(activeItem.hex) ?? activeItem.hex }}
-                >
-                  <span className="rack-fabric-glow" aria-hidden="true" />
-                  <div
-                    role="img"
-                    aria-label={`${activeItem.product.name}، نمای کامل ست`}
-                    className="rack-outfit-plate absolute inset-0 z-10"
+                <div className="lg:col-start-2 lg:row-start-1">
+                  <motion.div
+                    variants={cutTrack.cut}
+                    initial="from"
+                    animate="to"
+                    exit="out"
+                    drag={reduceMotion ? false : 'x'}
+                    dragDirectionLock
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.12}
+                    onDragEnd={onStageDragEnd}
+                    /* Touch action stays on the DOM node framer builds; the pan is
+                       horizontal only, so a vertical swipe still scrolls the page. */
+                    className="min-w-0 cursor-grab active:cursor-grabbing"
+                    onMouseEnter={() => setIsStageHovered(true)}
+                    onMouseLeave={() => setIsStageHovered(false)}
                   >
-                    <img
-                      key={activeItem.slug}
-                      src={activeItem.stageSrc}
-                      srcSet={activeItem.stageSrcSet}
-                      sizes="(min-width: 1024px) 380px, 88vw"
-                      alt=""
-                      aria-hidden="true"
-                      loading="eager"
-                      fetchPriority="high"
-                      decoding="async"
-                      draggable={false}
-                      onError={(event) => {
-                        const image = event.currentTarget;
-                        // Assigning .src does not clear .srcset — the browser would
-                        // keep picking a candidate off the set and never reach the
-                        // fallback URL. Drop the set on the first error.
-                        image.srcset = '';
-                        if (!image.dataset.fallback) {
-                          image.dataset.fallback = 'outfit';
-                          image.src = rackOutfitAsset(activeItem.outfitPreview);
-                        } else if (image.dataset.fallback === 'outfit') {
-                          image.dataset.fallback = 'hanger';
-                          image.src = asset(activeItem.previewFallback);
-                        } else {
-                          image.style.visibility = 'hidden';
-                        }
-                      }}
-                      className="rack-outfit-composite pointer-events-none select-none"
-                    />
-                  </div>
+                    <motion.div variants={cutTrack.art} className="min-w-0">
+                      <div
+                        className={`rack-outfit-stage ${
+                          activeItem.categorySlug === 'clothing' ? '' : 'rack-outfit-photo'
+                        }`}
+                        style={{ ['--fabric-glow' as string]: glowTint(activeItem.hex) ?? activeItem.hex }}
+                      >
+                        <span className="rack-fabric-glow" aria-hidden="true" />
+                        {hasCut && artReadyId === activeItem.id && (
+                          <span
+                            aria-hidden="true"
+                            className="rack-cut-light"
+                            /* The band travels with the change, so a step back sweeps
+                               the other way. Two custom properties, no re-render of the
+                               artwork: the sweep is one composited translate. */
+                            style={{
+                              ['--cut-from' as string]: `${cutDir * 34}%`,
+                              ['--cut-to' as string]: `${cutDir * -34}%`,
+                            }}
+                          />
+                        )}
+                        <div
+                          role="img"
+                          aria-label={`${activeItem.product.name}، نمای کامل ست`}
+                          className="rack-outfit-plate absolute inset-0 z-10"
+                        >
+                          <img
+                            key={activeItem.slug}
+                            ref={plateRef}
+                            src={activeItem.stageSrc}
+                            srcSet={activeItem.stageSrcSet}
+                            sizes="(min-width: 1024px) 380px, 88vw"
+                            alt=""
+                            aria-hidden="true"
+                            loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
+                            draggable={false}
+                            onLoad={() => setArtReadyId(activeItem.id)}
+                            onError={(event) => {
+                              const image = event.currentTarget;
+                              // Assigning .src does not clear .srcset — the browser
+                              // would keep picking a candidate off the set and never
+                              // reach the fallback URL. Drop the set on the first error.
+                              image.srcset = '';
+                              if (!image.dataset.fallback) {
+                                image.dataset.fallback = 'outfit';
+                                image.src = rackOutfitAsset(activeItem.outfitPreview);
+                              } else if (image.dataset.fallback === 'outfit') {
+                                image.dataset.fallback = 'hanger';
+                                image.src = asset(activeItem.previewFallback);
+                              } else {
+                                image.style.visibility = 'hidden';
+                              }
+                            }}
+                            className="rack-outfit-composite pointer-events-none select-none"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
                 </div>
                 <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
-                  <div className="mb-2 flex flex-wrap items-center justify-start gap-2.5">
+                  <motion.div
+                    variants={cutTrack.copy}
+                    initial="from"
+                    animate="to"
+                    exit="out"
+                    className="mb-2 flex flex-wrap items-center justify-start gap-2.5"
+                  >
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cdbb99] bg-[#fdfaf4]/70 px-3 py-1 text-xs font-bold text-[#7d6636]">
                       <span
                         className="h-1.5 w-1.5 rounded-full ring-1 ring-black/10"
@@ -497,36 +687,73 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       {new Intl.NumberFormat('fa-IR').format(activeIndex + 1)} /{' '}
                       {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
                     </span>
-                  </div>
+                  </motion.div>
 
                   {activeItem.categorySlug !== 'clothing' && (
                     /* The photo used to be a 64px thumbnail next to a bare body, and
                        the caption read like a commit message. Now the catalogue image
                        is the stage itself, so this line only says what you are seeing. */
-                    <p className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#ded8ce] bg-white/55 px-3 py-1 text-xs font-medium text-[#6b6152]">
+                    <motion.p
+                      variants={cutTrack.caption}
+                      initial="from"
+                      animate="to"
+                      exit="out"
+                      className="mb-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#ded8ce] bg-white/55 px-3 py-1 text-xs font-medium text-[#6b6152]"
+                    >
                       تصویر خودِ کالا از کاتالوگ مُدارا
-                    </p>
+                    </motion.p>
                   )}
 
-                  <h2 className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]">
+                  {/* The title keeps its own timing rather than a slot: it is the one
+                      line that must be readable the instant the look lands. */}
+                  <motion.h2
+                    variants={cutTrack.title}
+                    initial="from"
+                    animate="to"
+                    exit="out"
+                    className="text-balance text-[clamp(1.2rem,2vw,1.75rem)] font-extrabold leading-[1.35] text-[#241d14]"
+                  >
                     {activeItem.product.name}
-                  </h2>
+                  </motion.h2>
                   {activeItem.product.description && (
-                    <p className="mt-2 max-w-[30rem] text-xs leading-[1.75] text-[#6b6152] sm:text-[13px]">
+                    <motion.p
+                      variants={cutTrack.body}
+                      initial="from"
+                      animate="to"
+                      exit="out"
+                      className="mt-2 max-w-[30rem] text-xs leading-[1.75] text-[#6b6152] sm:text-[13px]"
+                    >
                       {activeItem.product.description}
-                    </p>
+                    </motion.p>
                   )}
 
-                  <div className="mt-3 flex flex-wrap items-center justify-start gap-2">
-                    <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`} aria-hidden="true" />
+                  <motion.div
+                    variants={cutTrack.meta}
+                    initial="from"
+                    animate="to"
+                    exit="out"
+                    className="mt-3 flex flex-wrap items-center justify-start gap-2"
+                  >
+                    <span
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${activeItem.product.stock > 0 ? 'bg-[#edf3e9] text-[#45603a]' : 'bg-[#f7ece8] text-[#985c4b]'}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${activeItem.product.stock > 0 ? 'bg-[#668b55]' : 'bg-[#b87561]'}`}
+                        aria-hidden="true"
+                      />
                       {activeItem.product.stock > 0
                         ? `${new Intl.NumberFormat('fa-IR').format(activeItem.product.stock)} عدد موجود`
                         : 'ناموجود'}
                     </span>
-                  </div>
+                  </motion.div>
 
-                  <div className="mt-4 border-t border-[#cdbb99]/60 pt-3">
+                  <motion.div
+                    variants={cutTrack.price}
+                    initial="from"
+                    animate="to"
+                    exit="out"
+                    className="mt-4 border-t border-[#cdbb99]/60 pt-3"
+                  >
                     <span className="block whitespace-nowrap text-base font-extrabold text-[#3f3527] sm:text-lg">
                       {formatPrice(activeItem.product.price)}
                     </span>
@@ -574,7 +801,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                         />
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* The sheet for the look on stage. This end track (172px at lg,
@@ -585,14 +812,20 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     trouser row comes from scripts/split-rack-outfits.py classifying
                     the transparent layers of this exact composite. Nothing here is
                     copy the catalogue cannot support. */}
-                <aside
+                <motion.aside
+                  variants={cutTrack.aside}
+                  initial="from"
+                  animate="to"
+                  exit="out"
                   className="hidden w-full min-w-0 max-w-[220px] justify-self-end lg:col-start-3 lg:row-start-1 lg:block"
                   aria-label="اجزای این نگاه"
                 >
                   <p className="text-xs font-bold tracking-[0.16em] text-[#7d6636]">این نگاه</p>
                   <dl className="mt-2 border-t border-[#ded8ce]/70 pt-1.5 text-xs leading-[1.6]">
                     <div className="flex items-baseline justify-between gap-3 border-b border-[#ded8ce]/45 py-1.5">
-                      <dt className="shrink-0 text-[#6f6659]">{activeItem.categorySlug === 'clothing' ? 'بالاتنه' : 'کالا'}</dt>
+                      <dt className="shrink-0 text-[#6f6659]">
+                        {activeItem.categorySlug === 'clothing' ? 'بالاتنه' : 'کالا'}
+                      </dt>
                       <dd className="min-w-0 truncate text-left font-semibold text-[#4a4234]">
                         {activeItem.product.name}
                       </dd>
@@ -614,7 +847,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       <div className="flex items-baseline justify-between gap-3 border-b border-[#ded8ce]/45 py-1.5">
                         <dt className="shrink-0 text-[#6f6659]">شلوار</dt>
                         <dd className="text-left font-semibold text-[#4a4234]">
-                          {rackOutfitLayerInfo[activeItem.slug]?.hasTrousers ? 'هم‌رنگ، در همین نما' : 'ندارد؛ نگاه یک‌تکه'}
+                          {rackOutfitLayerInfo[activeItem.slug]?.hasTrousers
+                            ? 'هم‌رنگ، در همین نما'
+                            : 'ندارد؛ نگاه یک‌تکه'}
                         </dd>
                       </div>
                     )}
@@ -630,7 +865,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                       aria-hidden="true"
                     />
                   </button>
-                </aside>
+                </motion.aside>
               </motion.div>
             )}
           </AnimatePresence>
@@ -677,11 +912,14 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             <div>
               <p className="mb-1 text-xs font-bold tracking-[0.14em] text-[#7d6636]">MODARA · LOOKBOOK</p>
               <h2 className="text-lg font-bold text-[#342d24] sm:text-xl">انتخاب استایل</h2>
-              <p className="mt-1 text-xs text-[#6b6152] sm:text-[13px]">لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید</p>
+              <p className="mt-1 text-xs text-[#6b6152] sm:text-[13px]">
+                لباس را روی مدل ببینید یا کیف، عینک، ساعت و اکسسوری را انتخاب کنید
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs tabular-nums text-[#6f6659]">
-                {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} / {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
+                {new Intl.NumberFormat('fa-IR').format(Math.max(activeIndex + 1, 1))} /{' '}
+                {new Intl.NumberFormat('fa-IR').format(visibleItems.length)}
               </span>
               <button
                 type="button"
@@ -697,7 +935,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ddd6ca] text-[#665b4b] transition-colors hover:bg-white"
               >
-                {isAutoPlaying ? <Pause className="h-3.5 w-3.5" aria-hidden="true" /> : <Play className="h-3.5 w-3.5" aria-hidden="true" />}
+                {isAutoPlaying ? (
+                  <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
               </button>
               <button
                 type="button"
@@ -718,7 +960,11 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
             </div>
           </div>
 
-          <div className="mb-2 flex flex-wrap items-center justify-start gap-2" role="group" aria-label="فیلتر دسته‌بندی محصولات">
+          <div
+            className="mb-2 flex flex-wrap items-center justify-start gap-2"
+            role="group"
+            aria-label="فیلتر دسته‌بندی محصولات"
+          >
             {RACK_FILTERS.map((filter) => {
               const isSelected = selectedCategory === filter.id;
               return (
@@ -769,7 +1015,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     className="relative h-[130px] w-[90px] shrink-0 animate-pulse rounded-xl bg-[#e9e5de]"
                   />
                 ))}
-  
+
               {!loading &&
                 visibleItems.map((item) => {
                   const isActive = item.id === activeItem?.id;
@@ -808,8 +1054,21 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                           draggable={false}
                           className={`h-[94px] w-[72px] origin-top object-contain object-center transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.04] ${isActive ? 'scale-[1.04]' : ''}`}
                         />
-                        <span className={`w-full truncate text-center text-xs text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.name}</span>
-                        {isActive && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]" aria-hidden="true" />}
+                        <span
+                          className={`w-full truncate text-center text-xs text-[#6f6659] ${isActive ? 'font-bold' : 'font-medium'}`}
+                        >
+                          {item.name}
+                        </span>
+                        {isActive && (
+                          /* The rule under the chosen hanger draws itself instead of
+                             appearing: the eye finds the new piece on the rail at the
+                             same instant the stage changes, which is what makes the
+                             swap feel driven rather than accidental. */
+                          <span
+                            aria-hidden="true"
+                            className="rack-style-rule absolute inset-x-3 bottom-0 h-[2px] rounded-full bg-[#9b7948]"
+                          />
+                        )}
                       </button>
                     </li>
                   );

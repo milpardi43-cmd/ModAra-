@@ -392,6 +392,14 @@
   margin-inline: auto;
 }
 
+/* The plate is the clip for everything painted as "the look": the artwork, the
+ * cut light and, on photo slides, the rounded corners — a border-radius on a
+ * parent does not clip an <img> child, so without this the photograph kept
+ * square corners inside a rounded plate. */
+.rack-outfit-plate {
+  overflow: hidden;
+}
+
 .rack-outfit-composite {
   position: absolute;
   inset: 0;
@@ -425,6 +433,20 @@
   pointer-events: none;
   opacity: 0.16;
   background-image: radial-gradient(closest-side, var(--fabric-glow, #b9a783), transparent 78%);
+  /* Light does not switch on; it blooms. `both` keeps the filled end state equal
+   * to the static rule above, so the animation and its absence agree. */
+  animation: rackGlowIn 660ms cubic-bezier(0.22, 1, 0.36, 1) 110ms both;
+}
+
+@keyframes rackGlowIn {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+  to {
+    opacity: 0.16;
+    scale: 1;
+  }
 }
 
 /* The ground, for cut-out slides only: a try-on sheet is a transparent composite
@@ -449,13 +471,73 @@
   z-index: 0;
   pointer-events: none;
   background-image: radial-gradient(50% 50% at 50% 50%, rgba(62, 48, 30, 0.38), rgba(62, 48, 30, 0) 72%);
+  /* The ground is painted as the garment lands on it, spreading from the centre.
+   * `translate: -50%` above is an individual transform property, so it survives:
+   * the individual properties are applied first and scaleX lands on top of them. */
+  animation: rackFloorIn 520ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  /* The glow follows the look, so let it arrive a beat later than the cut. */
-  .rack-fabric-glow {
-    transition: opacity 420ms ease;
+@keyframes rackFloorIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.62);
   }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* The cut light: a single band swept across the stage while the new look lands.
+ * It is a sibling of the artwork and never a filter — no blur, no repaint of the
+ * 380x507 image, only a composited translate. Its own overflow:hidden is what
+ * keeps it inside the stage, since .rack-outfit-stage deliberately paints past
+ * its box so the wall glow can spill. */
+.rack-cut-light {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.rack-cut-light::after {
+  content: "";
+  position: absolute;
+  inset: -18% -62%;
+  /* A measured band, not a glow: ±34% of the stage either side of the centre line
+   * at 62% white measured soft at both edges, and narrower than 34% reads as a
+   * searchlight rather than a change of light. */
+  background-image: linear-gradient(
+    101deg,
+    transparent 33%,
+    rgba(255, 255, 255, 0.62) 50%,
+    transparent 67%
+  );
+  opacity: 0;
+  transform: translateX(var(--cut-from, -34%));
+  animation: rackCutSweep 880ms cubic-bezier(0.3, 0, 0.4, 1) both;
+}
+
+@keyframes rackCutSweep {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--cut-from, -34%));
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--cut-to, 34%));
+  }
+}
+
+/* A photograph is a lighter object than paper: the sweep reads over it, but the
+ * corners of the plate are the picture's own, so clip them the same way. */
+.rack-outfit-photo .rack-cut-light {
+  border-radius: 1.75rem;
 }
 
 /* Accessories and bags have no try-on composite: their catalogue photograph IS
@@ -618,6 +700,23 @@
 .rack-style-item:hover,
 .rack-style-item:focus-within { animation-play-state: paused; }
 
+/* Drawn from the centre out, so it reads as a mark being made, not a line appearing. */
+.rack-style-rule {
+  transform-origin: center;
+  animation: rackRuleIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rackRuleIn {
+  from {
+    opacity: 0.2;
+    transform: scaleX(0.15);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
 @keyframes rackStyleBreeze {
   0%, 100% { transform: rotate(-0.75deg); }
   50% { transform: rotate(0.75deg); }
@@ -625,6 +724,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rack-style-item { animation: none !important; }
+  .rack-cut-light { display: none !important; }
+  .rack-style-rule { animation: none !important; }
+  .rack-fabric-glow,
+  .rack-outfit-stage:not(.rack-outfit-photo)::before {
+    animation: none !important;
+  }
 }
 
 /* Site-wide editorial text treatment: a soft ink reveal and a traced gold rule. */
