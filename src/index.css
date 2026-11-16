@@ -392,6 +392,45 @@
   margin-inline: auto;
 }
 
+/* The camera. Separated from the box it looks at, which is also the element that
+ * rotates: perspective belongs to the parent, the body rotates inside it. */
+.rack-perspective {
+  perspective: 1200px;
+  perspective-origin: 50% 46%;
+}
+
+/* The box. A real one, not a picture of one: the three layers of a look sit at
+ * different depths (below), so one rotation gives each of them a different arc.
+ * That difference is the 3D — flat rotation is what makes a swap look like a
+ * slideshow, and depth is what makes it look like a garment rail turning.
+ * Cut-out slides only: the catalogue photos carry `mix-blend-mode` + `mask-image`
+ * together, and a 3D transform on that pair is a known Safari trap, so they keep
+ * the flat treatment that was signed off. */
+.rack-3d {
+  transform-style: preserve-3d;
+  /* The seam is drawn slightly outside the plate, so the box cannot clip. */
+  overflow: visible;
+}
+
+/* Depth, painted once and never animated on its own: only the box rotates, and
+ * these offsets are what turn that single rotation into parallax. The glow sits
+ * furthest back because it is light thrown on the wall; the floor is between the
+ * two because it is under her feet; the plate is the plane everything is judged
+ * against; the seam is the front edge of the door, so it sits just proud of the
+ * plate and catches the light first.
+ *
+ * Depth is written with `translate`, never `transform`: `transform` on these nodes
+ * belongs to AnimatePresence (the lift, the settle, and on the plate no transform
+ * at all), and a declaration that wins would silently kill the animation. The
+ * individual property composes with the animation instead of fighting it. */
+.rack-3d .rack-fabric-glow {
+  translate: 0 0 -30px;
+}
+
+.rack-cut-seam {
+  translate: 0 0 2px;
+}
+
 /* The plate is the clip for everything painted as "the look": the artwork, the
  * cut light and, on photo slides, the rounded corners — a border-radius on a
  * parent does not clip an <img> child, so without this the photograph kept
@@ -467,13 +506,18 @@
   bottom: 0.75rem;
   width: 58%;
   height: 0.875rem;
-  translate: -50% 0;
   z-index: 0;
   pointer-events: none;
   background-image: radial-gradient(50% 50% at 50% 50%, rgba(62, 48, 30, 0.38), rgba(62, 48, 30, 0) 72%);
+  /* Sit the contact shadow 14px in front of the wall and 14px behind the garment.
+   * `translate` is the individual property already used for the -50% centring, so
+   * the depth has to be added there rather than in `transform`, which the entry
+   * animation below owns. */
+  translate: -50% 0 -14px;
   /* The ground is painted as the garment lands on it, spreading from the centre.
-   * `translate: -50%` above is an individual transform property, so it survives:
-   * the individual properties are applied first and scaleX lands on top of them. */
+   * `translate` above is an individual transform property, so it survives: the
+   * individual properties are applied first and the keyframe's scaleX lands on
+   * top of them, depth included. */
   animation: rackFloorIn 520ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
 }
 
@@ -516,21 +560,82 @@
     transparent 67%
   );
   opacity: 0;
-  transform: translateX(var(--cut-from, -34%));
+  /* The sweep travels with the step: `data-dir` on the stage comes from the same
+     value AnimatePresence hands the turn, so the light and the card always agree. */
+  transform: translateX(-34%);
   animation: rackCutSweep 880ms cubic-bezier(0.3, 0, 0.4, 1) both;
 }
 
 @keyframes rackCutSweep {
   0% {
     opacity: 0;
-    transform: translateX(var(--cut-from, -34%));
+    transform: translateX(-34%);
   }
   22% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translateX(var(--cut-to, 34%));
+    transform: translateX(34%);
+  }
+}
+
+@keyframes rackCutSweepBack {
+  0% {
+    opacity: 0;
+    transform: translateX(34%);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-34%);
+  }
+}
+
+[data-dir='prev'] .rack-cut-light::after {
+  animation-name: rackCutSweepBack;
+}
+
+/* The edge of the door. A 2px gold rule on the trailing edge of the plate that
+ * only exists while the look is turning — it is the light the seam catches, not a
+ * border on the artwork, which is why it is a sibling and not an outline.
+ * `aria-hidden`, pointer-events none, and it never lifts the plate off paper. */
+.rack-cut-seam {
+  position: absolute;
+  top: 6%;
+  bottom: 4%;
+  width: 2px;
+  z-index: 21;
+  pointer-events: none;
+  border-radius: 2px;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    rgba(201, 161, 90, 0.9) 18%,
+    rgba(255, 246, 226, 0.95) 50%,
+    rgba(138, 90, 29, 0.85) 82%,
+    transparent 100%
+  );
+  opacity: 0;
+  animation: rackSeamIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The seam is mounted on the trailing edge by the component (`left` or `right`),
+ * so there is nothing directional to replay here. */
+@keyframes rackSeamIn {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.55);
+  }
+  24% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
   }
 }
 
@@ -729,6 +834,29 @@
   .rack-fabric-glow,
   .rack-outfit-stage:not(.rack-outfit-photo)::before {
     animation: none !important;
+  }
+
+  /* Flatten the box. With no rotation to sell, depth would only shrink the figure
+   * and move the shadow off her feet. */
+  .rack-perspective {
+    perspective: none !important;
+  }
+
+  .rack-3d,
+  .rack-3d .rack-fabric-glow,
+  .rack-3d .rack-outfit-plate {
+    transform-style: flat !important;
+    /* `translate`, not `transform`: resetting `transform` here would wipe the
+       animation's own values for the rest of the slide's life. */
+    translate: none !important;
+  }
+
+  .rack-3d:not(.rack-outfit-photo)::before {
+    translate: -50% 0 !important;
+  }
+
+  .rack-cut-seam {
+    display: none !important;
   }
 }
 

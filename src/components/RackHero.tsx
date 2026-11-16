@@ -78,6 +78,21 @@ const RACK_ADVANCE_MS = 6000;
 /** A flick past the edge of the stage is a request to change the look. */
 const CUT_FLICK_PX = 38;
 const CUT_FLICK_VEL = 480;
+/**
+ * How far the stage turns — measured, not guessed.
+ *
+ * The artwork is a photograph of a person, so a large rotation does not read as a
+ * turn: it reads as a cardboard cut-out, and the face compresses first because it
+ * is the narrowest thing in frame. Rendering this exact composite at a range of
+ * angles (perspective 1200px, the real 380x507 stage) put the ceiling at ~26°:
+ * 12-26° reads as a garment swinging on its hook, 34° starts to squeeze the face,
+ * and 45°+ is unmistakably a card. The turn is therefore small and the motion is
+ * carried by the timing, the seam and the depth — not by the angle.
+ */
+const CUT_TURN_OUT = 22;
+const CUT_TURN_IN = 26;
+/** Narrower screens borrow less: the card is nearly the full column there. */
+const CUT_TURN_NARROW = 0.78;
 const faNumber = (value: number) => new Intl.NumberFormat('fa-IR').format(value);
 const warmedOutfitSources = new Set<string>();
 
@@ -122,6 +137,9 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
   const [cutDir, setCutDir] = useState<1 | -1>(1);
   const [cutPace, setCutPace] = useState<'user' | 'auto'>('auto');
   const [isStageHovered, setIsStageHovered] = useState(false);
+  /* The turn is the only thing in the hero that has to know the viewport, because
+   * the angle, not the layout, is what overflows on a phone. */
+  const [isNarrow, setIsNarrow] = useState(false);
   /* The id of the look whose artwork has actually decoded. The cut light is only
    * rendered for it, so the sweep can never cross empty paper on a cold cache —
    * a band over nothing is exactly the artefact that gives a swap away. */
@@ -152,6 +170,15 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     });
     observer.observe(node);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(max-width: 1023px)');
+    const sync = () => setIsNarrow(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
   }, []);
 
   useEffect(() => {
@@ -366,16 +393,22 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     /* Short on purpose: `mode="wait"` mounts the next look only after this has
        finished, so every millisecond here is a millisecond of paper. */
     const OUT = 0.13;
-    const still = { lead: 0, step: 0, enter: 0, drift: 0, lift: 0, artLift: 0 };
+    const still = { lead: 0, step: 0, enter: 0, turn: 0, drift: 0, lift: 0, artLift: 0 };
     const paces = reduceMotion
       ? { user: still, auto: still }
       : {
           /* The last slot (`price`, 4) settles at 0.41s on a tap and 0.54s on an
              ambient turn — nothing in the column is unreachable for longer than a
              blink, which is the limit for controls that are painted but invisible. */
-          user: { lead: 0.02, step: 0.022, enter: 0.3, drift: 18, lift: 6, artLift: 10 },
-          auto: { lead: 0.04, step: 0.03, enter: 0.38, drift: 24, lift: 8, artLift: 13 },
+          user: { lead: 0.02, step: 0.022, enter: 0.3, turn: 0.52, drift: 18, lift: 6, artLift: 10 },
+          auto: { lead: 0.04, step: 0.03, enter: 0.38, turn: 0.62, drift: 24, lift: 8, artLift: 13 },
         };
+    /* Direction, as the element will read it: framer hands a resolver the presence
+       `custom` when the element is leaving and the element's own `custom` when it is
+       entering — and `undefined` on a very first mount, before any presence context
+       exists. The closure `cutDir` is the fallback, so the first cut animates too. */
+    const turnOf = (custom: number | undefined) => ((custom ?? cutDir) < 0 ? -1 : 1);
+    const angleScale = isNarrow ? CUT_TURN_NARROW : 1;
     const build = (pace: 'user' | 'auto') => {
       const t = paces[pace];
       /* Reduced motion keeps one thing only: a 0.16s opacity exchange, so the stage
@@ -395,25 +428,61 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
           to: {},
           out: { opacity: 1, transition: { duration: OUT, ease: CUT_EASE } },
         } as Variants,
-        /* The look itself: a short sideways carry and a ~1% settle on a spring, so
-           the garment arrives and lands instead of cross-fading. */
+        /* The look itself: a short sideways carry and a settle, so the garment
+           arrives and lands instead of cross-fading. Direction-dependent, so it is
+           resolved per label (see the note on `dir` below). */
         cut: {
-          from: { opacity: 1, x: t.drift * (cutDir > 0 ? -1 : 1) },
+          from: (custom: number | undefined) => ({
+            opacity: reduceMotion ? 0 : 0.25,
+            /* Never from zero: the stage must not read as empty between two looks. */
+            x: t.drift * (turnOf(custom) < 0 ? 1 : -1),
+          }),
           to: { opacity: 1, x: 0, transition: { duration: t.enter + 0.06, ease: EASE } },
           out: { opacity: 0, y: -10 * away, transition: { duration: OUT, ease: CUT_EASE } },
         } as Variants,
+        /* The turn, as an open card: in RTL the next garment hangs to the left, so the
+           stage swings its left edge INTO the screen. `preserve-3d` is what makes the
+           glow and the floor ellipse travel on their own arcs instead of riding along
+           flat — that difference is the whole effect. Perspective lives on the wrapper
+           (CSS), not here, so these are pure transform properties.
+
+           `from` and `out` are resolver FUNCTIONS, not targets. That is not a style
+           choice: framer resolves a variant label by looking it up on `variants` and
+           calling it with `custom` if it is a function, and an element that is
+           leaving gets `AnimatePresence`'s `custom` — rebuilt the moment it is marked
+           as leaving. A plain object captured at render would replay the direction
+           from when the card arrived, so every other swap would turn the wrong way.
+           (A resolver on the outer object instead of on the label resolves to
+           undefined and nothing animates at all — the trap this shape avoids.) */
+        turn: {
+          from: (custom: number | undefined) => ({
+            rotateY: turnOf(custom) * CUT_TURN_IN * angleScale,
+            scale: 0.99,
+          }),
+          to: { rotateY: 0, scale: 1, transition: { duration: t.turn + 0.08, ease: EASE } },
+          out: (custom: number | undefined) => ({
+            rotateY: -turnOf(custom) * CUT_TURN_OUT * angleScale,
+            scale: 1,
+            transition: { duration: OUT * 1.5, ease: CUT_EASE },
+          }),
+        } as Variants,
+        /* The artwork, kept to transform only. `opacity` below 1 is a grouping
+           property: it forces the subtree flat, and the glow's depth would drop out in
+           the middle of the very turn that is showing it off. The fade lives on `cut`,
+           one level outside the perspective, where flattening is harmless. */
         art: {
-          /* Not from zero: the stage must never read as empty between two looks. */
-          from: { opacity: reduceMotion ? 0 : 0.2, y: t.artLift, scale: 1 - 0.012 * away },
+          from: { y: t.artLift, scale: 1 - 0.012 * away },
           to: {
-            opacity: 1,
             y: 0,
             scale: 1,
             transition: reduceMotion
               ? { duration: 0 }
               : { type: 'spring', stiffness: 300, damping: 32, mass: 0.9, delay: t.lead },
           },
-          out: { opacity: 0, y: -8 * away, scale: 1 + 0.004 * away, transition: { duration: OUT, ease: CUT_EASE } },
+          /* The old look keeps its full size while it swings away. Scaling it down at
+             the same time turns a turn into a shrink, and the shrink is what people
+             read as "a card being put away". */
+          out: { y: 0, scale: 1, transition: { duration: OUT, ease: CUT_EASE } },
         } as Variants,
         /* Fixed slots, not DOM order: an accessory carries one more line than a look
            and the schedule must not shift for the reader on a category change. */
@@ -427,7 +496,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
       };
     };
     return { user: build('user'), auto: build('auto') };
-  }, [cutDir, reduceMotion]);
+  }, [cutDir, isNarrow, reduceMotion]);
   const cutTrack = cutTracks[cutPace];
 
   /**
@@ -442,8 +511,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
     moveActive(info.offset.x > 0 || info.velocity.x > 0 ? 1 : -1);
   };
 
-  const autoplayRunning =
-    isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered && !isStageHovered;
+  const autoplayRunning = isAutoPlaying && !reduceMotion && isInView && !isSelectorHovered && !isStageHovered;
 
   useEffect(() => {
     if (!autoplayRunning || visibleItems.length < 2) return;
@@ -568,7 +636,7 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
               </div>
             </div>
           )}
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait" initial={false} custom={cutDir}>
             {activeItem && (
               <motion.div
                 /* The key is what makes the cut: a fresh subtree for every look, so
@@ -601,66 +669,95 @@ export default function RackHero({ onNavigate }: RackHeroProps) {
                     onMouseEnter={() => setIsStageHovered(true)}
                     onMouseLeave={() => setIsStageHovered(false)}
                   >
-                    <motion.div variants={cutTrack.art} className="min-w-0">
-                      <div
-                        className={`rack-outfit-stage ${
-                          activeItem.categorySlug === 'clothing' ? '' : 'rack-outfit-photo'
-                        }`}
-                        style={{ ['--fabric-glow' as string]: glowTint(activeItem.hex) ?? activeItem.hex }}
+                    {/* The camera. One element, because perspective belongs to the
+                        parent: putting it on the node that also rotates would cancel
+                        the rotation it is supposed to reveal. */}
+                    <div className="rack-perspective min-w-0">
+                      <motion.div
+                        /* Only cut-out looks turn. A catalogue photograph carries
+                         `mix-blend-mode` + `mask-image` together, and rotating that
+                         pair is the one combination Safari has broken for years — the
+                         accessory slides keep the flat plate that was signed off. */
+                        variants={activeItem.categorySlug === 'clothing' ? cutTrack.turn : undefined}
+                        custom={cutDir}
+                        initial="from"
+                        animate="to"
+                        exit="out"
+                        className={`min-w-0 ${activeItem.categorySlug === 'clothing' ? 'rack-3d' : ''}`}
                       >
-                        <span className="rack-fabric-glow" aria-hidden="true" />
-                        {hasCut && artReadyId === activeItem.id && (
-                          <span
-                            aria-hidden="true"
-                            className="rack-cut-light"
-                            /* The band travels with the change, so a step back sweeps
-                               the other way. Two custom properties, no re-render of the
-                               artwork: the sweep is one composited translate. */
-                            style={{
-                              ['--cut-from' as string]: `${cutDir * 34}%`,
-                              ['--cut-to' as string]: `${cutDir * -34}%`,
-                            }}
-                          />
-                        )}
-                        <div
-                          role="img"
-                          aria-label={`${activeItem.product.name}، نمای کامل ست`}
-                          className="rack-outfit-plate absolute inset-0 z-10"
-                        >
-                          <img
-                            key={activeItem.slug}
-                            ref={plateRef}
-                            src={activeItem.stageSrc}
-                            srcSet={activeItem.stageSrcSet}
-                            sizes="(min-width: 1024px) 380px, 88vw"
-                            alt=""
-                            aria-hidden="true"
-                            loading="eager"
-                            fetchPriority="high"
-                            decoding="async"
-                            draggable={false}
-                            onLoad={() => setArtReadyId(activeItem.id)}
-                            onError={(event) => {
-                              const image = event.currentTarget;
-                              // Assigning .src does not clear .srcset — the browser
-                              // would keep picking a candidate off the set and never
-                              // reach the fallback URL. Drop the set on the first error.
-                              image.srcset = '';
-                              if (!image.dataset.fallback) {
-                                image.dataset.fallback = 'outfit';
-                                image.src = rackOutfitAsset(activeItem.outfitPreview);
-                              } else if (image.dataset.fallback === 'outfit') {
-                                image.dataset.fallback = 'hanger';
-                                image.src = asset(activeItem.previewFallback);
-                              } else {
-                                image.style.visibility = 'hidden';
-                              }
-                            }}
-                            className="rack-outfit-composite pointer-events-none select-none"
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
+                        <motion.div variants={cutTrack.art} className="rack-3d-layer min-w-0">
+                          <div
+                            data-dir={cutDir > 0 ? 'next' : 'prev'}
+                            className={`rack-outfit-stage ${
+                              activeItem.categorySlug === 'clothing' ? 'rack-3d' : 'rack-outfit-photo'
+                            }`}
+                            style={{ ['--fabric-glow' as string]: glowTint(activeItem.hex) ?? activeItem.hex }}
+                          >
+                            <span className="rack-fabric-glow" aria-hidden="true" />
+                            {hasCut && artReadyId === activeItem.id && (
+                              <span
+                                aria-hidden="true"
+                                className="rack-cut-light"
+                                /* The band travels with the change, so a step back sweeps
+                                 the other way. Direction is an attribute on the stage,
+                                 not a per-render style: the sweep stays one composited
+                                 translate and the artwork is never re-rendered for it. */
+                                data-dir={cutDir > 0 ? 'next' : 'prev'}
+                              />
+                            )}
+                            {activeItem.categorySlug === 'clothing' && artReadyId === activeItem.id && (
+                              /* The edge of the door: a lit gold rule on the trailing side
+                             of the plate, for as long as the look is turning. It is a
+                             sibling of the artwork so it can catch the light without
+                             tinting the garment, and it is only ever the trail — the
+                             leading edge of a door does not glow. */
+                              <span
+                                aria-hidden="true"
+                                className="rack-cut-seam"
+                                style={{ [cutDir > 0 ? 'left' : 'right']: 0 }}
+                              />
+                            )}
+                            <div
+                              role="img"
+                              aria-label={`${activeItem.product.name}، نمای کامل ست`}
+                              className="rack-outfit-plate absolute inset-0 z-10"
+                            >
+                              <img
+                                key={activeItem.slug}
+                                ref={plateRef}
+                                src={activeItem.stageSrc}
+                                srcSet={activeItem.stageSrcSet}
+                                sizes="(min-width: 1024px) 380px, 88vw"
+                                alt=""
+                                aria-hidden="true"
+                                loading="eager"
+                                fetchPriority="high"
+                                decoding="async"
+                                draggable={false}
+                                onLoad={() => setArtReadyId(activeItem.id)}
+                                onError={(event) => {
+                                  const image = event.currentTarget;
+                                  // Assigning .src does not clear .srcset — the browser
+                                  // would keep picking a candidate off the set and never
+                                  // reach the fallback URL. Drop the set on the first error.
+                                  image.srcset = '';
+                                  if (!image.dataset.fallback) {
+                                    image.dataset.fallback = 'outfit';
+                                    image.src = rackOutfitAsset(activeItem.outfitPreview);
+                                  } else if (image.dataset.fallback === 'outfit') {
+                                    image.dataset.fallback = 'hanger';
+                                    image.src = asset(activeItem.previewFallback);
+                                  } else {
+                                    image.style.visibility = 'hidden';
+                                  }
+                                }}
+                                className="rack-outfit-composite pointer-events-none select-none"
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    </div>
                   </motion.div>
                 </div>
                 <div className="w-full max-w-[440px] min-w-0 justify-self-start text-right lg:col-start-1 lg:row-start-1">
