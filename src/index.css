@@ -412,6 +412,81 @@
   filter: none;
 }
 
+/* The fabric's own colour, lightened and thrown on the wall behind the model.
+ * `hex` is measured from the catalogue pixels (scripts/generate-product-palette.mjs)
+ * and hangerGarments.ts documents it as "the glow behind the rack" — this is that
+ * promise being kept. It is a single static radial gradient: no blur filter, no
+ * animation, and ::before/::after-free so it cannot fight the artwork for paint
+ * order (the composite lives in a z-10 wrapper and always wins). */
+.rack-fabric-glow {
+  position: absolute;
+  inset: -8% -30% 4%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: radial-gradient(closest-side, var(--fabric-glow, #b9a783), transparent 78%);
+}
+
+/* The ground, for cut-out slides only: a try-on sheet is a transparent composite
+ * with no floor of its own, so it needs one — photo slides bring their own ground
+ * and light, and shading under them would double the contact shadow.
+ * The cut-outs are floor-anchored, so the shoes end 15.2-22.5px above the bottom
+ * of .rack-outfit-stage (measured across all 17 sheets). The ellipse is therefore
+ * centred at 19px: the tightest look gets a few px of overlap, which is what
+ * contact shading looks like, and the loosest is 3px away, which blur hides.
+ * A hard floor line is deliberately NOT drawn here — the selector's own hairline
+ * 11-18px below already reads as the floor, and a second rule so close would look
+ * like a stray border. ::before, not ::after, so the shoes paint on top of their
+ * own shadow. */
+.rack-outfit-stage:not(.rack-outfit-photo)::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  width: 58%;
+  height: 0.875rem;
+  translate: -50% 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(50% 50% at 50% 50%, rgba(62, 48, 30, 0.38), rgba(62, 48, 30, 0) 72%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The glow follows the look, so let it arrive a beat later than the cut. */
+  .rack-fabric-glow {
+    transition: opacity 420ms ease;
+  }
+}
+
+/* Accessories and bags have no try-on composite: their catalogue photograph IS
+ * the stage. These are full lifestyle frames (travertine plinth, window light),
+ * so they cannot simply be dropped on paper:
+ *   · multiply — the studio wall is light and warm; multiplied onto #f3efe8 the
+ *     background falls to about 5/255 of the page colour, which the eye does not
+ *     register as a rectangle, while the product keeps its own density;
+ *   · a vertical mask fade — the only seams that survive are the top of the wall
+ *     and the front edge of the plinth, and 7%/10% of feather hides exactly those;
+ *   · the radius is on the plate, not the section: it keeps the silhouette of a
+ *     print without a border or a drop shadow, which is what the frameless
+ *     try-on side of the hero already promises.
+ * The blend lives on the wrapper because the wrapper is the stacking context
+ * (z-10) — on the <img> itself it would blend against that empty group and do
+ * nothing at all. */
+.rack-outfit-photo .rack-outfit-plate {
+  border-radius: 1.75rem;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 7%,
+    #000 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 90%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
 /* ------------------------------------------------------------------ *
  * The rack's top rail — brushed brass, mounted to the wall at both ends.
  *
