@@ -56,7 +56,8 @@ export default function Header({ onNavigate }: HeaderProps) {
             so the control and the panel it opens share an edge, and it stays clear of
             the product facts, which sit on the right at lg. Opening goes through the
             same `modara:open-cart` event ProductCard.tsx already emits: App.tsx stays
-            the only owner of the drawer's state. */}
+            the only owner of the drawer's state. The count is 12px, not the 11px a
+            badge usually gets, because nothing inside this band asks for smaller. */}
         <button
           type="button"
           onClick={() => window.dispatchEvent(new CustomEvent('modara:open-cart'))}
@@ -70,7 +71,7 @@ export default function Header({ onNavigate }: HeaderProps) {
           <ShoppingBag className="h-[18px] w-[18px]" aria-hidden="true" />
           <span
             aria-hidden="true"
-            className={`min-w-[1.125rem] rounded-full px-1 text-center text-[11px] font-bold tabular-nums leading-[1.125rem] ${
+            className={`min-w-[1.25rem] rounded-full px-1 text-center text-xs font-bold tabular-nums leading-[1.25rem] ${
               onDark ? 'bg-[#f7f1e4] text-[#241d14]' : 'bg-[#241d14] text-[#f7f1e4]'
             } ${totalItems > 0 ? '' : 'opacity-55'}`}
           >
